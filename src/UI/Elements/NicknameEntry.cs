@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 /// <summary>Draft-only nickname input using the game's supported keyboard input path.</summary>
 public static class NicknameEntry
@@ -30,7 +30,7 @@ public static class NicknameEntry
         var preview = Preview(text);
         var label = (IsEditing ? "Typing: " : "Nickname: ") +
             (preview.Length == 0 ? "click to type" : preview);
-        if (GUILayout.Button(label, _entryStyle, GUILayout.Width(270f)))
+        if (GUILayout.Button(label, _entryStyle, GUILayout.Width(Mathf.Min(270f, MenuUI.ContentWidth - 34f))))
         {
             NicknamePreset.NameInput = text;
             IsEditing = true;
@@ -50,14 +50,14 @@ public static class NicknameEntry
         GUILayout.Label(IsEditing
             ? _selectAll ? "All selected. Type to replace; Enter finishes."
                 : "Typing at end. Ctrl+A selects all; Enter finishes."
-            : "Click nickname to type; use Set my nickname to apply.", GUILayout.Width(270f));
+            : "Click nickname to type, then Apply my nickname.", GUILayout.Width(Mathf.Min(270f, MenuUI.ContentWidth - 34f)));
     }
 
     public static void Tick()
     {
         if (!IsEditing) return;
-        if (!MenuUI.isGUIActive || MenuUI.ActiveTabName != "Fun" ||
-            !Application.isFocused || MalumMenu.isPanicked)
+        if (!MenuUI.isGUIActive || MenuUI.ActiveTabName != "Appearance" ||
+            !Application.isFocused || HAUPlugin.isPanicked)
         {
             StopEditing();
             return;
@@ -118,8 +118,9 @@ public static class NicknameEntry
 
     public static void SuppressMovement(PlayerPhysics physics)
     {
-        if (!IsEditing || !MenuUI.isGUIActive || MenuUI.ActiveTabName != "Fun" ||
-            !Application.isFocused || MalumMenu.isPanicked) return;
+        bool editingWindow = OutfitPickerUI.IsOpen || (IsEditing && MenuUI.ActiveTabName == "Appearance");
+        if (!editingWindow || !MenuUI.isGUIActive ||
+            !Application.isFocused || HAUPlugin.isPanicked) return;
         try
         {
             var local = PlayerControl.LocalPlayer;

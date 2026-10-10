@@ -328,14 +328,14 @@ public class MapBehaviour : UnityEngine.Object
     public UnityEngine.SpriteRenderer HerePoint = new();
     public void Close()
     {
-        bool runOriginal = MalumMenu.MultiRoleDetectiveKeepOtherMaps.Prefix(this);
+        bool runOriginal = HAU.MultiRoleDetectiveKeepOtherMaps.Prefix(this);
         if (runOriginal)
         {
             CloseCalls++;
             if (ThrowOnClose) throw new InvalidOperationException("test map-close failure");
             IsOpen = false;
         }
-        MalumMenu.MultiRoleDetectiveKeepOtherMaps.Postfix(this, runOriginal);
+        HAU.MultiRoleDetectiveKeepOtherMaps.Postfix(this, runOriginal);
     }
     public void FixedUpdate() { }
 }
@@ -414,7 +414,7 @@ public class DetectiveNotesMinigame : Minigame
                 if (ThrowOnNativePageSetup) throw new InvalidOperationException("test native page setup failure");
                 noSuspectsPostIt.SetActive(true);
             }
-            MalumMenu.MultiRoleDetectiveSafePage.Postfix(this);
+            HAU.MultiRoleDetectiveSafePage.Postfix(this);
     }
     public void OpenExistingPage(DetectiveRole detective, DetectiveNotesPageInfo page)
     {
@@ -431,13 +431,13 @@ public class DetectiveNotesMinigame : Minigame
     public void Close()
     {
         NativeCloseCalls++;
-        bool scoped = MalumMenu.MultiRoleDetectiveHandler.BeginNotesClose(this);
+        bool scoped = HAU.MultiRoleDetectiveHandler.BeginNotesClose(this);
         try
         {
             if (MapBehaviour.Instance && MapBehaviour.Instance.IsOpen &&
-                MalumMenu.MultiRoleDetectiveHandler.MayCloseMap(MapBehaviour.Instance)) MapBehaviour.Instance.Close();
+                HAU.MultiRoleDetectiveHandler.MayCloseMap(MapBehaviour.Instance)) MapBehaviour.Instance.Close();
         }
-        finally { if (scoped) MalumMenu.MultiRoleDetectiveHandler.EndNotesClose(); }
+        finally { if (scoped) HAU.MultiRoleDetectiveHandler.EndNotesClose(); }
     }
     public override void ForceClose()
     {
@@ -535,7 +535,7 @@ namespace HarmonyLib
     public static class Priority { public const int First = 0; }
 }
 
-namespace MalumMenu
+namespace HAU
 {
     public static class MenuUI { public static bool isGUIActive; }
     public static class CheatToggles { public static bool multiRole; }
@@ -554,7 +554,7 @@ namespace MalumMenu
         public void LogWarning(string message) => Warnings.Add(message);
         public void LogInfo(string message) => Information.Add(message);
     }
-    public static class MalumMenu
+    public static class HAUPlugin
     {
         public static bool isPanicked;
         public static TestLog Log = new();

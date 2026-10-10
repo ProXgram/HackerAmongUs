@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 // Found here: https://github.com/astra1dev/AUnlocker/blob/main/src/OptionsPatches.cs
 

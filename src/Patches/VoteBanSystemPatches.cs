@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(VoteBanSystem), nameof(VoteBanSystem.AddVote))]
 public static class VoteBanSystem_AddVote

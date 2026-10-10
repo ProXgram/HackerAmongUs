@@ -1,7 +1,7 @@
 using HarmonyLib;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(Vent), nameof(Vent.CanUse))]
 public static class Vent_CanUse

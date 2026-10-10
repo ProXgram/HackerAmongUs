@@ -1,5 +1,5 @@
 #if GUEST_KILL_EXPERIMENT
-namespace MalumMenu;
+namespace HAU;
 
 internal static class GuestRoundTestPolicy
 {

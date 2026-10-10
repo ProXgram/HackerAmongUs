@@ -114,7 +114,7 @@ namespace InnerNet
     }
 }
 
-namespace MalumMenu
+namespace HAU
 {
     public static class Utils
     {
@@ -141,7 +141,7 @@ namespace MalumMenu
         public static bool BlockOwnKill(PlayerControl _) => throw new InvalidOperationException("Judge build entered a kill helper.");
     }
 
-    public static class MalumMenu { public static TestLogger Log = new(); }
+    public static class HAUPlugin { public static TestLogger Log = new(); }
     public sealed class TestLogger
     {
         public readonly List<string> Info = [];

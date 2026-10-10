@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 internal sealed class AutomaticTaskScheduler
 {

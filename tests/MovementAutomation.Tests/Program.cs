@@ -1,6 +1,6 @@
-using MalumMenu;
+using HAU;
 using UnityEngine;
-using Plugin = MalumMenu.MalumMenu;
+using Plugin = HAU.HAUPlugin;
 
 int total = 0, failed = 0;
 

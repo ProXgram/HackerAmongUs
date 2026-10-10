@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class DoorsHandler
 {

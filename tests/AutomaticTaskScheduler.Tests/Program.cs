@@ -1,5 +1,5 @@
-using MalumMenu;
-using TaskSlot = MalumMenu.AutomaticTaskScheduler.TaskSlot;
+using HAU;
+using TaskSlot = HAU.AutomaticTaskScheduler.TaskSlot;
 
 var tests = new (string Name, Action Run)[]
 {

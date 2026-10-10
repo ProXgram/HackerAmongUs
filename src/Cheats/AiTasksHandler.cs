@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 /// <summary>Visits the current console for an assigned task before advancing one native step.</summary>
 public static class AiTasksHandler
@@ -344,7 +344,7 @@ public static class AiTasksHandler
             _status = "AI tasks: living Crewmates with real tasks only";
             return false;
         }
-        if (MalumMenu.isPanicked || !Application.isFocused || MenuUI.isGUIActive ||
+        if (HAUPlugin.isPanicked || !Application.isFocused || MenuUI.isGUIActive ||
             Utils.isMeeting || Utils.isExiling || !HudManager.InstanceExists ||
             !local.CanMove || local.inVent || local.onLadder || local.inMovingPlat)
         {
@@ -471,6 +471,6 @@ public static class AiTasksHandler
         var now = Time.realtimeSinceStartupAsDouble;
         if (now < _nextErrorAt) return;
         _nextErrorAt = now + 5;
-        MalumMenu.Log?.LogWarning("AI Tasks: " + action + ": " + error.Message);
+        HAUPlugin.Log?.LogWarning("AI Tasks: " + action + ": " + error.Message);
     }
 }

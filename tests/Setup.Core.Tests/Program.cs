@@ -7,7 +7,33 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
-using MalumMenuEnhanced.Setup.Core;
+using HAU.Setup.Core;
+using HAU.Updates;
+
+if (args is ["--verify-release-plugin", var releasePluginPath])
+{
+    var repo = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
+    var loader = File.ReadAllBytes(Path.Combine(repo, "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip"));
+    if (Convert.ToHexString(SHA256.HashData(loader)) != "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F")
+        throw new InvalidDataException("Pinned loader hash changed.");
+    var plugin = File.ReadAllBytes(releasePluginPath);
+    foreach (var steam in new[] { false, true })
+    {
+        using var fixture = new Fixture(steam); fixture.ReplacePlugin(plugin); fixture.ReplaceLoader(loader);
+        fixture.Write("BepInEx/plugins/MalumMenuEnhanced.dll", "old menu backup fixture");
+        fixture.Write("BepInEx/config/MalumMenu.cfg", "[MalumMenu.GUI]\nKeybind = F5\n");
+        fixture.Write("BepInEx/config/MalumProfile.txt", "preserved profile");
+        var result = await fixture.Service(catalog: fixture.Catalog with { ExpectedPluginVersion = new Version(1, 0, 0, 0) }).InstallAsync(fixture.Game);
+        if (InstallerService.GetInstalledModVersion(fixture.Game) != new Version(1, 0, 0, 0) ||
+            !File.Exists(Path.Combine(result.BackupDirectory, "MalumMenuEnhanced.dll")) ||
+            File.ReadAllText(Path.Combine(fixture.Game, "BepInEx/config/HAU.cfg")) != "[HAU.GUI]\nKeybind = F5\n" ||
+            File.ReadAllText(Path.Combine(fixture.Game, "BepInEx/config/HAUProfile.txt")) != "preserved profile")
+            throw new InvalidDataException("Actual HAU release installation or migration failed.");
+        Console.WriteLine("PASS Actual HAU release ZIP installs and migrates settings in isolated " + (steam ? "Steam" : "Xbox") + " fixture.");
+    }
+    Console.WriteLine("Plugin ZIP SHA256 " + Convert.ToHexString(SHA256.HashData(plugin)) + ". No installed game was changed.");
+    return 0;
+}
 
 if (args is ["--verify-unity-reference", var referencePath])
 {
@@ -62,13 +88,13 @@ Test("Menu updates back up old DLLs outside plugins and preserve configuration",
     f.Write("BepInEx/plugins/Other.dll", "unrelated");
     f.Write("BepInEx/plugins/MalumMenu.dll", "old original");
     f.Write("BepInEx/plugins/HaddadMenu.dll", "old renamed");
-    f.Write("BepInEx/plugins/MalumMenuEnhanced.dll", "old enhanced");
+    f.Write("BepInEx/plugins/HAU.dll", "old enhanced");
     var result = await f.Service().InstallAsync(f.Game);
-    Check(result.BackupDirectory.StartsWith(Path.Combine(f.Game, "MalumMenuEnhanced-backups")));
+    Check(result.BackupDirectory.StartsWith(Path.Combine(f.Game, "HAU-backups")));
     Check(!result.BackupDirectory.Contains("plugins", StringComparison.OrdinalIgnoreCase));
     Check(File.ReadAllText(Path.Combine(result.BackupDirectory, "MalumMenu.dll")) == "old original");
     Check(File.ReadAllText(Path.Combine(result.BackupDirectory, "HaddadMenu.dll")) == "old renamed");
-    Check(File.ReadAllText(Path.Combine(result.BackupDirectory, "MalumMenuEnhanced.dll")) == "old enhanced");
+    Check(File.ReadAllText(Path.Combine(result.BackupDirectory, "HAU.dll")) == "old enhanced");
     Check(!File.Exists(Path.Combine(f.Game, "BepInEx/plugins/MalumMenu.dll")));
     Check(!File.Exists(Path.Combine(f.Game, "BepInEx/plugins/HaddadMenu.dll")));
     Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/user.cfg")) == "settings stay");
@@ -82,6 +108,143 @@ Test("Fresh loader installation preserves existing config and unrelated plugin f
     await f.Service().InstallAsync(f.Game);
     Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/a.cfg")) == "config");
     Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/plugins/Other.dll")) == "other");
+});
+
+Test("HAU 1.0 replaces every legacy edition and nested HAU copy without treating their versions as HAU downgrades", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader();
+    foreach (var name in new[] { "MalumMenu.dll", "HaddadMenu.dll", "MalumMenuEnhanced.dll", "nested/HAU.dll", "nested/MalumMenuEnhanced.dll" })
+    {
+        var target = Path.Combine(f.Game, "BepInEx/plugins", name); Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+        File.WriteAllBytes(target, Fixture.AssemblyBytes(name.EndsWith("HAU.dll") ? "HAU" : "MalumMenuEnhanced", name.EndsWith("HAU.dll") ? 1 : 9));
+    }
+    var result = await f.Service().InstallAsync(f.Game);
+    var pluginFiles = Directory.EnumerateFiles(Path.Combine(f.Game, "BepInEx/plugins"), "*.dll", SearchOption.AllDirectories).ToArray();
+    Check(pluginFiles.Select(Path.GetFullPath).SequenceEqual(new[] { f.PluginPath }, StringComparer.OrdinalIgnoreCase));
+    Check(InstallerService.GetInstalledModVersion(f.Game) == new Version(1, 0, 0, 0));
+    foreach (var name in new[] { "MalumMenu.dll", "HaddadMenu.dll", "MalumMenuEnhanced.dll", "nested/HAU.dll", "nested/MalumMenuEnhanced.dll" })
+        Check(File.Exists(Path.Combine(result.BackupDirectory, name)));
+});
+
+Test("An actual newer HAU installation cannot be downgraded by the normal installer", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader(); Directory.CreateDirectory(Path.GetDirectoryName(f.PluginPath)!);
+    File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("HAU", 2)); var before = f.Snapshot();
+    await Reject(() => f.Service().InstallAsync(f.Game), "newer HAU");
+    f.AssertSnapshot(before); Check(f.Http.Requests.Count == 0);
+});
+
+Test("Installer migrates saved sections and profile, keeps originals and backs them up", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader();
+    var config = "## Saved settings\r\n[MalumMenu.GUI]\r\nKeybind = F5\r\n[MalumMenu.Movement]\r\nSprintMultiplier = 7\r\n[ThirdParty]\r\nName = MalumMenu\r\n";
+    f.Write("BepInEx/config/MalumMenu.cfg", config); f.Write("BepInEx/config/MalumProfile.txt", "speed=true\nfollow=F4\n");
+    var result = await f.Service().InstallAsync(f.Game);
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/HAU.cfg")) == config.Replace("[MalumMenu.", "[HAU."));
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/HAUProfile.txt")) == "speed=true\nfollow=F4\n");
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/MalumMenu.cfg")) == config);
+    Check(File.ReadAllText(Path.Combine(result.BackupDirectory, "settings/MalumMenu.cfg")) == config);
+    Check(File.ReadAllText(Path.Combine(result.BackupDirectory, "settings/MalumProfile.txt")) == "speed=true\nfollow=F4\n");
+});
+
+Test("Installer never overwrites existing HAU settings or profile", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader();
+    f.Write("BepInEx/config/MalumMenu.cfg", "[MalumMenu.GUI]\nKeybind = F5\n");
+    f.Write("BepInEx/config/MalumProfile.txt", "old profile");
+    f.Write("BepInEx/config/HAU.cfg", "[HAU.GUI]\nKeybind = F8\n"); f.Write("BepInEx/config/HAUProfile.txt", "HAU profile");
+    await f.Service().InstallAsync(f.Game);
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/HAU.cfg")) == "[HAU.GUI]\nKeybind = F8\n");
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/HAUProfile.txt")) == "HAU profile");
+});
+
+Test("Config and profile migration roll back with the DLL if the second settings write fails", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader(); f.Write("BepInEx/plugins/MalumMenuEnhanced.dll", "legacy");
+    f.Write("BepInEx/config/MalumMenu.cfg", "[MalumMenu.GUI]\nKeybind = F5\n");
+    f.Write("BepInEx/config/MalumProfile.txt", "profile"); var before = f.Snapshot();
+    await Reject(() => f.Service(before: path =>
+    {
+        if (path.EndsWith("HAUProfile.txt") && !path.Contains("HAU-backups")) throw new IOException("Injected profile write failure");
+    }).InstallAsync(f.Game), "profile write failure");
+    f.AssertSnapshot(before);
+});
+
+Test("First launch imports absent settings and profile once without changing legacy originals", () =>
+{
+    using var f = new Fixture(); f.Write("BepInEx/config/MalumMenu.cfg", "[MalumMenu.Movement]\nSprintMultiplier = 5\n");
+    f.Write("BepInEx/config/MalumProfile.txt", "old keys");
+    var root = Path.Combine(f.Game, "BepInEx/config"); var profile = Path.Combine(root, "HAUProfile.txt");
+    var first = LegacySettingsMigration.ImportForStartup(root, profile);
+    Check(first.ConfigImported && first.ProfileImported && first.ImportedPaths.Count == 2);
+    Check(File.ReadAllText(Path.Combine(root, "HAU.cfg")) == "[HAU.Movement]\nSprintMultiplier = 5\n");
+    var before = f.Snapshot(); var second = LegacySettingsMigration.ImportForStartup(root, profile);
+    Check(!second.ConfigImported && !second.ProfileImported); f.AssertSnapshot(before);
+    return Task.CompletedTask;
+});
+
+Test("First launch imports a header-only fresh HAU config, preserves all real HAU settings", () =>
+{
+    foreach (var fresh in new[] { "", "## Settings file was created by plugin Hacker Among Us v1.0\n## Plugin GUID: HAU\n\n" })
+    {
+        using var f = new Fixture(); f.Write("BepInEx/config/MalumMenu.cfg", "[MalumMenu.GUI]\nKeybind = F5\n");
+        f.Write("BepInEx/config/HAU.cfg", fresh); var root = Path.Combine(f.Game, "BepInEx/config");
+        Check(LegacySettingsMigration.ImportForStartup(root, Path.Combine(root, "HAUProfile.txt")).ConfigImported);
+        Check(File.ReadAllText(Path.Combine(root, "HAU.cfg")) == "[HAU.GUI]\nKeybind = F5\n");
+    }
+    foreach (var real in new[] { "[HAU.GUI]\nKeybind = F8\n", "[HAU.GUI]\n", "Keybind = F8\n", "[Other]\nKey = value\n" })
+    {
+        using var f = new Fixture(); f.Write("BepInEx/config/MalumMenu.cfg", "[MalumMenu.GUI]\nKeybind = F5\n");
+        f.Write("BepInEx/config/HAU.cfg", real); var root = Path.Combine(f.Game, "BepInEx/config");
+        Check(!LegacySettingsMigration.ImportForStartup(root, Path.Combine(root, "HAUProfile.txt")).ConfigImported);
+        Check(File.ReadAllText(Path.Combine(root, "HAU.cfg")) == real);
+    }
+    return Task.CompletedTask;
+});
+
+Test("First-launch failure restores copied settings and a fresh HAU header", async () =>
+{
+    foreach (var existingHeader in new[] { false, true })
+    {
+        using var f = new Fixture(); f.Write("BepInEx/config/MalumMenu.cfg", "[MalumMenu.GUI]\nKeybind = F5\n");
+        f.Write("BepInEx/config/MalumProfile.txt", "keys");
+        if (existingHeader) f.Write("BepInEx/config/HAU.cfg", "## New HAU config\n");
+        var before = f.Snapshot(); var root = Path.Combine(f.Game, "BepInEx/config");
+        await Reject(() => Task.FromResult(LegacySettingsMigration.ImportForStartup(root, Path.Combine(root, "HAUProfile.txt"),
+            path => { if (path.EndsWith("HAUProfile.txt")) throw new IOException("Injected startup import failure"); })), "startup import failure");
+        f.AssertSnapshot(before);
+    }
+});
+
+Test("Legacy section translation preserves config values, comments and unrelated sections", () =>
+{
+    var source = "# MalumMenu comment\r\n[MalumMenu]\r\nName = MalumMenu\r\n  [MalumMenuEnhanced.GUI]  \r\nKey = F8\r\n[HaddadMenu.Movement]\r\nSpeed = 8\r\n[ThirdParty]\r\nName = HaddadMenu\r\n";
+    var translated = LegacySettingsMigration.TranslateConfigText(source);
+    Check(translated == source.Replace("[MalumMenu]", "[HAU]").Replace("[MalumMenuEnhanced.GUI]", "[HAU.GUI]").Replace("[HaddadMenu.Movement]", "[HAU.Movement]"));
+    return Task.CompletedTask;
+});
+
+Test("Legacy migration rejects linked settings instead of writing through them", async () =>
+{
+    using var f = new Fixture(); var config = Path.Combine(f.Game, "BepInEx/config"); var elsewhere = Path.Combine(f.Root, "Elsewhere");
+    Directory.CreateDirectory(elsewhere); Directory.CreateDirectory(Path.GetDirectoryName(config)!); Fixture.MakeLink(config, elsewhere);
+    try { await Reject(() => Task.FromResult(LegacySettingsMigration.PlanForInstall(config)), "Linked"); }
+    finally { Directory.Delete(config, false); }
+});
+
+Test("Settings alias resolution accepts only the official publisher package and verifies the target identity", () =>
+{
+    using var f = new Fixture(); var packages = Path.Combine(f.Root, "WindowsApps"); Directory.CreateDirectory(packages);
+    var alias = Path.Combine(packages, "Innersloth.AmongUs_2026.9.293.0_x64__fw5x688tam7rm"); Fixture.MakeLink(alias, f.Game);
+    try
+    {
+        Check(LegacySettingsMigration.NormalizeConfigRoot(Path.Combine(alias, "BepInEx/config"), packages) == Path.GetFullPath(Path.Combine(f.Game, "BepInEx/config")));
+        f.Write("Among Us_Data/app.info", "Other\nOther game");
+        try { LegacySettingsMigration.NormalizeConfigRoot(Path.Combine(alias, "BepInEx/config"), packages); }
+        catch (InvalidDataException) { return Task.CompletedTask; }
+        throw new Exception("Wrong alias target identity was accepted");
+    }
+    finally { Directory.Delete(alias, false); }
 });
 
 Test("Running game stops before HTTP or filesystem changes", async () =>
@@ -232,13 +395,13 @@ Test("File and directory collision is rejected", async () =>
 
 Test("Unexpected additional plugin DLL is rejected", async () =>
 {
-    using var f = new Fixture(); f.ReplacePlugin(Fixture.Zip([("MalumMenuEnhanced.dll", f.PluginDll, 0), ("Other.dll", [1], 0)]));
+    using var f = new Fixture(); f.ReplacePlugin(Fixture.Zip([("HAU.dll", f.PluginDll, 0), ("Other.dll", [1], 0)]));
     var before = f.Snapshot(); await Reject(() => f.Service().InstallAsync(f.Game), "expected files"); f.AssertSnapshot(before);
 });
 
 Test("Wrong assembly disguised as mod DLL is rejected", async () =>
 {
-    using var f = new Fixture(); f.ReplacePlugin(Fixture.Zip([("BepInEx/plugins/MalumMenuEnhanced.dll", Fixture.AssemblyBytes("Unexpected", 1), 0)]));
+    using var f = new Fixture(); f.ReplacePlugin(Fixture.Zip([("BepInEx/plugins/HAU.dll", Fixture.AssemblyBytes("Unexpected", 1), 0)]));
     var before = f.Snapshot(); await Reject(() => f.Service().InstallAsync(f.Game), "incompatible"); f.AssertSnapshot(before);
 });
 
@@ -278,7 +441,7 @@ Test("Commit failure restores loader originals and old menus", async () =>
 
 Test("Failure updating compatible existing menu preserves exact old DLL", async () =>
 {
-    using var f = new Fixture(); f.ExistingLoader(); f.Write("BepInEx/plugins/MalumMenuEnhanced.dll", "prior version");
+    using var f = new Fixture(); f.ExistingLoader(); f.Write("BepInEx/plugins/HAU.dll", "prior version");
     var before = f.Snapshot(); var steps = 0;
     await Reject(() => f.Service(before: _ => { if (++steps == 3) throw new IOException("Test replace failure"); }).InstallAsync(f.Game));
     f.AssertSnapshot(before);
@@ -336,7 +499,7 @@ Test("Unverified store version is rejected with manual guide instruction", () =>
 
 Test("Declared oversized ZIP extraction is rejected before writes", async () =>
 {
-    using var f = new Fixture(); var zip = Fixture.Zip([("BepInEx/plugins/MalumMenuEnhanced.dll", [1], 0)]);
+    using var f = new Fixture(); var zip = Fixture.Zip([("BepInEx/plugins/HAU.dll", [1], 0)]);
     for (var i = 0; i < zip.Length - 28; i++)
         if (zip[i] == 0x50 && zip[i + 1] == 0x4b && zip[i + 2] == 1 && zip[i + 3] == 2)
         { BitConverter.GetBytes(129 * 1024 * 1024).CopyTo(zip, i + 24); break; }
@@ -351,7 +514,7 @@ Test("Cancellation during download causes no game changes", async () =>
 
 Test("Rollback failure keeps originals and reports recovery location", async () =>
 {
-    using var f = new Fixture(); f.ExistingLoader(); f.Write("BepInEx/plugins/MalumMenuEnhanced.dll", "original menu");
+    using var f = new Fixture(); f.ExistingLoader(); f.Write("BepInEx/plugins/HAU.dll", "original menu");
     FileStream? locked = null; var count = 0; string? recovery = null;
     try
     {
@@ -383,20 +546,18 @@ Test("Rollback failure keeps originals and reports recovery location", async () 
 });
 
 foreach (var steam in new[] { false, true })
-Test("Real pinned archives install successfully in an isolated " + (steam ? "Steam" : "Xbox") + " game fixture", async () =>
+Test("Real pinned loader installs with the HAU fixture in an isolated " + (steam ? "Steam" : "Xbox") + " game fixture", async () =>
 {
     using var f = new Fixture(steam);
     var repo = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
-    var plugin = File.ReadAllBytes(Path.Combine(repo, "downloads/v1.0/MalumMenuEnhanced-1.0-Plugin.zip"));
     var loader = File.ReadAllBytes(Path.Combine(repo, "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip"));
-    Check(Convert.ToHexString(SHA256.HashData(plugin)) == "227F8D82300F5F89D30C49BEEB4E83C152C072D07BAC5400B194D0D6FBB6B8C1");
     Check(Convert.ToHexString(SHA256.HashData(loader)) == "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F");
-    f.ReplacePlugin(plugin); f.ReplaceLoader(loader);
+    f.ReplaceLoader(loader);
     var result = await f.Service().InstallAsync(f.Game);
     Check(result.LoaderInstalled && InstallerService.CheckCompatibleLoader(f.Game));
-    Check(Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(f.PluginPath))) == "D3FCC31C69C83F0381F25B5AC33FF052162D9BDCD6D74CDBDEFBFFEDD6E22559");
+    Check(File.ReadAllBytes(f.PluginPath).SequenceEqual(f.PluginDll));
     var second = await f.Service().InstallAsync(f.Game);
-    Check(!second.LoaderInstalled && File.Exists(Path.Combine(second.BackupDirectory, "MalumMenuEnhanced.dll")));
+    Check(!second.LoaderInstalled && File.Exists(Path.Combine(second.BackupDirectory, "HAU.dll")));
 });
 
 foreach (var dependency in new[] { "BepInEx/core/BepInEx.Preloader.Core.dll", "BepInEx/core/BepInEx.Unity.Common.dll", "dotnet/System.Private.CoreLib.dll", "dotnet/coreclr.dll" })
@@ -436,7 +597,7 @@ Test("Existing valid user Doorstop settings are preserved", async () =>
 
 Test("Progress consumer failure before success rolls back all writes", async () =>
 {
-    using var f = new Fixture(); f.Write("BepInEx/plugins/MalumMenuEnhanced.dll", "old"); var before = f.Snapshot();
+    using var f = new Fixture(); f.Write("BepInEx/plugins/HAU.dll", "old"); var before = f.Snapshot();
     await Reject(() => f.Service().InstallAsync(f.Game, new ThrowingProgress()), "Test progress failure"); f.AssertSnapshot(before);
 });
 
@@ -458,7 +619,7 @@ Test("Supported Steam v19 64-bit game validates and installs the pinned loader",
     Check(File.ReadAllBytes(f.PluginPath).SequenceEqual(f.PluginDll));
     var second = await f.Service().InstallAsync(f.Game);
     Check(!second.LoaderInstalled);
-    Check(File.ReadAllBytes(Path.Combine(second.BackupDirectory, "MalumMenuEnhanced.dll")).SequenceEqual(f.PluginDll));
+    Check(File.ReadAllBytes(Path.Combine(second.BackupDirectory, "HAU.dll")).SequenceEqual(f.PluginDll));
 });
 
 Test("Pasted Steam folder with trailing separators validates and installs", async () =>
@@ -646,8 +807,8 @@ sealed class Fixture : IDisposable
     public string Game { get; }
     public string SteamRoot => Path.Combine(Root, "Steam");
     public string SteamManifest => Path.Combine(SteamRoot, "steamapps", "appmanifest_945360.acf");
-    public string PluginPath => Path.Combine(Game, "BepInEx", "plugins", "MalumMenuEnhanced.dll");
-    public byte[] PluginDll { get; } = AssemblyBytes("MalumMenuEnhanced", 1);
+    public string PluginPath => Path.Combine(Game, "BepInEx", "plugins", "HAU.dll");
+    public byte[] PluginDll { get; } = AssemblyBytes("HAU", 1);
     public FakeHttp Http { get; } = new();
     public HttpClient Client { get; }
     public SetupCatalog Catalog { get; private set; }
@@ -684,7 +845,7 @@ sealed class Fixture : IDisposable
             ("doorstop_config.ini", Encoding.UTF8.GetBytes("[General]\nenabled = true\ntarget_assembly = BepInEx\\core\\BepInEx.Unity.IL2CPP.dll\n[Il2Cpp]\ncoreclr_path = dotnet\\coreclr.dll\ncorlib_dir = dotnet\n"), 0),
             ("changelog.txt", Encoding.UTF8.GetBytes("loader release"), 0), (".doorstop_version", Encoding.UTF8.GetBytes("4.4"), 0)
         ];
-        var loader = Zip(_loader); var plugin = Zip([("BepInEx/plugins/MalumMenuEnhanced.dll", PluginDll, 0),
+        var loader = Zip(_loader); var plugin = Zip([("BepInEx/plugins/HAU.dll", PluginDll, 0),
             ("README.md", [1], 0), ("FORK.md", [1], 0), ("CREDITS.md", [1], 0), ("FEATURES.md", [1], 0), ("LICENSE", [1], 0)]);
         Http.Responses["https://example.test/loader.zip"] = loader; Http.Responses["https://example.test/plugin.zip"] = plugin;
         Client = new HttpClient(Http);
@@ -707,7 +868,7 @@ sealed class Fixture : IDisposable
         var after = Snapshot();
         if (after.Count != before.Count || !after.Keys.Order().SequenceEqual(before.Keys.Order())) throw new Exception("File tree changed after failure");
         foreach (var (key, bytes) in before) if (!bytes.SequenceEqual(after[key])) throw new Exception("Original bytes changed: " + key);
-        if (Directory.Exists(Path.Combine(Game, "MalumMenuEnhanced-backups"))) throw new Exception("Backup directories remained after rollback");
+        if (Directory.Exists(Path.Combine(Game, "HAU-backups"))) throw new Exception("Backup directories remained after rollback");
     }
     public void Dispose() { Client.Dispose(); Directory.Delete(Root, true); }
     private static string Hash(byte[] bytes) => Convert.ToHexString(SHA256.HashData(bytes));

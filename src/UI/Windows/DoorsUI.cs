@@ -1,7 +1,7 @@
 using UnityEngine;
 using Il2CppSystem.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class DoorsUI : MonoBehaviour
 {
@@ -25,15 +25,17 @@ public class DoorsUI : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!CheatToggles.showDoorsMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
+        if (!CheatToggles.showDoorsMenu || !(MenuUI.isGUIActive || HAUPlugin.menuKeepSubwindowsOpen.Value) || HAUPlugin.isPanicked) return;
 
-        UIHelpers.ApplyUIColor();
+        using var theme = UIHelpers.UseTheme();
 
-        windowRect = GUI.Window((int)WindowId.DoorsUI, windowRect, (GUI.WindowFunction)DoorsWindow, "Doors");
+        windowRect = GUI.Window((int)WindowId.DoorsUI, windowRect, (GUI.WindowFunction)DoorsWindow, "HAU / Doors", GUIStylePreset.Window);
     }
 
     private void DoorsWindow(int windowID)
     {
+        if (GUI.Button(new Rect(windowRect.width - 29f, 3f, 24f, 20f), "X"))
+            CheatToggles.showDoorsMenu = false;
         if (!Utils.isShip)
         {
             GUI.DragWindow();

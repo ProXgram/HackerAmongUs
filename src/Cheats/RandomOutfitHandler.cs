@@ -6,7 +6,7 @@ using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using InnerNet;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class RandomOutfitHandler
 {
@@ -154,7 +154,7 @@ public static class RandomOutfitHandler
         var client = AmongUsClient.Instance;
         var practice = Utils.isFreePlay;
         var lobby = Utils.isLobby;
-        if (MalumMenu.isPanicked || !Application.isFocused || Utils.isMeeting || Utils.isExiling ||
+        if (HAUPlugin.isPanicked || !Application.isFocused || Utils.isMeeting || Utils.isExiling ||
             (!practice && (Utils.isInGame || (client && client.GameState == InnerNetClient.GameStates.Started))))
         {
             StatusText = "Change outfits before the round or in practice.";

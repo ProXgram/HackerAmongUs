@@ -88,7 +88,7 @@ namespace HarmonyLib
     }
 }
 
-namespace MalumMenu
+namespace HAU
 {
     public static class Utils
     {
@@ -111,7 +111,7 @@ namespace MalumMenu
         public static void Log(string message) => Messages.Add(message);
     }
 
-    public static class MalumMenu
+    public static class HAUPlugin
     {
         public static TestLogger Log = new();
     }

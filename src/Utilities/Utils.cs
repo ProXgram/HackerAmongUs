@@ -15,7 +15,7 @@ using System.Runtime.CompilerServices;
 using AmongUs.InnerNet.GameDataMessages;
 using Il2CppInterop.Runtime.Injection;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class Utils
 {
@@ -610,7 +610,7 @@ public static class Utils
         }
         catch
         {
-            MalumMenu.Log.LogError($"Failed to read Texture: {path}");
+            HAUPlugin.Log.LogError($"Failed to read Texture: {path}");
         }
         return null;
     }
@@ -631,7 +631,7 @@ public static class Utils
         }
         catch
         {
-            MalumMenu.Log.LogError($"Failed to read Texture: {path}");
+            HAUPlugin.Log.LogError($"Failed to read Texture: {path}");
         }
         return null;
     }
@@ -639,8 +639,8 @@ public static class Utils
     // Opens the config file in the default text editor
     public static void OpenConfigFile()
     {
-        var configFilePath = MalumMenu.Plugin.Config.ConfigFilePath;
-        var configEditor = MalumMenu.configEditor.Value;
+        var configFilePath = HAUPlugin.Plugin.Config.ConfigFilePath;
+        var configEditor = HAUPlugin.configEditor.Value;
 
         if (!string.IsNullOrWhiteSpace(configEditor))
         {
@@ -658,17 +658,17 @@ public static class Utils
                 }
                 catch (Exception ex)
                 {
-                    MalumMenu.Log.LogError(ex.Message);
+                    HAUPlugin.Log.LogError(ex.Message);
                 }
             }
             else
             {
-                MalumMenu.Log.LogError("Configuration file does not exist");
+                HAUPlugin.Log.LogError("Configuration file does not exist");
             }
         }
         else
         {
-            MalumMenu.Log.LogError("Configuration editor not specified");
+            HAUPlugin.Log.LogError("Configuration editor not specified");
         }
     }
 
@@ -678,7 +678,7 @@ public static class Utils
         public static void Create()
         {
             ClassInjector.RegisterTypeInIl2Cpp<PanicCleaner>();
-            var go = new GameObject("MalumMenu_PanicCleaner");
+            var go = new GameObject("HAU_PanicCleaner");
             go.hideFlags = HideFlags.HideAndDontSave;
             go.AddComponent<PanicCleaner>();
         }
@@ -687,18 +687,19 @@ public static class Utils
         // This allows some patches to run for a last time and finish properly
         private void LateUpdate()
         {
-            try { Harmony.UnpatchID(MalumMenu.Id); } catch { }
+            try { Harmony.UnpatchID(HAUPlugin.Id); } catch { }
             Destroy(gameObject);
         }
     }
 
     public static void Panic()
     {
+        OutfitPickerUI.Close();
         NicknameEntry.StopEditing();
         ColorCycleHandler.Stop();
         MovementAutomation.Reset();
         SprintHandler.Reset();
-        MalumMenu.isPanicked = true;
+        HAUPlugin.isPanicked = true;
 
         CheatToggles.DisableAll();
 
@@ -712,16 +713,17 @@ public static class Utils
             SceneManager.LoadScene(scene.name);
         }
 
-        UnityEngine.Object.Destroy(MalumMenu.menuUI);
+        UnityEngine.Object.Destroy(HAUPlugin.menuUI);
 
-        UnityEngine.Object.Destroy(MalumMenu.consoleUI);
-        UnityEngine.Object.Destroy(MalumMenu.doorsUI);
-        UnityEngine.Object.Destroy(MalumMenu.tasksUI);
-        UnityEngine.Object.Destroy(MalumMenu.protectUI);
-        // UnityEngine.Object.Destroy(MalumMenu.rolesUI);
-        // UnityEngine.Object.Destroy(MalumMenu.overloadUI);
+        UnityEngine.Object.Destroy(HAUPlugin.consoleUI);
+        UnityEngine.Object.Destroy(HAUPlugin.doorsUI);
+        UnityEngine.Object.Destroy(HAUPlugin.tasksUI);
+        UnityEngine.Object.Destroy(HAUPlugin.protectUI);
+        UnityEngine.Object.Destroy(HAUPlugin.outfitPickerUI);
+        // UnityEngine.Object.Destroy(HAUPlugin.rolesUI);
+        // UnityEngine.Object.Destroy(HAUPlugin.overloadUI);
 
-        UnityEngine.Object.Destroy(MalumMenu.keybindListener);
+        UnityEngine.Object.Destroy(HAUPlugin.keybindListener);
 
         PanicCleaner.Create();
     }

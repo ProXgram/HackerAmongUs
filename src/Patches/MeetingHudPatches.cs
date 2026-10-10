@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Object = UnityEngine.Object;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Update))]
 public static class MeetingHud_Update
@@ -66,7 +66,7 @@ public static class MeetingHud_Update
 
     public static void Postfix(MeetingHud __instance)
     {
-        MalumESP.MeetingNametags(__instance);
+        InformationTools.MeetingNametags(__instance);
 
         // Bugfix: NoClip staying active if meeting is called whilst climbing ladder
         PlayerControl.LocalPlayer.onLadder = false;

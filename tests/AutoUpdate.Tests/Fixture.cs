@@ -7,7 +7,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
-using MalumMenuEnhanced.Setup.Core;
+using HAU.Setup.Core;
 
 sealed class FakeHttp : HttpMessageHandler
 {
@@ -30,8 +30,8 @@ sealed class Fixture : IDisposable
     public string Game { get; }
     public string SteamRoot => Path.Combine(Root, "Steam");
     public string SteamManifest => Path.Combine(SteamRoot, "steamapps", "appmanifest_945360.acf");
-    public string PluginPath => Path.Combine(Game, "BepInEx", "plugins", "MalumMenuEnhanced.dll");
-    public byte[] PluginDll { get; } = AssemblyBytes("MalumMenuEnhanced", 1);
+    public string PluginPath => Path.Combine(Game, "BepInEx", "plugins", "HAU.dll");
+    public byte[] PluginDll { get; } = AssemblyBytes("HAU", 1);
     public FakeHttp Http { get; } = new();
     public HttpClient Client { get; }
     public SetupCatalog Catalog { get; private set; }
@@ -68,7 +68,7 @@ sealed class Fixture : IDisposable
             ("doorstop_config.ini", Encoding.UTF8.GetBytes("[General]\nenabled = true\ntarget_assembly = BepInEx\\core\\BepInEx.Unity.IL2CPP.dll\n[Il2Cpp]\ncoreclr_path = dotnet\\coreclr.dll\ncorlib_dir = dotnet\n"), 0),
             ("changelog.txt", Encoding.UTF8.GetBytes("loader release"), 0), (".doorstop_version", Encoding.UTF8.GetBytes("4.4"), 0)
         ];
-        var loader = Zip(_loader); var plugin = Zip([("BepInEx/plugins/MalumMenuEnhanced.dll", PluginDll, 0),
+        var loader = Zip(_loader); var plugin = Zip([("BepInEx/plugins/HAU.dll", PluginDll, 0),
             ("README.md", [1], 0), ("FORK.md", [1], 0), ("CREDITS.md", [1], 0), ("FEATURES.md", [1], 0), ("LICENSE", [1], 0)]);
         Http.Responses["https://example.test/loader.zip"] = loader; Http.Responses["https://example.test/plugin.zip"] = plugin;
         Client = new HttpClient(Http);
@@ -91,7 +91,7 @@ sealed class Fixture : IDisposable
         var after = Snapshot();
         if (after.Count != before.Count || !after.Keys.Order().SequenceEqual(before.Keys.Order())) throw new Exception("File tree changed after failure");
         foreach (var (key, bytes) in before) if (!bytes.SequenceEqual(after[key])) throw new Exception("Original bytes changed: " + key);
-        if (Directory.Exists(Path.Combine(Game, "MalumMenuEnhanced-backups"))) throw new Exception("Backup directories remained after rollback");
+        if (Directory.Exists(Path.Combine(Game, "HAU-backups"))) throw new Exception("Backup directories remained after rollback");
     }
     public void Dispose()
     {

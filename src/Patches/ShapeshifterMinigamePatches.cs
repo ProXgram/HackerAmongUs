@@ -3,7 +3,7 @@ using HarmonyLib;
 using UnityEngine;
 using Il2CppSystem.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(ShapeshifterMinigame), nameof(ShapeshifterMinigame.Begin))]
 public static class ShapeshifterMinigame_Begin

@@ -1,4 +1,4 @@
-namespace MalumMenu;
+namespace HAU;
 
 public interface ITab
 {

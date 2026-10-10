@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using InnerNet;
 using System.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(Constants), nameof(Constants.GetPlatformData))]
 public static class Constants_GetPlatformData
@@ -15,7 +15,7 @@ public static class Constants_GetPlatformData
     // Postfix patch of Constants.GetPlatformData to spoof the user's platform type
     public static void Postfix(ref PlatformSpecificData __result)
     {
-        if (Utils.StringToPlatformType(MalumMenu.spoofPlatform.Value, out Platforms? platformType))
+        if (Utils.StringToPlatformType(HAUPlugin.spoofPlatform.Value, out Platforms? platformType))
         {
             __result = new PlatformSpecificData
             {
@@ -108,7 +108,7 @@ public static class ChatBubble_SetName
 {
     public static void Postfix(ChatBubble __instance)
 	{
-        MalumESP.ChatNametags(__instance);
+        InformationTools.ChatNametags(__instance);
     }
 }
 
@@ -119,7 +119,7 @@ public static class SystemInfo_deviceUniqueIdentifier_Getter
     // Made to hide the user's real unique deviceId by generating a random fake one
     public static void Postfix(ref string __result)
     {
-        if (!MalumMenu.spoofDeviceId.Value) return;
+        if (!HAUPlugin.spoofDeviceId.Value) return;
 
         var bytes = new byte[16];
         using (var rng = RandomNumberGenerator.Create())
@@ -137,15 +137,15 @@ public static class VersionShower_Start
     // Postfix patch of VersionShower.Start to show this edition's version.
     public static void Postfix(VersionShower __instance)
     {
-        if (MalumMenu.inStealthMode || MalumMenu.isPanicked) return;
+        if (HAUPlugin.inStealthMode || HAUPlugin.isPanicked) return;
 
-        if (MalumMenu.supportedAU.Contains(Application.version)) // Checks if Among Us version is supported
+        if (HAUPlugin.supportedAU.Contains(Application.version)) // Checks if Among Us version is supported
         {
-            __instance.text.text =  $"{ModBranding.Name} v{MalumMenu.malumVersion} (v{Application.version})"; // Supported
+            __instance.text.text =  $"{ModBranding.Name} v{HAUPlugin.displayVersion} (v{Application.version})"; // Supported
         }
         else
         {
-            __instance.text.text =  $"{ModBranding.Name} v{MalumMenu.malumVersion} (<color=red>v{Application.version}</color>)"; // Unsupported
+            __instance.text.text =  $"{ModBranding.Name} v{HAUPlugin.displayVersion} (<color=red>v{Application.version}</color>)"; // Unsupported
         }
     }
 }
@@ -156,7 +156,7 @@ public static class PingTracker_Update
     // Postfix patch of PingTracker.Update to show this edition's creator and ping.
     public static void Postfix(PingTracker __instance)
     {
-        if (MalumMenu.inStealthMode)
+        if (HAUPlugin.inStealthMode)
         {
             __instance.text.alignment = TMPro.TextAlignmentOptions.TopLeft;
 
@@ -270,7 +270,7 @@ public static class Mushroom_FixedUpdate
 {
     public static void Postfix(Mushroom __instance)
     {
-        MalumESP.SporeCloudVision(__instance);
+        InformationTools.SporeCloudVision(__instance);
     }
 }
 
@@ -495,7 +495,8 @@ public static class PassiveUiElement_Patches
 
         // Ability-panel clicks must never also activate a native action below it.
         if (MultiRoleUI.BlocksNativeInput(mousePosition)) return false;
-        if (MalumMenu.menuAllowClickThrough.Value) return true;
+        if (OutfitPickerUI.IsOpen && OutfitPickerUI.windowRect.Contains(mousePosition)) return false;
+        if (HAUPlugin.menuAllowClickThrough.Value) return true;
 
         // Rect.Contains() uses GUI coordinates (top-left origin)
         return !((MenuUI.isGUIActive && MenuUI.windowRect.Contains(mousePosition)) ||

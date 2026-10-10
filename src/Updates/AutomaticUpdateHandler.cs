@@ -11,7 +11,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MalumMenuEnhanced.Updates;
+namespace HAU.Updates;
 
 /// <summary>Values captured on Unity's main thread before starting managed background work.</summary>
 internal sealed record UpdateStartupSnapshot(string GameDirectory, string GameVersion, string CurrentVersion, int GameProcessId);
@@ -39,7 +39,7 @@ internal static class AutomaticUpdateHandler
                 { Timeout = TimeSpan.FromSeconds(45) };
                 var service = new AutomaticUpdateService(http, new UpdateManifestVerifier(UpdateTrust.PublicKeyPem),
                     new Uri(UpdateTrust.ManifestUrl), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "MalumMenuEnhanced", "Updates"), LaunchHelper, IsHelperRunning, log);
+                        "HAU", "Updates"), LaunchHelper, IsHelperRunning, log);
                 Volatile.Write(ref _service, service);
                 using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
                 await service.CheckOnceAsync(snapshot, true, timeout.Token).ConfigureAwait(false);

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public enum ColorCycleMode { Off, LocalRainbow, LobbyCycle }
 
@@ -30,7 +30,7 @@ public static class ColorCycleHandler
             return;
         }
         var local = PlayerControl.LocalPlayer;
-        if (!HasContext(local) || local.Data.IsDead || !Application.isFocused || MalumMenu.isPanicked)
+        if (!HasContext(local) || local.Data.IsDead || !Application.isFocused || HAUPlugin.isPanicked)
         {
             StatusText = "Colors: join as a living player first";
             return;
@@ -91,7 +91,7 @@ public static class ColorCycleHandler
                 StopWithStatus("Colors: stopped after the player or game changed");
                 return;
             }
-            if (MalumMenu.isPanicked)
+            if (HAUPlugin.isPanicked)
             {
                 StopWithStatus("Colors: stopped");
                 return;
@@ -141,7 +141,7 @@ public static class ColorCycleHandler
         catch (Exception error)
         {
             StopWithStatus("Colors: stopped after an unavailable color update");
-            MalumMenu.Log?.LogWarning("Color cycle stopped: " + error.Message);
+            HAUPlugin.Log?.LogWarning("Color cycle stopped: " + error.Message);
         }
     }
 
@@ -200,8 +200,8 @@ public static class ColorCycleHandler
     private static float Interval()
     {
         var lobby = Mode == ColorCycleMode.LobbyCycle;
-        var configured = lobby ? MalumMenu.lobbyColorInterval?.Value ?? 3f
-            : MalumMenu.rainbowColorInterval?.Value ?? 0.6f;
+        var configured = lobby ? HAUPlugin.lobbyColorInterval?.Value ?? 3f
+            : HAUPlugin.rainbowColorInterval?.Value ?? 0.6f;
         if (!float.IsFinite(configured)) configured = lobby ? 3f : 0.6f;
         return Mathf.Clamp(configured, lobby ? 2f : 0.15f, lobby ? 10f : 3f);
     }
@@ -233,7 +233,7 @@ public static class ColorCycleHandler
         }
         catch (Exception error)
         {
-            MalumMenu.Log?.LogWarning("Rainbow preview could not be restored: " + error.Message);
+            HAUPlugin.Log?.LogWarning("Rainbow preview could not be restored: " + error.Message);
         }
     }
 

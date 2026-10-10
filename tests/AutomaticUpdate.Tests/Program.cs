@@ -3,7 +3,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MalumMenuEnhanced.Updates;
+using HAU.Updates;
 
 var tests = new List<(string Name, Func<Task> Run)>();
 void Test(string name, Func<Task> run) => tests.Add((name, run));
@@ -265,7 +265,7 @@ sealed class Fixture : IDisposable
 {
     private static readonly RSA SigningKey = RSA.Create(2048);
     private readonly List<string> _links = new();
-    public string Root { get; } = Path.Combine(Path.GetTempPath(), "MalumMenuEnhanced-AutomaticUpdate.Tests-" + Guid.NewGuid().ToString("N"));
+    public string Root { get; } = Path.Combine(Path.GetTempPath(), "HAU-AutomaticUpdate.Tests-" + Guid.NewGuid().ToString("N"));
     public string Game => Path.Combine(Root, "Game with spaces");
     public string Cache => Path.Combine(Root, "Updates");
     public string Slot => Path.Combine(Cache, "game-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Game.ToUpperInvariant())))[..40]);
@@ -284,10 +284,10 @@ sealed class Fixture : IDisposable
 
     public byte[] Envelope(string version, string gameVersion = "2026.9.29")
     {
-        object Asset(string name) => new { url = "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v" + version + "/" + name,
+        object Asset(string name) => new { url = "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v" + version + "/" + name,
             sha256 = Convert.ToHexString(SHA256.HashData(SetupBytes)), size = SetupBytes.Length };
-        var payload = JsonSerializer.SerializeToUtf8Bytes(new { product = "MalumMenuEnhanced", modVersion = version, supportedGameVersions = new[] { gameVersion },
-            pluginZip = Asset("MalumMenuEnhanced-" + version + "-Plugin.zip"), setupExe = Asset("MalumMenuEnhancedSetup.exe") });
+        var payload = JsonSerializer.SerializeToUtf8Bytes(new { product = "HAU", modVersion = version, supportedGameVersions = new[] { gameVersion },
+            pluginZip = Asset("HAU-" + version + "-Plugin.zip"), setupExe = Asset("HAUSetup.exe") });
         return JsonSerializer.SerializeToUtf8Bytes(new { payload = Convert.ToBase64String(payload),
             signature = Convert.ToBase64String(SigningKey.SignData(payload, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)) });
     }
@@ -321,7 +321,7 @@ sealed class Fixture : IDisposable
         foreach (var link in _links.AsEnumerable().Reverse()) if (Directory.Exists(link)) Directory.Delete(link, false);
         var full = Path.GetFullPath(Root);
         var temp = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.GetTempPath())) + Path.DirectorySeparatorChar;
-        if (!full.StartsWith(temp + "MalumMenuEnhanced-AutomaticUpdate.Tests-", StringComparison.OrdinalIgnoreCase)) throw new IOException("Unsafe test cleanup path");
+        if (!full.StartsWith(temp + "HAU-AutomaticUpdate.Tests-", StringComparison.OrdinalIgnoreCase)) throw new IOException("Unsafe test cleanup path");
         if (Directory.Exists(full)) Directory.Delete(full, true);
         Http.Dispose();
     }
@@ -343,7 +343,7 @@ sealed class MockHttp : HttpMessageHandler
         if (Failure != null) throw Failure;
         if (BeforeResponse != null) await BeforeResponse(uri, ct);
         var manifest = uri.AbsoluteUri == UpdateTrust.ManifestUrl;
-        if (!manifest && !(uri.Host == "github.com" && uri.AbsolutePath.EndsWith("/MalumMenuEnhancedSetup.exe"))) throw new Exception("Unexpected mocked request: " + uri);
+        if (!manifest && !(uri.Host == "github.com" && uri.AbsolutePath.EndsWith("/HAUSetup.exe"))) throw new Exception("Unexpected mocked request: " + uri);
         var content = new StreamContent(!manifest && SetupStream != null ? SetupStream() : new NonSeekableStream(manifest ? Manifest : Setup));
         if (!OmitLength) content.Headers.ContentLength = manifest ? Manifest.Length : SetupLength ?? Setup.Length;
         return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };

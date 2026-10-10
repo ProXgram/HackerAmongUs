@@ -1,7 +1,7 @@
 using UnityEngine;
 using Il2CppSystem.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class ProtectUI : MonoBehaviour
 {
@@ -26,15 +26,17 @@ public class ProtectUI : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!CheatToggles.showProtectMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
+        if (!CheatToggles.showProtectMenu || !(MenuUI.isGUIActive || HAUPlugin.menuKeepSubwindowsOpen.Value) || HAUPlugin.isPanicked) return;
 
-        UIHelpers.ApplyUIColor();
+        using var theme = UIHelpers.UseTheme();
 
-        windowRect = GUI.Window((int)WindowId.ProtectUI, windowRect, (GUI.WindowFunction)ProtectWindow, "Protect Players");
+        windowRect = GUI.Window((int)WindowId.ProtectUI, windowRect, (GUI.WindowFunction)ProtectWindow, "HAU / Protect Players", GUIStylePreset.Window);
     }
 
     private void ProtectWindow(int windowID)
     {
+        if (GUI.Button(new Rect(windowRect.width - 29f, 3f, 24f, 20f), "X"))
+            CheatToggles.showProtectMenu = false;
         GUILayout.BeginVertical();
 
         _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, false, true);

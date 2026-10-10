@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class MenuUI : MonoBehaviour
 {
@@ -15,31 +15,49 @@ public class MenuUI : MonoBehaviour
     private int _selectedTab;
     private Vector2 _tabScrollPosition;
     private Vector2 _contentScrollPosition;
-    public static string ActiveTabName => MalumMenu.menuUI &&
-        MalumMenu.menuUI._selectedTab >= 0 && MalumMenu.menuUI._selectedTab < MalumMenu.menuUI._tabs.Count
-        ? MalumMenu.menuUI._tabs[MalumMenu.menuUI._selectedTab].name : "";
+    public static string ActiveTabName => HAUPlugin.menuUI &&
+        HAUPlugin.menuUI._selectedTab >= 0 && HAUPlugin.menuUI._selectedTab < HAUPlugin.menuUI._tabs.Count
+        ? HAUPlugin.menuUI._tabs[HAUPlugin.menuUI._selectedTab].name : "";
     public static float hue; // For RGB mode
+    public static float ContentWidth => Mathf.Max(80f, windowRect.width - 200f);
+    public static string ContextText => Utils.isFreePlay ? "FREEPLAY"
+        : Utils.isHost ? "HOST" : Utils.isLobby || Utils.isInGame ? "GUEST" : "MAIN MENU";
+
+    public static void CloseMenu()
+    {
+        isGUIActive = false;
+        OutfitPickerUI.Close();
+        NicknameEntry.StopEditing();
+    }
+
+    public static void OpenTab(string name)
+    {
+        var menu = HAUPlugin.menuUI;
+        if (!menu) return;
+        int index = menu._tabs.FindIndex(tab => tab.name == name);
+        if (index < 0) return;
+        menu._selectedTab = index;
+        menu._contentScrollPosition = Vector2.zero;
+        NicknameEntry.StopEditing();
+    }
 
     private void Start()
     {
-        // Add all tabs on start
+        _tabs.Add(new HomeTab());
         _tabs.Add(new MovementTab());
-        _tabs.Add(new FunTab());
+        _tabs.Add(new PlayerToolsTab());
         _tabs.Add(new ColorsTab());
         _tabs.Add(new ESPTab());
         _tabs.Add(new TasksTab());
-        _tabs.Add(new HostOnlyTab());
         _tabs.Add(new RolesTab());
-        _tabs.Add(new ShipTab());
-        _tabs.Add(new ChatTab());
-        _tabs.Add(new AnimationsTab());
-        _tabs.Add(new ConsoleTab());
+        _tabs.Add(new HostOnlyTab());
         _tabs.Add(new PracticeTab());
         _tabs.Add(new ConfigTab());
+        _tabs.Add(new AboutTab());
+        _tabs.Add(new ConsoleTab());
 #if GUEST_KILL_EXPERIMENT
         _tabs.Add(new GuestRoundTestTab());
 #endif
-        // _tabs.Add(new OverloadTab());
 
         // Instantiate 2D area of MenuUI
         windowRect = new(
@@ -59,13 +77,13 @@ public class MenuUI : MonoBehaviour
     private void Update()
     {
         MultiRoleHandler.Tick();
-        if (Input.GetKeyDown(Utils.StringToKeycode(MalumMenu.menuKeybind.Value)))
+        if (Input.GetKeyDown(Utils.StringToKeycode(HAUPlugin.menuKeybind.Value)))
         {
             // Enable or disable GUI with DELETE key
-            isGUIActive = !isGUIActive;
-            if (!isGUIActive) NicknameEntry.StopEditing();
+            if (isGUIActive) CloseMenu();
+            else isGUIActive = true;
 
-            if (MalumMenu.menuOpenOnMouse.Value)
+            if (HAUPlugin.menuOpenOnMouse.Value)
             {
                 // Teleport the window to the mouse for immediate use
                 Vector2 mousePosition = Input.mousePosition;
@@ -85,9 +103,9 @@ public class MenuUI : MonoBehaviour
             if (hue > 1f) hue -= 1f; // Loop hue back to 0 when it exceeds 1
         }
 
-        if (CheatToggles.stealthMode != MalumMenu.inStealthMode)
+        if (CheatToggles.stealthMode != HAUPlugin.inStealthMode)
         {
-            MalumMenu.inStealthMode = CheatToggles.stealthMode;
+            HAUPlugin.inStealthMode = CheatToggles.stealthMode;
 
             Scene scene = SceneManager.GetActiveScene();
 
@@ -100,7 +118,7 @@ public class MenuUI : MonoBehaviour
         if (CheatToggles.panicMode) Utils.Panic();
 
         var stamp = ModManager.Instance.ModStamp;
-        if (stamp) stamp.enabled = !(MalumMenu.inStealthMode || MalumMenu.isPanicked);
+        if (stamp) stamp.enabled = !(HAUPlugin.inStealthMode || HAUPlugin.isPanicked);
 
         if (CheatToggles.openConfig)
         {
@@ -110,7 +128,7 @@ public class MenuUI : MonoBehaviour
 
         if (CheatToggles.reloadConfig)
         {
-            MalumMenu.Plugin.Config.Reload();
+            HAUPlugin.Plugin.Config.Reload();
             CheatToggles.reloadConfig = false;
         }
 
@@ -167,7 +185,7 @@ public class MenuUI : MonoBehaviour
             CheatToggles.spamOpenAllDoors = false;
             CheatToggles.mushSpore = false;
 
-            MalumCheats.StopShipAnimCheats();
+            GameActions.StopShipAnimCheats();
         }
 
         if(!Utils.isHost && !Utils.isFreePlay)
@@ -202,84 +220,98 @@ public class MenuUI : MonoBehaviour
 
     public void OnGUI()
     {
-        if (!isGUIActive || MalumMenu.isPanicked) return;
+        if (!isGUIActive || HAUPlugin.isPanicked || OutfitPickerUI.IsOpen) return;
+        UIHelpers.RefreshTheme();
 
-        InitStyles();
-
-        UIHelpers.ApplyUIColor();
-
-        // Keep navigation and the close button visible after dragging or a
-        // window-size change. The native GUILayout may resize the window.
-        windowRect.height = Mathf.Min(windowHeight, Mathf.Max(140f, Screen.height - 12f));
-        windowRect.x = Mathf.Clamp(windowRect.x, 0f, Mathf.Max(0f, Screen.width - windowRect.width));
-        windowRect.y = Mathf.Clamp(windowRect.y, 0f, Mathf.Max(0f, Screen.height - windowRect.height));
-
-        windowRect = GUI.Window((int)WindowId.MenuUI, windowRect, (GUI.WindowFunction)WindowFunction, ModBranding.Name + " v" + MalumMenu.malumVersion);
+        // Theme changes are scoped to this window; the game's own GUI keeps its skin.
+        var button = GUI.skin.button;
+        var toggle = GUI.skin.toggle;
+        var label = GUI.skin.label;
+        var background = GUI.backgroundColor;
+        var foreground = GUI.contentColor;
+        var enabled = GUI.enabled;
+        GUI.skin.button = GUIStylePreset.NormalButton;
+        GUI.skin.toggle = GUIStylePreset.NormalToggle;
+        GUI.skin.label = GUIStylePreset.Label;
+        GUI.backgroundColor = Color.white;
+        GUI.contentColor = Color.white;
+        try
+        {
+            var bounds = MenuLayout.Fit(Screen.width, Screen.height, windowRect.x, windowRect.y);
+            windowRect = new Rect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+            windowRect = GUI.Window((int)WindowId.MenuUI, windowRect,
+                (GUI.WindowFunction)WindowFunction, ModBranding.Name + " / v" + HAUPlugin.displayVersion,
+                GUIStylePreset.Window);
+        }
+        finally
+        {
+            GUI.skin.button = button;
+            GUI.skin.toggle = toggle;
+            GUI.skin.label = label;
+            GUI.backgroundColor = background;
+            GUI.contentColor = foreground;
+            GUI.enabled = enabled;
+        }
     }
 
     public void WindowFunction(int windowID)
     {
-        GUILayout.Label(Utils.isFreePlay ? "Practice | Role experiments are in Practice."
-            : Utils.isHost ? "Hosting | Shared game controls are in Host Only."
-            : Utils.isLobby || Utils.isInGame ? "Guest | Shared game controls need host support."
-            : "Player tools work locally | Create a lobby to use host controls.");
-        float contentHeight = Mathf.Max(60f, windowRect.height - 100f);
         GUILayout.BeginHorizontal();
+        GUILayout.Label(ModBranding.ShortName, GUIStylePreset.Brand, GUILayout.Width(72f));
+        GUILayout.BeginVertical();
+        GUILayout.Label(ModBranding.Name, GUIStylePreset.Label);
+        GUILayout.Label("by " + ModBranding.Creator, GUIStylePreset.Hint);
+        GUILayout.EndVertical();
+        GUILayout.FlexibleSpace();
+        GUILayout.Label(ContextText, GUIStylePreset.Context, GUILayout.Width(110f));
+        GUILayout.EndHorizontal();
 
-        // Left tab selector (15% width)
+        float contentHeight = Mathf.Max(100f, windowRect.height - MenuLayout.VerticalChrome);
+        GUILayout.BeginHorizontal();
         _tabScrollPosition = GUILayout.BeginScrollView(_tabScrollPosition, false, false,
-            GUILayout.Width(windowWidth * 0.15f + 15f), GUILayout.Height(contentHeight));
-        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.15f));
-        for (var i = 0; i < _tabs.Count; i++)
+            GUILayout.Width(MenuLayout.SidebarWidth), GUILayout.Height(contentHeight));
+        GUILayout.BeginVertical(GUILayout.Width(138f));
+        for (int i = 0; i < _tabs.Count; i++)
         {
-            Color standardColor = GUI.backgroundColor;
-
-            if (_selectedTab == i)
-            {
-                GUI.backgroundColor = new Color(0.2f, 0.2f, 0.2f);
-            }
-
-            if (GUILayout.Button(_tabs[i].name, GUIStylePreset.TabButton, GUILayout.Height(35)))
+            if (i == 1) GUILayout.Label("PLAYER", GUIStylePreset.Hint);
+            if (i == 7) GUILayout.Label("LOBBY", GUIStylePreset.Hint);
+            if (i == 9) GUILayout.Label("MENU", GUIStylePreset.Hint);
+            if (GUILayout.Button(_tabs[i].name,
+                i == _selectedTab ? GUIStylePreset.SelectedTab : GUIStylePreset.TabButton,
+                GUILayout.Height(27f)))
             {
                 _selectedTab = i;
                 _contentScrollPosition = Vector2.zero;
                 NicknameEntry.StopEditing();
             }
-
-            GUI.backgroundColor = standardColor;
-
         }
         GUILayout.EndVertical();
         GUILayout.EndScrollView();
-
-        // Vertical separator line + invisible space to create gap between the tab selector and the content
-        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
-        GUILayout.Space(10f);
-
-        // Right tab content and controls (85% width)
+        GUILayout.Space(9f);
         _contentScrollPosition = GUILayout.BeginScrollView(_contentScrollPosition, false, true,
-            GUILayout.Width(windowWidth - 150f), GUILayout.Height(contentHeight));
-        GUILayout.BeginVertical(GUILayout.Width(windowWidth - 170f));
-
-        // Tab-specific content
+            GUILayout.Width(windowRect.width - MenuLayout.HorizontalChrome), GUILayout.Height(contentHeight));
+        GUILayout.BeginVertical(GUILayout.Width(ContentWidth - 12f));
         if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
         {
             GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
             _tabs[_selectedTab].Draw();
         }
-
         GUILayout.EndVertical();
         GUILayout.EndScrollView();
-
         GUILayout.EndHorizontal();
 
-        if (GUILayout.Button("Close menu (Delete)", GUILayout.Width(190f)))
+        GUILayout.BeginHorizontal();
+        bool compact = windowRect.width < 540f;
+        if (GUILayout.Button("Close / " + HAUPlugin.menuKeybind.Value, GUILayout.Width(compact ? 100f : 145f)))
+            CloseMenu();
+        if (GUILayout.Button(compact ? "Stop / F8" : "Stop movement / F8", GUILayout.Width(compact ? 100f : 175f)))
         {
-            isGUIActive = false;
-            NicknameEntry.StopEditing();
+            MovementAutomation.Stop();
+            ColorCycleHandler.Stop();
         }
-
-        // Make the window draggable
-        GUI.DragWindow();
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("v" + HAUPlugin.displayVersion, GUIStylePreset.Hint, GUILayout.Width(compact ? 45f : 65f));
+        GUILayout.EndHorizontal();
+        GUI.DragWindow(new Rect(0f, 0f, windowRect.width, 77f));
     }
 }

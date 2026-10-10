@@ -1,7 +1,7 @@
 using System;
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 // GuestMode cheats are commented out as they are broken in latest updates
 
@@ -20,7 +20,7 @@ namespace MalumMenu;
 //         __instance.DeleteDeviceID(new System.Action(__instance.EndMergeGuestAccountFlow));
 
 //         // Log into a new temp account if the user is playing in guest mode
-//         if (!MalumMenu.guestMode.Value) return true;
+//         if (!HAUPlugin.guestMode.Value) return true;
 //         __instance.StartTempAccountFlow();
 //         __instance.CloseStartupWaitScreen();
 

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class OverloadTab : ITab
 {

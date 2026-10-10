@@ -2,7 +2,7 @@
 
 Run from any folder: python scripts/package-manual.py
 Use --platform steam for the current 64-bit Steam game package.
-Use --version with --plugin-sha and --dll-sha for a new verified release.
+Supply --plugin-sha and --dll-sha from the finished HAU plugin package report.
 The optional --draft mode creates an explicitly unfinished preview while
 redistribution notices and corresponding-source assets are being collected.
 Existing plugin/source/setup releases and the installed game are never changed.
@@ -24,38 +24,36 @@ import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 LOADER = ROOT / "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip"
-PLUGIN = ROOT / "downloads/v1.0/MalumMenuEnhanced-1.0-Plugin.zip"
+PLUGIN = ROOT / "downloads/hau-v1.0/HAU-1.0-Plugin.zip"
 LOADER_SHA = "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F"
-PLUGIN_SHA = "227F8D82300F5F89D30C49BEEB4E83C152C072D07BAC5400B194D0D6FBB6B8C1"
-DLL_SHA = "D3FCC31C69C83F0381F25B5AC33FF052162D9BDCD6D74CDBDEFBFFEDD6E22559"
-DLL_PATH = "BepInEx/plugins/MalumMenuEnhanced.dll"
-OUTPUT_NAME = "MalumMenuEnhanced-1.0-MicrosoftStore-EpicGames-XboxApp.zip"
-STEAM_OUTPUT_NAME = "MalumMenuEnhanced-1.0-Steam.zip"
+DLL_PATH = "BepInEx/plugins/HAU.dll"
+OUTPUT_NAME = "HAU-1.0-MicrosoftStore-EpicGames-XboxApp.zip"
+STEAM_OUTPUT_NAME = "HAU-1.0-Steam.zip"
 LEGAL = ROOT / "installer/ManualLegal"
-TIMESTAMP = (2026, 10, 5, 0, 0, 0)
+TIMESTAMP = (2026, 10, 10, 0, 0, 0)
 MAX_FILE = 128 * 1024 * 1024
 MAX_TOTAL = 512 * 1024 * 1024
 
-INSTALL = """MalumMenu Enhanced 1.0 by Rifegul
+INSTALL = """Hacker Among Us 1.0 by Rifegul
 Windows PC: Microsoft Store / Epic Games / Xbox App
 Among Us 19.0.0 / 2026.9.29
 
 1. Close Among Us.
 2. Extract this ZIP, then copy everything inside it into the game folder containing Among Us.exe. Copy BepInEx, dotnet and the loose files directly beside Among Us.exe, not the outer ZIP folder.
 3. Open Among Us from your usual launcher. Wait for the first launch to finish preparing the mod.
-4. Press Delete to open the menu.
+4. Use your menu key (Delete by default) to open HAU.
 
 Microsoft Store / Xbox App: Xbox App > Among Us > Manage > Files > Browse > Content.
 Epic Games: Library > Among Us > Manage > Installation > folder icon.
 
-Updating another menu? Back up old MalumMenu.dll, HaddadMenu.dll or MalumMenuEnhanced.dll outside BepInEx/plugins first. Keep only one menu DLL active.
+Updating another menu? Close the game and move every old MalumMenu.dll, HaddadMenu.dll or MalumMenuEnhanced.dll outside BepInEx/plugins, including copies in subfolders. Remove duplicate HAU.dll copies too; keep only BepInEx/plugins/HAU.dll from this ZIP. Your old configuration and saved profile are imported on the first HAU launch and their originals stay intact. Existing HAU settings are kept.
 
-The Xbox / Microsoft Store build has been tested. Epic Games uses this same manual package but has not yet been tested. This package is for PC, not Xbox consoles.
+Earlier editions were tested in Xbox / Microsoft Store gameplay. HAU 1.0 build and fixture checks have passed; live round checks are pending because the local unmodified game also stays on a black startup screen. Epic Games gameplay has not been tested. This package is for PC, not Xbox consoles.
 
-Source and credits: https://github.com/ProXgram/MalumMenuEnhanced
+Source and credits: https://github.com/ProXgram/HackerAmongUs
 """
 
-STEAM_INSTALL = """MalumMenu Enhanced 1.0 by Rifegul
+STEAM_INSTALL = """Hacker Among Us 1.0 by Rifegul
 Windows PC: Steam (64-bit)
 Among Us 19.0.0 / 2026.9.29
 
@@ -63,13 +61,13 @@ Among Us 19.0.0 / 2026.9.29
 2. In Steam, open Library > Among Us > Properties > Installed Files > Browse.
 3. Extract this ZIP, then copy everything inside it into the game folder containing Among Us.exe. Copy BepInEx, dotnet and the loose files directly beside Among Us.exe, not the outer ZIP folder.
 4. Open Among Us from Steam. Wait for the first launch to finish preparing the mod.
-5. Press Delete to open the menu.
+5. Use your menu key (Delete by default) to open HAU.
 
-Updating another menu? Back up old MalumMenu.dll, HaddadMenu.dll or MalumMenuEnhanced.dll outside BepInEx/plugins first. Keep only one menu DLL active.
+Updating another menu? Close the game and move every old MalumMenu.dll, HaddadMenu.dll or MalumMenuEnhanced.dll outside BepInEx/plugins, including copies in subfolders. Remove duplicate HAU.dll copies too; keep only BepInEx/plugins/HAU.dll from this ZIP. Your old configuration and saved profile are imported on the first HAU launch and their originals stay intact. Existing HAU settings are kept.
 
 This package targets the 64-bit Steam build of Among Us 19.0.0 / 2026.9.29. Steam has not yet been tested live. Older 32-bit Steam versions need a matching loader and mod version.
 
-Source and credits: https://github.com/ProXgram/MalumMenuEnhanced
+Source and credits: https://github.com/ProXgram/HackerAmongUs
 """
 
 AUTOMATIC_UPDATES = """Automatic updates on Steam / Microsoft Store / Xbox App: The menu checks for a compatible published release when Among Us opens. A verified update installs after you close Among Us and keeps your settings. A new game version needs a compatible mod release before the menu can update. Epic Games uses updates from the latest manual ZIP.
@@ -206,20 +204,13 @@ def main() -> None:
     parser.add_argument("--draft", action="store_true", help="Build an explicitly unfinished preview.")
     parser.add_argument("--platform", choices=("windows", "steam"), default="windows",
                         help="Choose the existing Windows stores package or the current 64-bit Steam package.")
-    parser.add_argument("--version", type=numeric_version, default="1.0", help="Verified plugin release version; defaults to the original pinned 1.0 package.")
-    parser.add_argument("--plugin-sha", type=sha256_argument, help="Required verified plugin ZIP hash for versions after 1.0.")
-    parser.add_argument("--dll-sha", type=sha256_argument, help="Required verified plugin DLL hash for versions after 1.0.")
+    parser.add_argument("--version", type=numeric_version, default="1.0", help="Finished HAU release version.")
+    parser.add_argument("--plugin-sha", type=sha256_argument, required=True, help="Verified HAU plugin ZIP SHA256.")
+    parser.add_argument("--dll-sha", type=sha256_argument, required=True, help="Verified HAU DLL SHA256.")
     args = parser.parse_args()
     steam = args.platform == "steam"
-    plugin_path = ROOT / f"downloads/v{args.version}/MalumMenuEnhanced-{args.version}-Plugin.zip"
-    if args.version == "1.0":
-        require(args.plugin_sha is None or args.plugin_sha == PLUGIN_SHA, "The original plugin ZIP pin cannot be changed.")
-        require(args.dll_sha is None or args.dll_sha == DLL_SHA, "The original plugin DLL pin cannot be changed.")
-        plugin_sha, dll_sha = PLUGIN_SHA, DLL_SHA
-    else:
-        require(args.plugin_sha is not None and args.dll_sha is not None,
-                "New versions require --plugin-sha and --dll-sha from verified build artifacts.")
-        plugin_sha, dll_sha = args.plugin_sha, args.dll_sha
+    plugin_path = ROOT / f"downloads/hau-v{args.version}/HAU-{args.version}-Plugin.zip"
+    plugin_sha, dll_sha = args.plugin_sha, args.dll_sha
     output_name = (STEAM_OUTPUT_NAME if steam else OUTPUT_NAME).replace("-1.0-", f"-{args.version}-")
     loader, directories = pinned_zip(LOADER, LOADER_SHA)
     plugin, _ = pinned_zip(plugin_path, plugin_sha)
@@ -238,9 +229,8 @@ def main() -> None:
         require(path.is_file() and not path.is_symlink(), "A root license or credits file is missing.")
         files[name] = path.read_bytes()
     install = STEAM_INSTALL if steam else INSTALL
-    if args.version != "1.0":
-        install = install.replace("MalumMenu Enhanced 1.0 by Rifegul", f"MalumMenu Enhanced {args.version} by Rifegul")
-        install = install.replace("Source and credits:", AUTOMATIC_UPDATES + "Source and credits:")
+    install = install.replace("Hacker Among Us 1.0 by Rifegul", f"Hacker Among Us {args.version} by Rifegul")
+    install = install.replace("Source and credits:", AUTOMATIC_UPDATES + "Source and credits:")
     files["INSTALL.txt"] = install.replace("\n", "\r\n").encode("utf-8")
     assets, legal_complete = legal_assets(args.draft, loader)
     require(not set(files) & set(assets), "A notice asset would overwrite a loader file.")
@@ -313,16 +303,15 @@ def main() -> None:
         "zlib": zlib.ZLIB_VERSION,
         "fixedZipTimestamp": list(TIMESTAMP),
         "epicGamesLiveTested": False,
+        "modVersion": args.version,
+        "automaticUpdatesIncluded": True,
+        "legacySettingsMigrationIncluded": True,
     }
     if steam:
         report.update({"platform": "Steam", "architecture": "x64", "steamLiveTested": False})
-    if args.version != "1.0":
-        report.update({"modVersion": args.version, "automaticUpdatesIncluded": True})
     verification = ROOT / "artifacts/verification"
     verification.mkdir(parents=True, exist_ok=True)
-    report_name = "manual-package-steam" if steam else "manual-package"
-    if args.version != "1.0":
-        report_name += "-" + args.version
+    report_name = ("hau-manual-package-steam-" if steam else "hau-manual-package-") + args.version
     (verification / (report_name + ("-draft.json" if args.draft else ".json"))).write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))

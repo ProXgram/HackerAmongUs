@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class KeybindListener : MonoBehaviour
 {
@@ -20,7 +20,7 @@ public class KeybindListener : MonoBehaviour
         SprintHandler.Tick();
         ColorCycleHandler.Tick();
         NicknameEntry.Tick();
-        if (MalumMenu.isPanicked) return;
+        if (HAUPlugin.isPanicked) return;
         // Typing a nickname in the menu must not trigger cheat keybinds.
         if (MenuUI.isGUIActive) return;
 

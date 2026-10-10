@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class ChatTab : ITab
 {
@@ -8,34 +8,16 @@ public class ChatTab : ITab
 
     public void Draw()
     {
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
-
-        DrawGeneral();
-
-        GUILayout.Space(15);
-
-        DrawTextbox();
-
-        GUILayout.EndVertical();
-    }
-
-    private void DrawGeneral()
-    {
-        CheatToggles.enableChat = GUILayout.Toggle(CheatToggles.enableChat, " Enable Chat");
-
-        CheatToggles.bypassUrlBlock = GUILayout.Toggle(CheatToggles.bypassUrlBlock, " Bypass URL Block");
-
-        CheatToggles.lowerRateLimits = GUILayout.Toggle(CheatToggles.lowerRateLimits, " Lower Rate Limits");
-    }
-
-    private void DrawTextbox()
-    {
-        GUILayout.Label("Textbox", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.unlockCharacters = GUILayout.Toggle(CheatToggles.unlockCharacters, " Unlock Extra Characters");
-
-        CheatToggles.longerMessages = GUILayout.Toggle(CheatToggles.longerMessages, " Allow Longer Messages");
-
-        CheatToggles.unlockClipboard = GUILayout.Toggle(CheatToggles.unlockClipboard, " Unlock Clipboard");
+        UIHelpers.BeginSection("Chat access", "Your client can change the chat interface. The server still checks submitted messages.");
+        CheatToggles.enableChat = GUILayout.Toggle(CheatToggles.enableChat, " Show chat outside normal chat periods");
+        CheatToggles.bypassUrlBlock = GUILayout.Toggle(CheatToggles.bypassUrlBlock, " Allow links in the local textbox");
+        CheatToggles.lowerRateLimits = GUILayout.Toggle(CheatToggles.lowerRateLimits, " Shorten the local send delay");
+        UIHelpers.EndSection();
+        UIHelpers.BeginSection("Writing messages");
+        CheatToggles.unlockCharacters = GUILayout.Toggle(CheatToggles.unlockCharacters, " Allow extra characters");
+        CheatToggles.longerMessages = GUILayout.Toggle(CheatToggles.longerMessages, " Increase the textbox length");
+        CheatToggles.unlockClipboard = GUILayout.Toggle(CheatToggles.unlockClipboard, " Enable clipboard paste");
+        UIHelpers.Hint("These options affect your textbox. Message delivery depends on the game's network checks.");
+        UIHelpers.EndSection();
     }
 }

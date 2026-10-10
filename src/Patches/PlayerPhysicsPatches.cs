@@ -2,35 +2,35 @@ using System;
 using HarmonyLib;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(PlayerPhysics), nameof(PlayerPhysics.LateUpdate))]
 public static class PlayerPhysics_LateUpdate
 {
     public static void Postfix(PlayerPhysics __instance)
     {
-        MalumESP.PlayerNametags(__instance);
-        MalumESP.SeeGhostsCheat(__instance);
+        InformationTools.PlayerNametags(__instance);
+        InformationTools.SeeGhostsCheat(__instance);
 
-        MalumCheats.NoClipCheat();
-        MalumCheats.ProtectCheat();
-        MalumCheats.KillAllCheat();
-        MalumCheats.KillAllCrewCheat();
-        MalumCheats.KillAllImpsCheat();
-        MalumCheats.ForceStartGameCheat();
-        MalumCheats.TeleportCursorCheat();
-        MalumCheats.CompleteMyTasksCheat();
-        MalumCheats.PlayAnimationCheat();
-        MalumCheats.PlayScannerCheat();
+        GameActions.NoClipCheat();
+        GameActions.ProtectCheat();
+        GameActions.KillAllCheat();
+        GameActions.KillAllCrewCheat();
+        GameActions.KillAllImpsCheat();
+        GameActions.ForceStartGameCheat();
+        GameActions.TeleportCursorCheat();
+        GameActions.CompleteMyTasksCheat();
+        GameActions.PlayAnimationCheat();
+        GameActions.PlayScannerCheat();
 
-        MalumPPMCheats.EjectPlayerPPM();
-        MalumPPMCheats.SpectatePPM();
-        MalumPPMCheats.KillPlayerPPM();
-        MalumPPMCheats.TelekillPlayerPPM();
-        MalumPPMCheats.TeleportPlayerPPM();
-        MalumPPMCheats.SetFakeRolePPM();
-        MalumPPMCheats.SetFakeAlivePPM();
-        // MalumPPMCheats.ForceRolePPM();
+        PlayerActions.EjectPlayerPPM();
+        PlayerActions.SpectatePPM();
+        PlayerActions.KillPlayerPPM();
+        PlayerActions.TelekillPlayerPPM();
+        PlayerActions.TeleportPlayerPPM();
+        PlayerActions.SetFakeRolePPM();
+        PlayerActions.SetFakeAlivePPM();
+        // PlayerActions.ForceRolePPM();
 
         // This check ensures there is only one run per frame
         // so that OverloadHandler._timer progression remains accurate

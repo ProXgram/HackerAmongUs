@@ -1,7 +1,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class TasksUI : MonoBehaviour
 {
@@ -27,21 +27,23 @@ public class TasksUI : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!CheatToggles.showTasksMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
+        if (!CheatToggles.showTasksMenu || !(MenuUI.isGUIActive || HAUPlugin.menuKeepSubwindowsOpen.Value) || HAUPlugin.isPanicked) return;
 
-        _playerHeaderStyle ??= new GUIStyle(GUI.skin.button)
+        using var theme = UIHelpers.UseTheme();
+        _playerHeaderStyle ??= new GUIStyle(GUIStylePreset.NormalButton)
         {
-            fontSize = 18,
+            fontSize = 16,
+            richText = true,
             alignment = TextAnchor.MiddleLeft
         };
 
-        UIHelpers.ApplyUIColor();
-
-        windowRect = GUI.Window((int)WindowId.TasksUI, windowRect, (GUI.WindowFunction)TasksWindow, "Tasks");
+        windowRect = GUI.Window((int)WindowId.TasksUI, windowRect, (GUI.WindowFunction)TasksWindow, "HAU / Tasks", GUIStylePreset.Window);
     }
 
     private void TasksWindow(int windowID)
     {
+        if (GUI.Button(new Rect(windowRect.width - 29f, 3f, 24f, 20f), "X"))
+            CheatToggles.showTasksMenu = false;
         GUILayout.BeginVertical();
 
         _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, false, true);

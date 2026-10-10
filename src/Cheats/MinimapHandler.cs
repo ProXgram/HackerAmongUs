@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 public static class MinimapHandler
 {
     public static bool minimapActive;

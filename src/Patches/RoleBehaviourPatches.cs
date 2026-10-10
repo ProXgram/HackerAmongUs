@@ -2,7 +2,7 @@ using HarmonyLib;
 using System.Linq;
 using Sentry.Internal.Extensions;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(EngineerRole), nameof(EngineerRole.FixedUpdate))]
 public static class EngineerRole_FixedUpdate
@@ -11,7 +11,7 @@ public static class EngineerRole_FixedUpdate
     {
         if(__instance.Player.AmOwner)
         {
-            MalumCheats.HandleEngineerCheats(__instance);
+            GameActions.HandleEngineerCheats(__instance);
         }
     }
 }
@@ -25,7 +25,7 @@ public static class ShapeshifterRole_FixedUpdate
         {
             if(__instance.Player.AmOwner)
             {
-                MalumCheats.HandleShapeshifterCheats(__instance);
+                GameActions.HandleShapeshifterCheats(__instance);
             }
         } catch { }
     }
@@ -38,7 +38,7 @@ public static class ScientistRole_Update
     {
         if(__instance.Player.AmOwner)
         {
-            MalumCheats.HandleScientistCheats(__instance);
+            GameActions.HandleScientistCheats(__instance);
         }
     }
 }
@@ -50,7 +50,7 @@ public static class TrackerRole_FixedUpdate
     {
         if(__instance.Player.AmOwner)
         {
-            MalumCheats.HandleTrackerCheats(__instance);
+            GameActions.HandleTrackerCheats(__instance);
         }
     }
 }

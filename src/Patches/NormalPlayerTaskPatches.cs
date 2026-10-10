@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(NormalPlayerTask), nameof(NormalPlayerTask.Initialize))]
 public static class NormalPlayerTask_Initialize

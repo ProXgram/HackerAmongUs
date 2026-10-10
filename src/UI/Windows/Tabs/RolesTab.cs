@@ -1,130 +1,84 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class RolesTab : ITab
 {
-    public string name => "Roles";
+    public string name => "Abilities";
+    private int _page;
 
     public void Draw()
     {
-        GUILayout.Label("Multi Role", GUIStylePreset.TabSubtitle);
-        bool multiRole = GUILayout.Toggle(CheatToggles.multiRole, " Multi Role (Vent + Track + Vitals + Detective)");
-        if (multiRole != CheatToggles.multiRole) MultiRoleHandler.SetEnabled(multiRole);
-        GUILayout.Label("One ability panel, usable without hosting. Close this menu during a round to use it.\nDetective Notes record observed deaths; interrogate a nearby tracked player for their recorded location.\nYour assigned role stays the same; the host still checks vent requests.");
+        _page = UIHelpers.Subtabs(_page, "Multi Role", "Role settings", "Previews");
+        if (_page == 0) DrawBundle();
+        else if (_page == 1) DrawRoleSettings();
+        else DrawPreviews();
+    }
+
+    private static void DrawBundle()
+    {
+        UIHelpers.BeginSection("Multi Role panel", "Vent access, player tracking, Scientist Vitals and Detective Notes in one panel.");
+        bool enabled = GUILayout.Toggle(CheatToggles.multiRole, " Enable Multi Role");
+        if (enabled != CheatToggles.multiRole) MultiRoleHandler.SetEnabled(enabled);
+        UIHelpers.Hint("Close this menu during a living player's round or Freeplay to use the draggable ability panel.");
         if (CheatToggles.multiRole) GUILayout.Label(MultiRoleHandler.StatusText);
-        GUILayout.Space(15f);
-        GUILayout.Label("Ability controls do not assign a real role.\nThe host assigns your online role.");
-        GUILayout.Space(10f);
-        GUILayout.BeginHorizontal();
-
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
-
-        DrawGeneral();
-
-        GUILayout.Space(15);
-
-        DrawImpostor();
-
-        GUILayout.Space(15);
-
-        DrawShapeshifter();
-
-        GUILayout.Space(15);
-
-        DrawTracker();
-
-        GUILayout.EndVertical();
-
-        GUILayout.BeginVertical();
-
-        DrawEngineer();
-
-        GUILayout.Space(15);
-
-        DrawScientist();
-
-        GUILayout.Space(15);
-
-        DrawDetective();
-
-        GUILayout.EndVertical();
-
-        GUILayout.EndHorizontal();
+        UIHelpers.EndSection();
+        UIHelpers.BeginSection("What each tool does");
+        GUILayout.Label("Vitals / Opens the native status display.");
+        GUILayout.Label("Track / Select a player, then open their tracking map.");
+        GUILayout.Label("Detective Notes / Records deaths observed while enabled, including their recorded rooms.");
+        GUILayout.Label("Interrogate / Shows recorded location information for a nearby tracked player.");
+        GUILayout.Label("Vent / Offers vent access; the host still validates the request.");
+        UIHelpers.Hint("Your assigned role stays the same. Escape and Close Detective Notes close the notebook.");
+        UIHelpers.EndSection();
     }
 
-    private void DrawGeneral()
+    private static void DrawRoleSettings()
     {
-        CheatToggles.setFakeRole = GUILayout.Toggle(CheatToggles.setFakeRole, " Set Fake Role");
+        UIHelpers.Hint("Each setting adjusts an ability available on your client. It does not assign a real online role.");
+        UIHelpers.BeginSection("Vents");
+        CheatToggles.unlockVents = GUILayout.Toggle(CheatToggles.unlockVents, " Enable vent access");
+        CheatToggles.walkInVents = GUILayout.Toggle(CheatToggles.walkInVents, " Move while vented");
+        CheatToggles.endlessVentTime = GUILayout.Toggle(CheatToggles.endlessVentTime, " Remove local Engineer vent timer");
+        CheatToggles.noVentCooldown = GUILayout.Toggle(CheatToggles.noVentCooldown, " Remove local Engineer vent cooldown");
+        UIHelpers.Hint("Engineer timer settings apply to the Engineer ability. Host validation still applies to vent requests.");
+        UIHelpers.EndSection();
 
-        CheatToggles.setFakeAlive = GUILayout.Toggle(CheatToggles.setFakeAlive, " Set Fake Alive");
+        UIHelpers.BeginSection("Scientist Vitals");
+        CheatToggles.endlessBattery = GUILayout.Toggle(CheatToggles.endlessBattery, " Keep Vitals battery full");
+        CheatToggles.noVitalsCooldown = GUILayout.Toggle(CheatToggles.noVitalsCooldown, " Remove local Vitals cooldown");
+        UIHelpers.EndSection();
+
+        UIHelpers.BeginSection("Tracker");
+        CheatToggles.endlessTracking = GUILayout.Toggle(CheatToggles.endlessTracking, " Keep tracking active");
+        CheatToggles.noTrackingDelay = GUILayout.Toggle(CheatToggles.noTrackingDelay, " Remove tracking delay");
+        CheatToggles.noTrackingCooldown = GUILayout.Toggle(CheatToggles.noTrackingCooldown, " Remove tracking cooldown");
+        CheatToggles.trackReach = GUILayout.Toggle(CheatToggles.trackReach, " Extend tracking selection range");
+        UIHelpers.EndSection();
+
+        UIHelpers.BeginSection("Detective");
+        CheatToggles.interrogateReach = GUILayout.Toggle(CheatToggles.interrogateReach, " Extend native Interrogate range");
+        UIHelpers.Hint("Applies to the native Detective ability. Multi Role uses its own nearby tracked-player checks.");
+        UIHelpers.EndSection();
+
+        UIHelpers.BeginSection("Impostor abilities");
+        CheatToggles.killReach = GUILayout.Toggle(CheatToggles.killReach, " Extend local kill targeting range");
+        CheatToggles.noShapeshiftAnim = GUILayout.Toggle(CheatToggles.noShapeshiftAnim, " Skip shapeshift animation");
+        CheatToggles.endlessSsDuration = GUILayout.Toggle(CheatToggles.endlessSsDuration, " Keep shapeshift active locally");
+        UIHelpers.Hint("Requires an available ability. The host determines whether online actions are accepted.");
+        UIHelpers.EndSection();
     }
 
-    private void DrawImpostor()
+    private static void DrawPreviews()
     {
-        GUILayout.Label("Impostor", GUIStylePreset.TabSubtitle);
-
+        UIHelpers.BeginSection("Local role preview", "Changes the role interface on your own screen. Your host-assigned role remains authoritative.");
+        UIHelpers.ChoosePlayer("Choose a role preview", ref CheatToggles.setFakeRole, Utils.isPlayer);
         if (!Utils.isHost && !Utils.isFreePlay)
         {
-            RolePreviewControls.DrawAlwaysImpostor(" Local Impostor preview (my screen)");
-            GUILayout.Label("Changes your local preview.\nIt does not change the\nhost-assigned role or grant\ncounted kills.",
-                GUIStylePreset.TabSubtitle, GUILayout.Width(270f));
+            RolePreviewControls.DrawAlwaysImpostor(" Impostor preview on my screen");
+            UIHelpers.Hint("This preview does not grant counted kills.");
         }
-        else
-        {
-            GUILayout.Label("Hosted role setup is in\nHost Only. Freeplay role\ncontrols are in Practice.",
-                GUIStylePreset.TabSubtitle, GUILayout.Width(270f));
-        }
-
-        CheatToggles.killReach = GUILayout.Toggle(CheatToggles.killReach, " Kill Reach");
-
-        // CheatToggles.impostorTasks = GUILayout.Toggle(CheatToggles.impostorTasks, " Allow Tasks");
-    }
-
-    private void DrawShapeshifter()
-    {
-        GUILayout.Label("Shapeshifter", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.noShapeshiftAnim = GUILayout.Toggle(CheatToggles.noShapeshiftAnim, " No Ss Animation");
-
-        CheatToggles.endlessSsDuration = GUILayout.Toggle(CheatToggles.endlessSsDuration, " Endless Ss Duration");
-    }
-
-    private void DrawTracker()
-    {
-        GUILayout.Label("Tracker", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.endlessTracking = GUILayout.Toggle(CheatToggles.endlessTracking, " Endless Tracking");
-
-        CheatToggles.noTrackingDelay = GUILayout.Toggle(CheatToggles.noTrackingDelay, " No Track Delay");
-
-        CheatToggles.noTrackingCooldown = GUILayout.Toggle(CheatToggles.noTrackingCooldown, " No Track Cooldown");
-
-        CheatToggles.trackReach = GUILayout.Toggle(CheatToggles.trackReach, " Track Reach");
-    }
-
-    private void DrawEngineer()
-    {
-        GUILayout.Label("Engineer", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.endlessVentTime = GUILayout.Toggle(CheatToggles.endlessVentTime, " Endless Vent Time");
-
-        CheatToggles.noVentCooldown = GUILayout.Toggle(CheatToggles.noVentCooldown, " No Vent Cooldown");
-    }
-
-    private void DrawScientist()
-    {
-        GUILayout.Label("Scientist", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.endlessBattery = GUILayout.Toggle(CheatToggles.endlessBattery, " Endless Battery");
-
-        CheatToggles.noVitalsCooldown = GUILayout.Toggle(CheatToggles.noVitalsCooldown, " No Vitals Cooldown");
-    }
-
-    private void DrawDetective()
-    {
-        GUILayout.Label("Detective", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.interrogateReach = GUILayout.Toggle(CheatToggles.interrogateReach, " Interrogate Reach");
+        else UIHelpers.Hint("Hosted Impostor assignment is in Host Controls. Freeplay experiments are in Practice.");
+        UIHelpers.EndSection();
     }
 }

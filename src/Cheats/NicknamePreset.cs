@@ -2,7 +2,7 @@ using System;
 using AmongUs.Data;
 using InnerNet;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class NicknamePreset
 {

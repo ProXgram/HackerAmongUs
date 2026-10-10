@@ -1,3 +1,38 @@
+# Hacker Among Us (HAU) 1.0
+
+**Rifegul's HAU edition for Among Us 19.0.0 / 2026.9.29.**
+
+HAU adopts its own visible name, DLL (`HAU.dll`), project/namespace and settings
+identity. The redesigned charcoal/cyan interface groups tools into Home,
+Movement, Player Tools, Appearance, Information, Tasks, Abilities, Host Controls,
+Practice, Settings, About and Logs.
+
+This edition adds a detailed outfit studio with six categories, search, item
+details, cached thumbnails, per-slot equip/clear actions and session look
+save/restore. Sprint can be configured up to 10x; Automatic Tasks remains
+manually enabled each round. Host requirements and local role-preview limits
+remain explicit.
+
+The installer and first launch can import supported earlier configuration
+sections and profiles into `HAU.cfg` and `HAUProfile.txt`, leaving the originals
+intact. Older menu DLLs must not remain active beside HAU. Version numbering
+starts at 1.0 for HAU; this does not relabel earlier builds or their test results.
+
+For current controls and limits, read [FEATURES.md](FEATURES.md). For current
+installation and update instructions, read [docs/INSTALL.md](docs/INSTALL.md).
+Original authors, source attribution and license notices remain in
+[CREDITS.md](CREDITS.md) and [LICENSE](LICENSE).
+
+## Historical notes
+
+Everything below documents previous editions as recorded at the time.
+Their version names, menu paths, commands and verification statements belong
+to those earlier builds. They are not current HAU instructions or evidence of
+new HAU gameplay tests.
+
+<details>
+<summary>Earlier edition implementation and release history</summary>
+
 # MalumMenu Enhanced — Rifegul's Among Us 19.0.0 edition
 
 Based on [scp222thj/MalumMenu v3.3.0](https://github.com/scp222thj/MalumMenu/releases/tag/v3.3.0),
@@ -505,3 +540,5 @@ Moving-target routes retain their work through small native body-center shifts. 
 ### Unreachable nearby floor (3.3.18)
 
 A live Security-to-Upper-Engine test found Orbit repeatedly choosing a clear but unreachable floor spot beside the engine. Follow reached the same player using another nearby spot. Completed moving-route failures now advance through bounded alternate floor candidates while retaining the total no-route timer. Pending searches keep their selected approach; Orbit changes its preferred turn only after a checked direct arc. Moving a target substantially or choosing another player resets the candidate selection. Failed-search diagnostics distinguish an exhausted planner from an unusable route join.
+
+</details>

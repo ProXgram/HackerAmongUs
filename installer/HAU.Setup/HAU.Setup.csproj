@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>HAUSetup</AssemblyName>
+    <Product>Hacker Among Us Setup</Product>
+    <Title>Hacker Among Us Setup</Title>
+    <Company>Rifegul</Company>
+    <Authors>Rifegul</Authors>
+    <Version>1.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <DebugType>none</DebugType>
+    <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../..'))=/_/HackerAmongUs</PathMap>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../HAU.Setup.Core/HAU.Setup.Core.csproj" />
+    <EmbeddedResource Include="../../LICENSE" LogicalName="Legal.GPL-3.0.txt" />
+    <EmbeddedResource Include="../../CREDITS.md" LogicalName="Legal.Credits.txt" />
+    <EmbeddedResource Include="Legal/*.txt" />
+  </ItemGroup>
+</Project>

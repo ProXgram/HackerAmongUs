@@ -6,10 +6,10 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>Setup.Core.Tests</AssemblyName>
-    <PathMap>$(MSBuildProjectDirectory)=/_/MalumMenuEnhanced/tests/Setup.Core.Tests</PathMap>
+    <PathMap>$(MSBuildProjectDirectory)=/_/HackerAmongUs/tests/Setup.Core.Tests</PathMap>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../installer/MalumMenuEnhanced.Setup.Core/MalumMenuEnhanced.Setup.Core.csproj" />
+    <ProjectReference Include="../../installer/HAU.Setup.Core/HAU.Setup.Core.csproj" />
   </ItemGroup>
 </Project>

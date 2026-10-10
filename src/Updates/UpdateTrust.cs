@@ -1,8 +1,8 @@
-namespace MalumMenuEnhanced.Updates;
+namespace HAU.Updates;
 
 public static class UpdateTrust
 {
-    public const string ManifestUrl = "https://raw.githubusercontent.com/ProXgram/MalumMenuEnhanced/main/updates/latest.json";
+    public const string ManifestUrl = "https://raw.githubusercontent.com/ProXgram/HackerAmongUs/main/updates/hau/latest.json";
     public const string PublicKeyPem = @"-----BEGIN PUBLIC KEY-----
 MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAv/2NkuSo4LKLibIUjl55
 UG0JzzCIHuGSp5Xc7Bh1CD13689wySboAzq9qr6mrmvspoDla5o7oAtYCu8gCvkB

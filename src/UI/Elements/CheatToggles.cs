@@ -4,7 +4,7 @@ using System.Reflection;
 using AmongUs.GameOptions;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public struct CheatToggles
 {
@@ -230,11 +230,11 @@ public struct CheatToggles
         }
     }
 
-    // Saves cheat toggles and their keybinds to MalumProfile.txt
+    // Saves controls and their keybinds to HAUProfile.txt
     // Format per line: ToggleName = True/False = KeyCode.KEY
     public static void SaveTogglesToProfile()
     {
-        using var writer = new StreamWriter(MalumMenu.ProfilePath);
+        using var writer = new StreamWriter(HAUPlugin.ProfilePath);
 
         writer.WriteLine("# " + ModBranding.Name + " profile");
         writer.WriteLine("# Format: ToggleName = True/False = KeyCode.KEY");
@@ -252,7 +252,7 @@ public struct CheatToggles
         }
     }
 
-    // Loads cheat toggles and their keybinds from MalumProfile.txt if the file is present
+    // Loads controls and their keybinds from HAUProfile.txt if the file is present
     // Format per line: ToggleName = True/False = KeyCode.KEY
     public static void LoadTogglesFromProfile()
     {
@@ -260,9 +260,9 @@ public struct CheatToggles
         // profile was saved with this toggle on. Its shortcut still loads.
         automaticTasks = false;
         AutomaticTasksHandler.Reset();
-        if (!File.Exists(MalumMenu.ProfilePath)) return;
+        if (!File.Exists(HAUPlugin.ProfilePath)) return;
 
-        using var reader = new StreamReader(MalumMenu.ProfilePath);
+        using var reader = new StreamReader(HAUPlugin.ProfilePath);
 
         while (reader.ReadLine() is { } line)
         {

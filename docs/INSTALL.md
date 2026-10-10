@@ -1,70 +1,94 @@
-# Install MalumMenu Enhanced
+# Install Hacker Among Us (HAU)
 
-For **Steam / Microsoft Store / Epic Games / Xbox App on Windows PC**.
-Use Among Us **19.0.0 / 2026.9.29**, Windows 10/11, 64-bit.
+**HAU 1.0 by Rifegul.**
+For Among Us **19.0.0 / 2026.9.29**, on Windows 10/11, 64-bit.
 
-## Option 1: All-in-one installer
+## Automatic installation
 
 For **Steam / Microsoft Store / Xbox App**.
 
-1. [Download the installer](https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhancedSetup.exe).
+1. [Download HAUSetup.exe](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAUSetup.exe).
 2. Close Among Us. Open the downloaded file and click **Install**.
-3. Open Among Us normally and press **Delete**.
+3. Open Among Us from your usual launcher. Wait for the first launch, then press **Delete**.
 
-The installer finds your game and chooses the correct loader. If it cannot
-find the game, click **Browse** and select `Among Us.exe`. It keeps your settings
-and backs up the previous menu. No separate .NET download is needed.
+The installer finds your game. If it cannot, click **Browse** and select
+`Among Us.exe`. It installs the loader too, preserves settings and backs up
+the previous menu. No separate .NET download is needed.
 
-## Option 2: Manual ZIP
+Epic Games uses the manual ZIP below.
 
-Choose the ZIP for your launcher:
+## Manual installation
 
-- **[Steam ZIP](https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Steam.zip)**
-- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-MicrosoftStore-EpicGames-XboxApp.zip)**
+Download the ZIP matching your PC launcher:
 
-1. Download your ZIP.
-2. Close Among Us and open your game folder using the steps below.
-3. Extract the ZIP. Copy **all the files and folders inside it** into the folder containing `Among Us.exe`.
-4. Open Among Us from your usual launcher. The first launch takes longer while the mod prepares its files. When it finishes, press **Delete**.
+- **[Steam ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Steam.zip)**
+- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-MicrosoftStore-EpicGames-XboxApp.zip)**
 
-Copy `BepInEx`, `dotnet` and the loose files directly beside `Among Us.exe`.
-Do not copy just the outer ZIP folder. The ZIP already includes the loader;
-there is no separate loader download.
+1. Close Among Us.
+2. Open your game folder using the table below.
+3. Extract the ZIP. Copy **all files and folders inside it** directly into the folder containing `Among Us.exe`.
+4. Open Among Us normally. The first launch takes longer while the mod prepares its files. Press **Delete** when it finishes.
+
+The ZIP includes HAU and the loader. Copy `BepInEx`, `dotnet` and the loose
+files beside `Among Us.exe`. Copy the contents of the ZIP, rather than its
+outer folder.
 
 ## Find your game folder
 
-| Your PC launcher | Open this folder |
+| Your launcher | Steps |
 | --- | --- |
 | Steam | **Library** → right-click **Among Us** → **Manage** → **Browse local files**. |
 | Microsoft Store / Xbox App | Open **Xbox App** → **Among Us** → **Manage** → **Files** → **Browse** → **Content**. |
 | Epic Games | **Library** → **Among Us** → **Manage** → **Installation** → click the **folder icon**. |
 
-If you bought the game through Microsoft Store, use its **Xbox App** entry to
-browse the game files. Choose the editable game folder; these instructions do
-not require changing Windows permissions.
+If you bought Among Us through Microsoft Store, use its **Xbox App** entry to
+browse the game files. Choose the editable game folder. These steps do not
+require changing Windows permissions.
 
-## Automatic updates
+## Replacing an older menu
 
-On Steam / Microsoft Store / Xbox App, after installing 1.1.0 once, the mod checks for compatible published releases
-when you open Among Us. If an update is ready, close the game normally and
-wait for it to install before reopening. Your settings and unrelated plugins
-are preserved, and the previous menu is backed up.
+Use the installer for the simplest replacement. For manual installation, move
+older menu DLLs out of `BepInEx/plugins` before copying HAU. Keep only one menu
+active. Examples of older files are `MalumMenu.dll`, `HaddadMenu.dll` and
+`MalumMenuEnhanced.dll`.
 
-See its status under **Delete → Settings → Mod updates**. The **Automatic
-updates** switch takes effect on the next launch.
+Keep backups outside `BepInEx/plugins`; a DLL left in that folder can still load.
+Keep your configuration and profile files if you want to retain supported
+settings.
 
-If an Among Us update breaks the mod, a compatible build must be published
-first. If the mod cannot start at all, download and run the latest installer.
-An updater cannot automatically repair code broken by a game update. Epic Games
-users install updates from the latest manual ZIP.
+## Your first launch
 
-## Replacing another menu
+- **Delete** opens and closes HAU.
+- **Movement → Sprint & speed** controls sprint, its key and its boost up to **10×**.
+- **Appearance → Outfit & name** opens the searchable outfit studio and nickname editor.
+- **Tasks** contains Automatic Tasks and AI Tasks. Enable them yourself; task completion does not start automatically each round.
+- **Host Controls** contains shared rules. Most of these controls unlock only while hosting or in Freeplay.
+- **F8** stops movement automation and color cycling.
 
-Before copying the new files, back up old `MalumMenu.dll`, `HaddadMenu.dll` or
-`MalumMenuEnhanced.dll` outside `BepInEx/plugins`. Keep only one menu DLL active.
+Close the menu and chat before sprinting or using AI movement. Local role
+previews do not assign a real online role. Ghost Voting needs the host and each
+voting ghost to enable the mod.
 
-Xbox / Microsoft Store gameplay has been tested. Steam and Epic Games gameplay
-have not yet been tested. These packages are for Among Us 2026.9.29 on Windows
-PC.
+## Updates
 
-[Download page](https://github.com/ProXgram/MalumMenuEnhanced/releases/tag/v1.1.0) · [Source](https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Source.zip) · [Credits](../CREDITS.md)
+Steam / Microsoft Store / Xbox App editions check for compatible published
+releases when Among Us opens. If an update is ready, close the game normally and
+wait for it to finish before reopening. Settings and unrelated plugins are
+preserved; the previous menu is backed up.
+
+View status under **Delete → Settings → Automatic updates**. The update
+switch takes effect on the next launch.
+
+An Among Us update may need a new compatible mod build. The updater can install
+that build after it is published; it cannot repair incompatible code itself.
+If HAU cannot start, run the latest installer. Epic Games users replace the
+files using the latest manual ZIP.
+
+Earlier editions were tested in Xbox / Microsoft Store gameplay. HAU 1.0 has
+passed build and fixture checks; live round checks are pending because the
+local unmodified game also stays on a black startup screen. Steam and Epic
+Games gameplay remain untested. These downloads are for Windows PC.
+
+[Download page](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0) ·
+[Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Source.zip) ·
+[License](../LICENSE)

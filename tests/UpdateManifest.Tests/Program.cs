@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using MalumMenuEnhanced.Updates;
+using HAU.Updates;
 
 if (args is ["--verify-manifest", var manifestPath])
 {
@@ -12,7 +12,7 @@ if (args is ["--verify-manifest", var manifestPath])
         if (new FileInfo(manifestPath).Length > UpdateManifestVerifier.MaximumEnvelopeBytes)
             throw new InvalidDataException("Manifest envelope exceeds the byte limit.");
         UpdateManifest manifest = new UpdateManifestVerifier(UpdateTrust.PublicKeyPem).Verify(File.ReadAllBytes(manifestPath));
-        Console.WriteLine($"Verified signed MalumMenuEnhanced {manifest.ModVersion}; supports 2026.9.29: {manifest.SupportsGameVersion("2026.9.29")}; plugin {manifest.PluginZip.Size} bytes; setup {manifest.SetupExe.Size} bytes.");
+        Console.WriteLine($"Verified signed HAU {manifest.ModVersion}; supports 2026.9.29: {manifest.SupportsGameVersion("2026.9.29")}; plugin {manifest.PluginZip.Size} bytes; setup {manifest.SetupExe.Size} bytes.");
         return 0;
     }
     catch (Exception ex)
@@ -43,17 +43,17 @@ JsonObject Payload(string modVersion = "1.1.0")
 {
     JsonObject Asset(string filename) => new()
     {
-        ["url"] = "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v" + modVersion + "/" + filename,
+        ["url"] = "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v" + modVersion + "/" + filename,
         ["sha256"] = new string('a', 64),
         ["size"] = 196172
     };
     return new JsonObject
     {
-        ["product"] = "MalumMenuEnhanced",
+        ["product"] = "HAU",
         ["modVersion"] = modVersion,
         ["supportedGameVersions"] = new JsonArray("2026.9.29"),
-        ["pluginZip"] = Asset("MalumMenuEnhanced-" + modVersion + "-Plugin.zip"),
-        ["setupExe"] = Asset("MalumMenuEnhancedSetup.exe")
+        ["pluginZip"] = Asset("HAU-" + modVersion + "-Plugin.zip"),
+        ["setupExe"] = Asset("HAUSetup.exe")
     };
 }
 byte[] EnvelopeBytes(byte[] payload, RSA? key = null)
@@ -71,11 +71,25 @@ Test("Signed release resolves exact assets and supported game", () =>
     Check(manifest.ModVersion == "1.1.0");
     Check(manifest.ParsedVersion == new Version(1, 1, 0, 0));
     Check(manifest.SupportedGameVersions.SequenceEqual(new[] { "2026.9.29" }));
-    Check(manifest.PluginZip.Url.AbsoluteUri.EndsWith("/v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip"));
-    Check(manifest.SetupExe.Url.AbsoluteUri.EndsWith("/v1.1.0/MalumMenuEnhancedSetup.exe"));
+    Check(manifest.PluginZip.Url.AbsoluteUri.EndsWith("/hau-v1.1.0/HAU-1.1.0-Plugin.zip"));
+    Check(manifest.SetupExe.Url.AbsoluteUri.EndsWith("/hau-v1.1.0/HAUSetup.exe"));
     Check(manifest.PluginZip.Sha256 == new string('A', 64));
     Check(manifest.PluginZip.Size == 196172);
     manifest.RequireCompatibleUpdate("1.0", "2026.9.29");
+});
+Test("HAU 1.0 has its own authenticated product channel with normal version comparisons", () =>
+{
+    var manifest = verifier.Verify(Envelope(Payload("1.0")));
+    Check(manifest.ModVersion == "1.0" && !manifest.IsNewerThan("1.0.0") && manifest.IsNewerThan("0.9"));
+    Check(manifest.PluginZip.Url.AbsoluteUri.EndsWith("/hau-v1.0/HAU-1.0-Plugin.zip"));
+    var legacy = Payload("1.0"); legacy["product"] = "MalumMenuEnhanced";
+    Reject(() => verifier.Verify(Envelope(legacy)), "product");
+});
+Test("Legacy repository and release tags are refused even with a publisher signature", () =>
+{
+    var legacy = Payload("1.0");
+    legacy["pluginZip"]!["url"] = "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.0/MalumMenuEnhanced-1.0-Plugin.zip";
+    Reject(() => verifier.Verify(Envelope(legacy)), "URL");
 });
 Test("Exact signed bytes permit insignificant JSON whitespace", () =>
 {
@@ -161,18 +175,18 @@ Test("Malformed local game version is rejected", () => Reject(() => Valid().Supp
 
 foreach (string url in new[]
 {
-    "http://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip",
-    "https://github.com.evil.test/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip",
-    "https://github.com@evil.test/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip",
-    "https://github.com:443/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip",
-    "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.0/MalumMenuEnhanced-1.1.0-Plugin.zip",
-    "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/Other.dll",
-    "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/%4DalumMenuEnhanced-1.1.0-Plugin.zip",
-    "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/../v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip",
-    "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip?raw=1",
-    "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip#ignored",
-    " https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Plugin.zip",
-    "file:///C:/MalumMenuEnhancedSetup.exe"
+    "http://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/HAU-1.1.0-Plugin.zip",
+    "https://github.com.evil.test/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/HAU-1.1.0-Plugin.zip",
+    "https://github.com@evil.test/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/HAU-1.1.0-Plugin.zip",
+    "https://github.com:443/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/HAU-1.1.0-Plugin.zip",
+    "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.1.0-Plugin.zip",
+    "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/Other.dll",
+    "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/%4DalumMenuEnhanced-1.1.0-Plugin.zip",
+    "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/../v1.1.0/HAU-1.1.0-Plugin.zip",
+    "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/HAU-1.1.0-Plugin.zip?raw=1",
+    "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/HAU-1.1.0-Plugin.zip#ignored",
+    " https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.1.0/HAU-1.1.0-Plugin.zip",
+    "file:///C:/HAUSetup.exe"
 })
     Test("Unsafe or mismatched plugin URL rejected: " + url, () =>
     {
@@ -183,7 +197,7 @@ foreach (string url in new[]
 Test("Setup URL has its own exact basename and matching tag", () =>
 {
     JsonObject payload = Payload();
-    payload["setupExe"]!["url"] = "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.0.1/MalumMenuEnhancedSetup.exe";
+    payload["setupExe"]!["url"] = "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAUSetup.exe";
     Reject(() => verifier.Verify(Envelope(payload)), "URL");
 });
 

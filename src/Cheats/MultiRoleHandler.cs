@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using AmongUs.GameOptions;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 // A local ability bundle. The player's real role and native ability button
 // remain untouched; no role-assignment or tracking messages are sent.
@@ -25,7 +25,7 @@ public static class MultiRoleHandler
         get
         {
             var local = PlayerControl.LocalPlayer;
-            return CheatToggles.multiRole && !MalumMenu.isPanicked &&
+            return CheatToggles.multiRole && !HAUPlugin.isPanicked &&
                 (Utils.isInGame || Utils.isFreePlay) && ShipStatus.Instance &&
                 local && local.AmOwner && local.Data != null && local.Data.Role &&
                 !local.Data.IsDead && !local.Data.Disconnected &&
@@ -233,7 +233,7 @@ public static class MultiRoleHandler
 
     private static void ReportError(string message)
     {
-        if (_lastError != message) MalumMenu.Log?.LogWarning(message);
+        if (_lastError != message) HAUPlugin.Log?.LogWarning(message);
         _lastError = message;
     }
 }

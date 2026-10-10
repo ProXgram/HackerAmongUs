@@ -2,7 +2,7 @@ using Il2CppSystem;
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class ConsoleUI : MonoBehaviour
 {
@@ -14,6 +14,9 @@ public class ConsoleUI : MonoBehaviour
     private static Vector2 _scrollPosition = Vector2.zero;
     private static List<string> _logEntries = new();
     private const int MaxLogEntries = 300;
+
+    public static int EntryCount => _logEntries.Count;
+    public static void Clear() => _logEntries.Clear();
 
     private void Start()
     {
@@ -28,20 +31,21 @@ public class ConsoleUI : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!CheatToggles.showConsole || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
+        if (!CheatToggles.showConsole || !(MenuUI.isGUIActive || HAUPlugin.menuKeepSubwindowsOpen.Value) || HAUPlugin.isPanicked) return;
 
-        _logStyle ??= new GUIStyle(GUI.skin.label)
+        using var theme = UIHelpers.UseTheme();
+        _logStyle ??= new GUIStyle(GUIStylePreset.RichLabel)
         {
-            fontSize = 15
+            fontSize = 14, richText = true, wordWrap = true
         };
 
-        UIHelpers.ApplyUIColor();
-
-        windowRect = GUI.Window((int)WindowId.ConsoleUI, windowRect, (GUI.WindowFunction)ConsoleWindow, "Console");
+        windowRect = GUI.Window((int)WindowId.ConsoleUI, windowRect, (GUI.WindowFunction)ConsoleWindow, "HAU / Event log", GUIStylePreset.Window);
     }
 
     private void ConsoleWindow(int windowID)
     {
+        if (GUI.Button(new Rect(windowRect.width - 29f, 3f, 24f, 20f), "X"))
+            CheatToggles.showConsole = false;
         GUILayout.BeginVertical(GUI.skin.box);
 
         _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, false, false);
@@ -59,7 +63,7 @@ public class ConsoleUI : MonoBehaviour
 
         if (GUILayout.Button("Clear Log", GUILayout.Width(285)))
         {
-            _logEntries.Clear();
+            Clear();
         }
 
         if (GUILayout.Button("Copy Log to Clipboard"))

@@ -1,4 +1,4 @@
-using MalumMenu;
+using HAU;
 using UnityEngine;
 
 var passed = 0;
@@ -393,7 +393,7 @@ static void SetUp()
     PlayerControl.LocalPlayer = new(); ShipStatus.Instance = new();
     HudManager.InstanceExists = true; HudManager.Acquisitions = 0; HudManager.Existing = new();
     GameOptionsManager.Instance = new(); Minigame.Instance = null;
-    MenuUI.isGUIActive = false; MalumMenu.MalumMenu.isPanicked = false; MalumMenu.MalumMenu.Log = new();
+    MenuUI.isGUIActive = false; HAU.HAUPlugin.isPanicked = false; HAU.HAUPlugin.Log = new();
     Application.isFocused = true; Time.realtimeSinceStartupAsDouble = 0;
     NavigationRouter.StandCheck = _ => true; PhysicsHelpers.Blocked = false;
 }

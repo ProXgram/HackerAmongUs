@@ -8,10 +8,10 @@
     <AssemblyName>AutoUpdate.Tests</AssemblyName>
     <DebugType>none</DebugType>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <PathMap>$(MSBuildProjectDirectory)=/_/MalumMenuEnhanced/tests/AutoUpdate.Tests</PathMap>
+    <PathMap>$(MSBuildProjectDirectory)=/_/HackerAmongUs/tests/AutoUpdate.Tests</PathMap>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../installer/MalumMenuEnhanced.Setup.Core/MalumMenuEnhanced.Setup.Core.csproj" />
-    <Compile Include="../../installer/MalumMenuEnhanced.Setup/UpdateCommand.cs" Link="UpdateCommand.cs" />
+    <ProjectReference Include="../../installer/HAU.Setup.Core/HAU.Setup.Core.csproj" />
+    <Compile Include="../../installer/HAU.Setup/UpdateCommand.cs" Link="UpdateCommand.cs" />
   </ItemGroup>
 </Project>

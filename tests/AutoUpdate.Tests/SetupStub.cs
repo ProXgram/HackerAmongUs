@@ -1,6 +1,6 @@
-using MalumMenuEnhanced.Setup.Core;
+using HAU.Setup.Core;
 
-namespace MalumMenuEnhanced.Setup;
+namespace HAU.Setup;
 
 internal sealed class SetupForm
 {

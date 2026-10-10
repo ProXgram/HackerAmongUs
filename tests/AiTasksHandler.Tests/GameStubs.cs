@@ -140,14 +140,14 @@ namespace UnityEngine
     }
 }
 
-namespace MalumMenu
+namespace HAU
 {
     public static class Utils
     {
         public static bool isClient = true, isInGame = true, isFreePlay, isNormalGame = true, isMeeting, isExiling;
     }
     public static class MenuUI { public static bool isGUIActive; }
-    public static class MalumMenu { public static bool isPanicked; public static TestLogger Log = new(); }
+    public static class HAUPlugin { public static bool isPanicked; public static TestLogger Log = new(); }
     public sealed class TestLogger { public List<string> Warnings = new(); public void LogWarning(string message) => Warnings.Add(message); }
     public static class NavigationRouter
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using AmongUs.GameOptions;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 // A detached notebook: never assign this behaviour as the player's role, and
 // never put its death records into the native DetectiveLocationsController.
@@ -604,12 +604,12 @@ public static class MultiRoleDetectiveHandler
 
     private static void ReportError(string message)
     {
-        if (_lastError != message) MalumMenu.Log?.LogWarning(message);
+        if (_lastError != message) HAUPlugin.Log?.LogWarning(message);
         _lastError = message;
     }
 
     // Diagnostic builds can trace the local notebook's native presentation.
     [System.Diagnostics.Conditional("DEBUG")]
     internal static void Trace(string message) =>
-        MalumMenu.Log?.LogInfo("MultiRole Detective diagnostic: " + message);
+        HAUPlugin.Log?.LogInfo("MultiRole Detective diagnostic: " + message);
 }

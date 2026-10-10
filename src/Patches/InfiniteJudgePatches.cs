@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(JudgeRole), nameof(JudgeRole.OnMeetingStart))]
 public static class JudgeRole_OnMeetingStart_InfiniteJudge

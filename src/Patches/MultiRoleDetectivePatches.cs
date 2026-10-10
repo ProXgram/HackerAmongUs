@@ -1,7 +1,7 @@
 using System;
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.MurderPlayer))]
 public static class MultiRoleDetectiveDeathCapture
@@ -12,13 +12,13 @@ public static class MultiRoleDetectiveDeathCapture
     {
         __state = null;
         try { __state = MultiRoleDetectiveHandler.CapturePendingDeath(target, resultFlags); }
-        catch (Exception error) { MalumMenu.Log?.LogWarning("Detective snapshot failed: " + error.Message); }
+        catch (Exception error) { HAUPlugin.Log?.LogWarning("Detective snapshot failed: " + error.Message); }
     }
 
     public static void Postfix(PlayerControl target, MultiRoleDetectiveHandler.PendingDeath __state)
     {
         try { MultiRoleDetectiveHandler.ConfirmDeath(__state, target); }
-        catch (Exception error) { MalumMenu.Log?.LogWarning("Detective death confirmation failed: " + error.Message); }
+        catch (Exception error) { HAUPlugin.Log?.LogWarning("Detective death confirmation failed: " + error.Message); }
     }
 }
 
@@ -49,7 +49,7 @@ public static class MultiRoleDetectiveSafePage
         {
             MultiRoleDetectiveHandler.RenderPage(__instance);
         }
-        catch (Exception error) { MalumMenu.Log?.LogWarning("Detective page display failed: " + error.Message); }
+        catch (Exception error) { HAUPlugin.Log?.LogWarning("Detective page display failed: " + error.Message); }
     }
 
 }
@@ -72,7 +72,7 @@ public static class MultiRoleDetectiveSafeMap
     {
         if (!MultiRoleDetectiveHandler.Owns(__instance)) return true;
         try { MultiRoleDetectiveHandler.OpenCaseMap(__instance); }
-        catch (Exception error) { MalumMenu.Log?.LogWarning("Detective map failed: " + error.Message); }
+        catch (Exception error) { HAUPlugin.Log?.LogWarning("Detective map failed: " + error.Message); }
         return false;
     }
 }
@@ -108,6 +108,6 @@ public static class MultiRoleDetectiveVictimMarker
     public static void Postfix(MapBehaviour __instance)
     {
         try { MultiRoleDetectiveHandler.UpdateCaseMap(__instance); }
-        catch (Exception error) { MalumMenu.Log?.LogWarning("Detective victim marker failed: " + error.Message); }
+        catch (Exception error) { HAUPlugin.Log?.LogWarning("Detective victim marker failed: " + error.Message); }
     }
 }

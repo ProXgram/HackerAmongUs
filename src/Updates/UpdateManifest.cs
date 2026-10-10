@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace MalumMenuEnhanced.Updates
+namespace HAU.Updates
 {
     /// <summary>A release asset authenticated by the publisher's signed manifest.</summary>
     public sealed class UpdateAsset
@@ -72,7 +72,7 @@ namespace MalumMenuEnhanced.Updates
         public const int MaximumEnvelopeBytes = 64 * 1024;
         public const int MaximumPayloadBytes = 32 * 1024;
         public const long MaximumAssetBytes = 100L * 1024 * 1024;
-        private const string AssetPrefix = "https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v";
+        private const string AssetPrefix = "https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v";
         private static readonly UTF8Encoding StrictUtf8 = new UTF8Encoding(false, true);
         private readonly RSAParameters publicKey;
         private readonly int signatureBytes;
@@ -112,14 +112,14 @@ namespace MalumMenuEnhanced.Updates
                 using JsonDocument document = ParseDocument(payload);
                 JsonElement root = document.RootElement;
                 RequireProperties(root, "product", "modVersion", "supportedGameVersions", "pluginZip", "setupExe");
-                if (GetString(root, "product") != "MalumMenuEnhanced")
+                if (GetString(root, "product") != "HAU")
                     throw new InvalidDataException("The update manifest product is incorrect.");
                 string modVersion = GetString(root, "modVersion");
                 Version parsedVersion = ParseNumericVersion(modVersion);
                 string[] games = ReadSupportedGameVersions(root.GetProperty("supportedGameVersions"));
                 UpdateAsset plugin = ReadAsset(root.GetProperty("pluginZip"), modVersion,
-                    "MalumMenuEnhanced-" + modVersion + "-Plugin.zip");
-                UpdateAsset setup = ReadAsset(root.GetProperty("setupExe"), modVersion, "MalumMenuEnhancedSetup.exe");
+                    "HAU-" + modVersion + "-Plugin.zip");
+                UpdateAsset setup = ReadAsset(root.GetProperty("setupExe"), modVersion, "HAUSetup.exe");
                 return new UpdateManifest(modVersion, parsedVersion, games, plugin, setup);
             }
             catch (Exception ex) when (ex is JsonException || ex is FormatException || ex is DecoderFallbackException || ex is OverflowException)

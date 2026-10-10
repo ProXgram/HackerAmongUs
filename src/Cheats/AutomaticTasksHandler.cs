@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class AutomaticTasksHandler
 {
@@ -129,13 +129,13 @@ public static class AutomaticTasksHandler
 
             _completed++;
             _status = "Completed " + _completed + " tasks this round.";
-            MalumMenu.Log.LogInfo("Automatic Tasks: completed own task " + next.Id +
+            HAUPlugin.Log.LogInfo("Automatic Tasks: completed own task " + next.Id +
                 " (" + selected.TaskType + ").");
         }
         catch (Exception error)
         {
             if (!_failed)
-                MalumMenu.Log.LogError("Automatic Tasks: paused after task completion failed: " + error);
+                HAUPlugin.Log.LogError("Automatic Tasks: paused after task completion failed: " + error);
             _failed = true; // One failure pauses completion instead of retrying every frame.
         }
     }

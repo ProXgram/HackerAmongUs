@@ -1,13 +1,13 @@
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.Update))]
 public static class AmongUsClient_Update
 {
     public static void Postfix()
     {
-        MalumSpoof.SpoofLevel();
+        PlayerDisplayOverrides.SpoofLevel();
         AlwaysImpostorHandler.TickFreeplay();
         LocalImpostorHandler.Tick();
         AutomaticTasksHandler.Tick();
@@ -16,11 +16,11 @@ public static class AmongUsClient_Update
         // GuestMode cheats are commented out as they are broken in latest updates
 
         // Code to treat temp accounts the same as full accounts, including access to friend codes
-        // if (!EOSManager.Instance.loginFlowFinished || !MalumMenu.guestMode.Value) return;
+        // if (!EOSManager.Instance.loginFlowFinished || !HAUPlugin.guestMode.Value) return;
         // DataManager.Player.Account.LoginStatus = EOSManager.AccountLoginStatus.LoggedIn;
 
         // if (!string.IsNullOrWhiteSpace(EOSManager.Instance.FriendCode)) return;
-        // var friendCode = MalumSpoof.spoofFriendCode();
+        // var friendCode = PlayerDisplayOverrides.spoofFriendCode();
         // var editUsername = EOSManager.Instance.editAccountUsername;
         // editUsername.UsernameText.SetText(friendCode);
         // editUsername.SaveUsername();

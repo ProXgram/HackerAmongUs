@@ -1,7 +1,7 @@
 using HarmonyLib;
 using System.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(MapBehaviour), nameof(MapBehaviour.ShowNormalMap))]
 public static class MapBehaviour_ShowNormalMap

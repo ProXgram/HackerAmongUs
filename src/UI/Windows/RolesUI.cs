@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class RolesUI : MonoBehaviour
 {
@@ -23,15 +23,17 @@ public class RolesUI : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!CheatToggles.showRolesMenu || !(MenuUI.isGUIActive || MalumMenu.menuKeepSubwindowsOpen.Value) || MalumMenu.isPanicked) return;
+        if (!CheatToggles.showRolesMenu || !(MenuUI.isGUIActive || HAUPlugin.menuKeepSubwindowsOpen.Value) || HAUPlugin.isPanicked) return;
 
-        UIHelpers.ApplyUIColor();
+        using var theme = UIHelpers.UseTheme();
 
-        windowRect = GUI.Window((int)WindowId.RolesUI, windowRect, (GUI.WindowFunction)RolesWindow, "Assign Roles");
+        windowRect = GUI.Window((int)WindowId.RolesUI, windowRect, (GUI.WindowFunction)RolesWindow, "HAU / Assign Roles", GUIStylePreset.Window);
     }
 
     private void RolesWindow(int windowID)
     {
+        if (GUI.Button(new Rect(windowRect.width - 29f, 3f, 24f, 20f), "X"))
+            CheatToggles.showRolesMenu = false;
         GUILayout.BeginVertical();
 
         _scrollPosition = GUILayout.BeginScrollView(_scrollPosition, false, true);
@@ -62,7 +64,7 @@ public class RolesUI : MonoBehaviour
 
         GUILayout.EndScrollView();
         GUILayout.EndVertical();
-        GUILayout.Label("Roles will be assigned on next game start");
+        UIHelpers.Hint("Your selected role applies on the next game start.");
         GUI.DragWindow();
     }
 }

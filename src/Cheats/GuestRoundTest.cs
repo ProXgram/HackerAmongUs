@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 
-namespace MalumMenu;
+namespace HAU;
 
 // Separate manual experiment. The normal release excludes this entire class.
 // A local role/body is never evidence that another client accepted the action.
@@ -161,7 +161,7 @@ public static class GuestRoundTest
             _shipPointer = ship.Pointer;
             _bound = true;
             _status = "Bound to this guest round. Remote acceptance remains unverified.";
-            MalumMenu.Log.LogInfo("Guest round test: manually bound game " + _gameId +
+            HAUPlugin.Log.LogInfo("Guest round test: manually bound game " + _gameId +
                 ", host " + _hostId + ", public=" + _wasPublic + ", local player " + local.PlayerId +
                 "; local data OwnerId=" + local.Data.OwnerId +
                 ", ServerOwned=" + InnerNet.InnerNetClient.ServerOwned +
@@ -193,7 +193,7 @@ public static class GuestRoundTest
             _roleStatus = "Role request: ATTEMPTED; remote acceptance unverified.";
             local.RpcSetRole(RequestedRole, true);
             _roleStatus = "Role request: SENT; remote acceptance unverified.";
-            MalumMenu.Log.LogInfo("Guest round test: sent one own-player " + RequestedRole + " role request. " +
+            HAUPlugin.Log.LogInfo("Guest round test: sent one own-player " + RequestedRole + " role request. " +
                 "A local role change does not prove the host or server accepted it.");
         }
         catch (Exception error)
@@ -201,7 +201,7 @@ public static class GuestRoundTest
             _roleStatus = _roleAttempted
                 ? "Role request: call failed; attempt used this round."
                 : "Role request: conditions could not be verified.";
-            MalumMenu.Log.LogError("Guest round test: role request failed: " + error);
+            HAUPlugin.Log.LogError("Guest round test: role request failed: " + error);
         }
     }
 
@@ -226,7 +226,7 @@ public static class GuestRoundTest
             _killStatus = "Kill test: ATTEMPTED; remote acceptance unverified.";
             local.RpcMurderPlayer(target, true);
             _killStatus = "Kill test: SENT; remote acceptance unverified.";
-            MalumMenu.Log.LogInfo("Guest round test: sent one own-player kill decision for target " +
+            HAUPlugin.Log.LogInfo("Guest round test: sent one own-player kill decision for target " +
                 target.PlayerId + ". A local body or animation does not prove remote acceptance.");
         }
         catch (Exception error)
@@ -234,7 +234,7 @@ public static class GuestRoundTest
             _killStatus = _killAttempted
                 ? "Kill test: call failed; attempt used this round."
                 : "Kill test: conditions could not be verified.";
-            MalumMenu.Log.LogError("Guest round test: kill call failed: " + error);
+            HAUPlugin.Log.LogError("Guest round test: kill call failed: " + error);
         }
 #endif
     }
@@ -456,7 +456,7 @@ public static class GuestRoundTest
     {
         if (_guardErrorLogged) return;
         _guardErrorLogged = true;
-        MalumMenu.Log.LogError("Guest round test: condition inspection failed: " + error);
+        HAUPlugin.Log.LogError("Guest round test: condition inspection failed: " + error);
     }
 }
 #endif

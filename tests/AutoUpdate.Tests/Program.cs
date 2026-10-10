@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using System.Text.Json;
-using MalumMenuEnhanced.Setup;
-using MalumMenuEnhanced.Setup.Core;
-using MalumMenuEnhanced.Updates;
+using HAU.Setup;
+using HAU.Setup.Core;
+using HAU.Updates;
 
 using var key = RSA.Create(2048);
 var verifier = new UpdateManifestVerifier(key.ExportSubjectPublicKeyInfoPem());
@@ -22,10 +22,10 @@ byte[] Envelope(Fixture f, string version = "2.0.0", string gameVersion = "2026.
     var bytes = f.Http.Responses["https://example.test/plugin.zip"];
     var payload = JsonSerializer.SerializeToUtf8Bytes(new
     {
-        product = "MalumMenuEnhanced", modVersion = version, supportedGameVersions = new[] { gameVersion },
-        pluginZip = new { url = $"https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v{version}/MalumMenuEnhanced-{version}-Plugin.zip",
+        product = "HAU", modVersion = version, supportedGameVersions = new[] { gameVersion },
+        pluginZip = new { url = $"https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v{version}/HAU-{version}-Plugin.zip",
             sha256 = hash ?? Convert.ToHexString(SHA256.HashData(bytes)), size = size ?? bytes.Length },
-        setupExe = new { url = $"https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v{version}/MalumMenuEnhancedSetup.exe",
+        setupExe = new { url = $"https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v{version}/HAUSetup.exe",
             sha256 = new string('0', 64), size = 100L }
     });
     return JsonSerializer.SerializeToUtf8Bytes(new { payload = Convert.ToBase64String(payload),
@@ -36,10 +36,10 @@ string Prepare(Fixture f, string version = "2.0.0", byte[]? envelope = null)
 {
     f.ExistingLoader();
     Directory.CreateDirectory(Path.GetDirectoryName(f.PluginPath)!);
-    File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("MalumMenuEnhanced", 1));
-    var newBytes = Fixture.Zip([("BepInEx/plugins/MalumMenuEnhanced.dll", Fixture.AssemblyBytes("MalumMenuEnhanced", 2), 0)]);
+    File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("HAU", 1));
+    var newBytes = Fixture.Zip([("BepInEx/plugins/HAU.dll", Fixture.AssemblyBytes("HAU", 2), 0)]);
     f.ReplacePlugin(newBytes);
-    f.Http.Responses[$"https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v{version}/MalumMenuEnhanced-{version}-Plugin.zip"] = newBytes;
+    f.Http.Responses[$"https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v{version}/HAU-{version}-Plugin.zip"] = newBytes;
     var path = Path.Combine(f.Root, "latest.json");
     File.WriteAllBytes(path, envelope ?? Envelope(f, version));
     return path;
@@ -85,7 +85,7 @@ Test("New signed release installs, backs up the old menu and preserves settings"
     var prior = File.ReadAllBytes(f.PluginPath);
     var result = await Service(f, new FakeProcesses()).ApplyAsync(Request(f, manifest));
     Check(result.Installed && result.BackupDirectory.Length > 0);
-    Check(File.ReadAllBytes(Path.Combine(result.BackupDirectory, "MalumMenuEnhanced.dll")).SequenceEqual(prior));
+    Check(File.ReadAllBytes(Path.Combine(result.BackupDirectory, "HAU.dll")).SequenceEqual(prior));
     Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/com.rifegul.cfg")) == "saved settings");
     Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/plugins/Unrelated.dll")) == "unrelated");
 });
@@ -138,9 +138,9 @@ Test("The signed plugin byte length must match the download", async () =>
 Test("A validly signed ZIP with another assembly version cannot be installed", async () =>
 {
     using var f = new Fixture(steam: true); var manifest = Prepare(f);
-    var wrong = Fixture.Zip([("BepInEx/plugins/MalumMenuEnhanced.dll", Fixture.AssemblyBytes("MalumMenuEnhanced", 3), 0)]);
+    var wrong = Fixture.Zip([("BepInEx/plugins/HAU.dll", Fixture.AssemblyBytes("HAU", 3), 0)]);
     f.ReplacePlugin(wrong);
-    f.Http.Responses["https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v2.0.0/MalumMenuEnhanced-2.0.0-Plugin.zip"] = wrong;
+    f.Http.Responses["https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v2.0.0/HAU-2.0.0-Plugin.zip"] = wrong;
     File.WriteAllBytes(manifest, Envelope(f)); var before = f.Snapshot();
     await Reject(() => Service(f, new FakeProcesses()).ApplyAsync(Request(f, manifest)), "version"); f.AssertSnapshot(before);
 });
@@ -206,7 +206,7 @@ Test("A mod installed by another updater while waiting is never downgraded", asy
     var processes = new FakeProcesses { HoldExit = true, Running = true };
     var update = Service(f, processes).ApplyAsync(Request(f, manifest));
     await processes.WaitStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
-    File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("MalumMenuEnhanced", 3)); var afterManualUpdate = f.Snapshot();
+    File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("HAU", 3)); var afterManualUpdate = f.Snapshot();
     processes.Running = false; processes.Exit.TrySetResult();
     Check(!(await update).Installed && f.Http.Requests.Count == 0); f.AssertSnapshot(afterManualUpdate);
 });
@@ -228,7 +228,7 @@ Test("A mod installed during download is preserved instead of being overwritten"
     f.Http.OnResponse = () =>
     {
         if (afterManualUpdate != null) return;
-        File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("MalumMenuEnhanced", 3));
+        File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("HAU", 3));
         afterManualUpdate = f.Snapshot();
     };
     await Reject(() => Service(f, new FakeProcesses()).ApplyAsync(Request(f, manifest)), "changed while downloading");
@@ -238,7 +238,7 @@ Test("A mod installed during download is preserved instead of being overwritten"
 Test("Automatic update requires an installed edition version of at least 1.0", async () =>
 {
     using var f = new Fixture(steam: true); var manifest = Prepare(f);
-    File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("MalumMenuEnhanced", 0)); var before = f.Snapshot();
+    File.WriteAllBytes(f.PluginPath, Fixture.AssemblyBytes("HAU", 0)); var before = f.Snapshot();
     await Reject(() => Service(f, new FakeProcesses()).ApplyAsync(Request(f, manifest)), "existing");
     Check(f.Http.Requests.Count == 0); f.AssertSnapshot(before);
 });

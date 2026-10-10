@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using System.Text.RegularExpressions;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(ChatController), nameof(ChatController.AddChat))]
 public static class ChatController_AddChat

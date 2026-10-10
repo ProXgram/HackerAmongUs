@@ -1,4 +1,4 @@
-"""Sign the latest compatible MalumMenu Enhanced release with a publisher key.
+"""Sign the latest compatible Hacker Among Us release with a publisher key.
 
 Requires Python and the cryptography package. Build the plugin ZIP and setup
 program first, then supply --version, --private-key and optional repeated
@@ -54,7 +54,7 @@ def release_asset(path: Path, version: str) -> dict[str, str | int]:
             sha.update(block)
     require(bytes_read == size, "A release asset changed while it was being read.")
     return {
-        "url": f"https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v{version}/{path.name}",
+        "url": f"https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v{version}/{path.name}",
         "sha256": sha.hexdigest().upper(),
         "size": size,
     }
@@ -97,14 +97,14 @@ def main() -> None:
     parser.add_argument("--version", required=True, type=numeric_version, help="Matching numeric mod version and GitHub release tag.")
     parser.add_argument("--private-key", required=True, type=Path, help="Publisher RSA PEM private key stored outside this repository.")
     parser.add_argument("--game-version", action="append", type=numeric_version, help="Supported Among Us version; repeat for multiple versions.")
-    parser.add_argument("--dry-run", action="store_true", help="Verify and sign without replacing updates/latest.json.")
+    parser.add_argument("--dry-run", action="store_true", help="Verify and sign without replacing updates/hau/latest.json.")
     args = parser.parse_args()
     games = args.game_version or ["2026.9.29"]
     require(1 <= len(games) <= 16 and len(set(games)) == len(games), "Supply one to sixteen distinct supported game versions.")
-    plugin = ROOT / f"downloads/v{args.version}/MalumMenuEnhanced-{args.version}-Plugin.zip"
-    setup = ROOT / "downloads/setup/MalumMenuEnhancedSetup.exe"
+    plugin = ROOT / f"downloads/hau-v{args.version}/HAU-{args.version}-Plugin.zip"
+    setup = ROOT / "downloads/setup/HAUSetup.exe"
     payload = {
-        "product": "MalumMenuEnhanced",
+        "product": "HAU",
         "modVersion": args.version,
         "supportedGameVersions": games,
         "pluginZip": release_asset(plugin, args.version),
@@ -121,7 +121,7 @@ def main() -> None:
     }
     data = (json.dumps(envelope, ensure_ascii=True, separators=(",", ":"), sort_keys=True) + "\n").encode("utf-8")
     require(0 < len(data) <= MAX_ENVELOPE_BYTES, "The manifest envelope exceeds its byte limit.")
-    output = ROOT / "updates/latest.json"
+    output = ROOT / "updates/hau/latest.json"
     if not args.dry_run:
         output.parent.mkdir(parents=True, exist_ok=True)
         require(not output.parent.is_symlink() and ROOT in output.parent.resolve().parents and not output.is_symlink(),

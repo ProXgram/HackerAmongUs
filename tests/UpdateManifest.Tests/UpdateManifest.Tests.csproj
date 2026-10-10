@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>UpdateManifest.Tests</AssemblyName>
-    <PathMap>$(MSBuildProjectDirectory)=/_/MalumMenuEnhanced/tests/UpdateManifest.Tests</PathMap>
+    <PathMap>$(MSBuildProjectDirectory)=/_/HackerAmongUs/tests/UpdateManifest.Tests</PathMap>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
   <ItemGroup>

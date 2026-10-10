@@ -1,4 +1,9 @@
-# MalumMenu Enhanced credits
+# Hacker Among Us (HAU) credits
+
+**HAU 1.0** is Rifegul's redesigned edition. The visible name is **Hacker Among
+Us**, abbreviated **HAU**. This edition introduces the reorganized interface,
+10x sprint controls and detailed outfit studio. Its version numbering starts at
+1.0; historical release records retain the names and versions they originally used.
 
 - **Current edition creator and maintainer:** Rifegul.
 - **Previous personal edition:** Haddad Menu, maintained by MHadd.
@@ -9,10 +14,12 @@
 - **Original game:** Among Us by Innersloth LLC.
 - **Frameworks:** BepInEx, Harmony and Il2CppInterop, with their own licenses.
 
-MalumMenu Enhanced is an independent fork with local changes; Rifegul's edition
+HAU is an independent fork with local changes; Rifegul's edition
 credit does not replace attribution for the original work. The original
 GPL-3.0 [LICENSE](LICENSE) and source-origin credits are retained. The release
 includes the corresponding source archive.
+
+## Earlier editions
 
 Version **3.3.7-au19** introduced the Haddad Menu name and `HaddadMenu.dll`.
 Version **1.0** is a branding-only release adopting **MalumMenu Enhanced**,
@@ -20,7 +27,8 @@ Version **1.0** is a branding-only release adopting **MalumMenu Enhanced**,
 Rifegul's renamed edition. It does not change gameplay or host authority, and
 earlier live tests remain attributed to their actual versions.
 
-The visible title and DLL name use MalumMenu Enhanced. The historical `MalumMenu`
-plugin/config ID and internal namespace remain for compatibility with existing
-settings and keybind profiles. Historical releases and verification records keep
-the names and results that applied when they were created.
+In the previous MalumMenu Enhanced edition, the visible title and DLL name used
+MalumMenu Enhanced. Its historical `MalumMenu` plugin/config ID and internal
+namespace remained for compatibility with existing settings and keybind profiles.
+Historical releases and verification records keep the names and results that
+applied when they were created.

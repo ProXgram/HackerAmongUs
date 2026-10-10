@@ -1,7 +1,7 @@
 using System;
 using AmongUs.GameOptions;
 
-namespace MalumMenu;
+namespace HAU;
 
 // This changes only the local game's role presentation. The host retains its
 // original role assignment and can reject actions requested by this client.
@@ -46,7 +46,7 @@ public static class LocalImpostorHandler
             _blockedKillReported = true;
             const string message = "Kill blocked: your Impostor role is local only. " +
                 "Accepted kills require a real assigned Impostor role.";
-            MalumMenu.Log.LogWarning(message);
+            HAUPlugin.Log.LogWarning(message);
             ConsoleUI.Log(message);
         }
         return true;
@@ -194,13 +194,13 @@ public static class LocalImpostorHandler
             _changedLocally = true;
             _blockedKillReported = false;
             _lastResult = LocalRoleStatus;
-            MalumMenu.Log.LogInfo("Always Impostor: applied local-only role; host assignment is unchanged.");
+            HAUPlugin.Log.LogInfo("Always Impostor: applied local-only role; host assignment is unchanged.");
         }
         catch (Exception error)
         {
             _failed = true;
             _lastResult = "Local-only assignment failed; toggle off/on to retry.";
-            MalumMenu.Log.LogError("Always Impostor: local-only assignment failed: " + error);
+            HAUPlugin.Log.LogError("Always Impostor: local-only assignment failed: " + error);
 
             // Keep enough information to undo a partial native assignment.
             try
@@ -244,13 +244,13 @@ public static class LocalImpostorHandler
             _originalRole = null;
             _appliedRolePointer = IntPtr.Zero;
             _lastResult = "Local-only mode disabled; original local role restored.";
-            MalumMenu.Log.LogInfo("Always Impostor: restored the original local role.");
+            HAUPlugin.Log.LogInfo("Always Impostor: restored the original local role.");
         }
         catch (Exception error)
         {
             _failed = true;
             _lastResult = "Local role restoration failed; see Console log.";
-            MalumMenu.Log.LogError("Always Impostor: local role restoration failed: " + error);
+            HAUPlugin.Log.LogError("Always Impostor: local role restoration failed: " + error);
         }
     }
 

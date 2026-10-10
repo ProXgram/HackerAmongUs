@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 /// <summary>Returns ground movement only; never changes position or sends messages.</summary>
 public static class NavigationRouter

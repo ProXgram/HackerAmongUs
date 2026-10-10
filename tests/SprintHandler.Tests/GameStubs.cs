@@ -75,7 +75,7 @@ namespace BepInEx.Configuration
 {
     public sealed class ConfigEntry<T> { public T Value; public ConfigEntry(T value) => Value = value; }
 }
-namespace MalumMenu
+namespace HAU
 {
     public static class MovementAutomation { public static bool Active; }
     public static class Utils
@@ -91,7 +91,7 @@ namespace MalumMenu
     }
     public static class CheatToggles { public static bool sprint; }
     public static class MenuUI { public static bool isGUIActive; }
-    public static class MalumMenu
+    public static class HAUPlugin
     {
         public static bool isPanicked;
         public static BepInEx.Configuration.ConfigEntry<string> sprintKeybind = new("LeftShift");

@@ -1,7 +1,7 @@
 using HarmonyLib;
 using System;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(HudManager), nameof(HudManager.Start))]
 public static class HudManager_Start
@@ -29,7 +29,7 @@ public static class HudManager_Update
 {
 	public static void Postfix(HudManager __instance)
     {
-		__instance.ShadowQuad.gameObject.SetActive(!MalumESP.IsFullbrightActive()); // Fullbright
+		__instance.ShadowQuad.gameObject.SetActive(!InformationTools.IsFullbrightActive()); // Fullbright
 
 		if (Utils.IsChatUiActive()) // AlwaysChat
 		{
@@ -41,9 +41,9 @@ public static class HudManager_Update
 			__instance.Chat.gameObject.SetActive(false);
 		}
 
-		MalumCheats.UseVentCheat(__instance);
-		MalumESP.ZoomOut(__instance);
-		MalumESP.FreecamCheat();
+		GameActions.UseVentCheat(__instance);
+		InformationTools.ZoomOut(__instance);
+		InformationTools.FreecamCheat();
 
 		// Close PlayerPickMenu if there is no PPM cheat enabled
 		if (PlayerPickMenu.playerpickMenu != null && CheatToggles.ShouldPPMClose())

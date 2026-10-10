@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class OverloadUI : MonoBehaviour
 {
@@ -26,12 +26,12 @@ public class OverloadUI : MonoBehaviour
 
     private void Start()
     {
-        killSwitchThreshold = 500 * MalumMenu.killSwitchLvl.Value;
+        killSwitchThreshold = 500 * HAUPlugin.killSwitchLvl.Value;
 
         if (!CheatToggles.olAutoAdapt)
         {
-            OverloadHandler.strength = MalumMenu.defaultStrength.Value;
-            OverloadHandler.cooldown = MalumMenu.defaultCooldown.Value;
+            OverloadHandler.strength = HAUPlugin.defaultStrength.Value;
+            OverloadHandler.cooldown = HAUPlugin.defaultCooldown.Value;
         }
     }
 
@@ -140,7 +140,7 @@ public class OverloadUI : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!CheatToggles.showOverload || !MenuUI.isGUIActive || MalumMenu.isPanicked) return;
+        if (!CheatToggles.showOverload || !MenuUI.isGUIActive || HAUPlugin.isPanicked) return;
 
         InitStyles();
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public enum MovementMode { Off, TurboOrbit, ZigzagDash, TeleportYoYo, ShadowFollow, AiTasks, LagWalk }
 
@@ -228,7 +228,7 @@ public static class MovementAutomation
             if (!CanUseContext(local)) { Reset(); return; }
             EnsureContext(local);
             if (!Active) return;
-            if (MalumMenu.isPanicked || local.Data.IsDead || local.Data.Disconnected)
+            if (HAUPlugin.isPanicked || local.Data.IsDead || local.Data.Disconnected)
             {
                 Stop();
                 return;
@@ -447,7 +447,7 @@ public static class MovementAutomation
                     _reportedNavigationIssue = true;
                     if (!NavigationRouter.IsMovingRoutePending) LastNavigationIssue = navigationStatus;
                     var targetPoint = _target.GetTruePosition();
-                    MalumMenu.Log?.LogInfo("Movement route " + Mode + ": " + navigationStatus +
+                    HAUPlugin.Log?.LogInfo("Movement route " + Mode + ": " + navigationStatus +
                         "; own=(" + from.x + "," + from.y + "); target=(" + targetPoint.x + "," + targetPoint.y + ")" +
                         "; " + NavigationRouter.Diagnostics);
                 }
@@ -488,7 +488,7 @@ public static class MovementAutomation
                     _baseSpeed = physics.Speed;
                     _capturedSpeed = true;
                 }
-                float multiplier = movingTarget ? MalumMenu.targetMovementMultiplier.Value : MalumMenu.stuntMultiplier.Value;
+                float multiplier = movingTarget ? HAUPlugin.targetMovementMultiplier.Value : HAUPlugin.stuntMultiplier.Value;
                 if (!IsFinite(multiplier)) multiplier = movingTarget ? 3f : 2f;
                 if (movingTarget && targetDistance > 2f) multiplier = Mathf.Max(2f, multiplier);
                 physics.Speed = Mathf.Clamp(_baseSpeed * Mathf.Clamp(multiplier, 1f, 4f), -20f, 20f);
@@ -559,7 +559,7 @@ public static class MovementAutomation
         }
         catch (Exception error)
         {
-            MalumMenu.Log?.LogWarning("Movement local error: " + error.GetType().Name + ": " + error.Message);
+            HAUPlugin.Log?.LogWarning("Movement local error: " + error.GetType().Name + ": " + error.Message);
             Stop();
             StatusText = "Movement: stopped after a local error";
         }
@@ -580,7 +580,7 @@ public static class MovementAutomation
 
     private static double LagInterval()
     {
-        float interval = MalumMenu.lagInterval.Value;
+        float interval = HAUPlugin.lagInterval.Value;
         if (!IsFinite(interval)) interval = 0.75f;
         interval = Mathf.Clamp(interval, 0.5f, 2f);
         // Uneven corrections while ordinary walking continues. A late frame
@@ -685,7 +685,7 @@ public static class MovementAutomation
         // Require substantial actual walking; a held key against a wall must
         // not manufacture a teleport or replay a previous successful segment.
         if (_lagWalkDistance < 0.25f) return;
-        float limit = MalumMenu.lagJumpDistance.Value;
+        float limit = HAUPlugin.lagJumpDistance.Value;
         if (!IsFinite(limit)) limit = 1.25f;
         limit = Mathf.Clamp(limit, 0.25f, 2f);
         Vector2 recentMotion = Vector2.zero;
@@ -733,7 +733,7 @@ public static class MovementAutomation
 
     private static bool TryLagSnap(PlayerControl local, Vector2 from, Vector2 transformPosition, ref Vector2 displacement)
     {
-        float limit = MalumMenu.lagJumpDistance.Value;
+        float limit = HAUPlugin.lagJumpDistance.Value;
         if (!IsFinite(limit)) limit = 1.25f;
         limit = Mathf.Clamp(limit, 0.25f, 2f);
         float distance = displacement.magnitude;
@@ -944,7 +944,7 @@ public static class MovementAutomation
 
     private static float JumpInterval()
     {
-        float interval = MalumMenu.yoyoInterval.Value;
+        float interval = HAUPlugin.yoyoInterval.Value;
         return IsFinite(interval) ? Mathf.Clamp(interval, 1f, 5f) : 1f;
     }
 }

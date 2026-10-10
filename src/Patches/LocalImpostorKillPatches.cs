@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(KillButton), nameof(KillButton.DoClick))]
 public static class KillButton_DoClick

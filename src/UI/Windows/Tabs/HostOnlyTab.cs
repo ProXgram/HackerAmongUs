@@ -1,93 +1,83 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class HostOnlyTab : ITab
 {
-    public string name => "Host Only";
+    public string name => "Host Controls";
+    private int _page;
 
     public void Draw()
     {
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth - 190f));
-        GUILayout.Label("Lobby rule: ghost voting", GUIStylePreset.TabSubtitle);
-        // The ghost's copy enables local vote selection; only the host counts it.
-        CheatToggles.ghostVoting = GUILayout.Toggle(CheatToggles.ghostVoting, " Ghost Voting (host support required)");
-        GUILayout.Label("The host and each voting ghost must enable this mod.\nGuests can enable their vote controls here; the host must allow the votes.");
-        GUILayout.Space(15f);
-        GUILayout.Label(Utils.isFreePlay ? "Host tools available in practice."
-            : Utils.isHost ? "You are hosting: host controls are available."
-            : "Host controls unlock when you host a lobby or enter practice.");
-        bool wasEnabled = GUI.enabled;
-        GUI.enabled = wasEnabled && (Utils.isHost || Utils.isFreePlay);
+        _page = UIHelpers.Subtabs(_page, "Lobby rules", "Meetings", "Player actions");
+        bool host = Utils.isHost || Utils.isFreePlay;
+        UIHelpers.Hint(Utils.isFreePlay ? "Host controls are available in Freeplay."
+            : Utils.isHost ? "You are hosting. These settings affect the shared game."
+            : "Host controls unlock when you host a lobby or enter Freeplay.");
+
+        // A ghost must opt into its local controls; only a supporting host counts votes.
+        if (_page == 0 || _page == 1)
+        {
+            UIHelpers.BeginSection("Ghost Voting", "The host and each voting ghost need this mod enabled.");
+            CheatToggles.ghostVoting = GUILayout.Toggle(CheatToggles.ghostVoting,
+                host ? " Allow ghost votes in my lobby" : " Enable my ghost vote controls");
+            UIHelpers.Hint(host ? "Ask each voting ghost to enable their controls. Multiplayer vote counting remains untested."
+                : "Your host must allow ghost votes. Enabling this alone does not make your vote count.");
+            UIHelpers.EndSection();
+        }
+
+        bool previous = GUI.enabled;
+        GUI.enabled = previous && host;
         try
         {
-            GUILayout.Label("Role assignment", GUIStylePreset.TabSubtitle);
-            RolePreviewControls.DrawAlwaysImpostor(" Always Impostor (real host / practice role)");
-            GUILayout.Space(15f);
-            DrawMeetings();
-            GUILayout.Space(15f);
-            GUILayout.Label("Kill rules", GUIStylePreset.TabSubtitle);
-            DrawGeneral();
-            GUILayout.Space(15f);
-            DrawMurder();
-            GUILayout.Space(15f);
-            GUILayout.Label("Ship rules", GUIStylePreset.TabSubtitle);
-            CheatToggles.unfixableLights = GUILayout.Toggle(CheatToggles.unfixableLights, " Unfixable Lights");
-            CheatToggles.kickVents = GUILayout.Toggle(CheatToggles.kickVents, " Kick All From Vents");
-            GUILayout.Space(15f);
-            DrawGameState();
+            if (_page == 0) DrawRules();
+            else if (_page == 1) DrawMeetings();
+            else DrawPlayerActions();
         }
-        finally { GUI.enabled = wasEnabled; }
-        GUILayout.EndVertical();
+        finally { GUI.enabled = previous; }
     }
 
-    private void DrawGeneral()
+    private static void DrawRules()
     {
-        CheatToggles.killVanished = GUILayout.Toggle(CheatToggles.killVanished, " Kill While Vanished");
-
-        CheatToggles.killAnyone = GUILayout.Toggle(CheatToggles.killAnyone, " Kill Anyone");
-
-        CheatToggles.noKillCd = GUILayout.Toggle(CheatToggles.noKillCd, " No Kill Cooldown");
-
-        CheatToggles.showProtectMenu = GUILayout.Toggle(CheatToggles.showProtectMenu, " Show Protect Menu");
-
-        // CheatToggles.forceRole = GUILayout.Toggle(CheatToggles.forceRole, " Force Role");
-
-        // CheatToggles.noOptionsLimits = GUILayout.Toggle(CheatToggles.noOptionsLimits, " No Options Limits");
+        UIHelpers.BeginSection("My role assignment", "Set your own role before the round starts.");
+        RolePreviewControls.DrawAlwaysImpostor(" Assign me Impostor / host or Freeplay");
+        UIHelpers.EndSection();
+        UIHelpers.BeginSection("Round rules");
+        CheatToggles.noGameEnd = GUILayout.Toggle(CheatToggles.noGameEnd, " Keep the round running after win conditions");
+        CheatToggles.unfixableLights = GUILayout.Toggle(CheatToggles.unfixableLights, " Make lights unfixable until disabled");
+        UIHelpers.Action("Start the lobby now", ref CheatToggles.forceStartGame, Utils.isLobby);
+        UIHelpers.EndSection();
+        UIHelpers.BeginSection("Kill rules");
+        CheatToggles.noKillCd = GUILayout.Toggle(CheatToggles.noKillCd, " Remove my kill cooldown");
+        CheatToggles.killAnyone = GUILayout.Toggle(CheatToggles.killAnyone, " Allow targeting teammates and protected players");
+        CheatToggles.killVanished = GUILayout.Toggle(CheatToggles.killVanished, " Allow kills while vanished");
+        CheatToggles.showProtectMenu = GUILayout.Toggle(CheatToggles.showProtectMenu, " Open player protection window");
+        UIHelpers.EndSection();
     }
 
-    private void DrawMurder()
+    private static void DrawMeetings()
     {
-        GUILayout.Label("Player actions", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.killPlayer = GUILayout.Toggle(CheatToggles.killPlayer, " Kill Player");
-
-        CheatToggles.telekillPlayer = GUILayout.Toggle(CheatToggles.telekillPlayer, " Telekill Player");
-
-        CheatToggles.killAllCrew = GUILayout.Toggle(CheatToggles.killAllCrew, " Kill All Crewmates");
-
-        CheatToggles.killAllImps = GUILayout.Toggle(CheatToggles.killAllImps, " Kill All Impostors");
-
-        CheatToggles.killAll = GUILayout.Toggle(CheatToggles.killAll, " Kill Everyone");
+        UIHelpers.BeginSection("Meeting actions");
+        UIHelpers.Action("Start emergency meeting", ref CheatToggles.callMeeting, Utils.isShip && !Utils.isMeeting);
+        UIHelpers.Action("End meeting for everyone / skip", ref CheatToggles.skipMeeting, Utils.isMeeting);
+        UIHelpers.ChoosePlayer("Choose player to eject", ref CheatToggles.ejectPlayer, Utils.isMeeting);
+        CheatToggles.voteImmune = GUILayout.Toggle(CheatToggles.voteImmune, " Prevent votes from ejecting me");
+        UIHelpers.Hint("Eject and End meeting are available during a meeting.");
+        UIHelpers.EndSection();
     }
 
-    private void DrawGameState()
+    private static void DrawPlayerActions()
     {
-        GUILayout.Label("Game State", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.forceStartGame = GUILayout.Toggle(CheatToggles.forceStartGame, " Force Start Game");
-
-        CheatToggles.noGameEnd = GUILayout.Toggle(CheatToggles.noGameEnd, " No Game End");
-    }
-
-    private void DrawMeetings()
-    {
-        GUILayout.Label("Meetings", GUIStylePreset.TabSubtitle);
-        CheatToggles.callMeeting = GUILayout.Toggle(CheatToggles.callMeeting, " Force emergency meeting");
-        CheatToggles.skipMeeting = GUILayout.Toggle(CheatToggles.skipMeeting, " End meeting for everyone");
-
-        CheatToggles.voteImmune = GUILayout.Toggle(CheatToggles.voteImmune, " Vote Immune");
-
-        CheatToggles.ejectPlayer = GUILayout.Toggle(CheatToggles.ejectPlayer, " Eject Player");
+        UIHelpers.BeginSection("Choose a player", "Opens the player selection screen. Kill actions are unavailable in the lobby.");
+        UIHelpers.ChoosePlayer("Choose player to kill", ref CheatToggles.killPlayer, Utils.isShip && !Utils.isLobby);
+        UIHelpers.ChoosePlayer("Choose player to kill and return", ref CheatToggles.telekillPlayer, Utils.isShip && !Utils.isLobby);
+        UIHelpers.EndSection();
+        UIHelpers.BeginSection("Group actions");
+        UIHelpers.Action("Kill all crewmates", ref CheatToggles.killAllCrew, Utils.isShip && !Utils.isLobby);
+        UIHelpers.Action("Kill all impostors", ref CheatToggles.killAllImps, Utils.isShip && !Utils.isLobby);
+        UIHelpers.Action("Kill everyone", ref CheatToggles.killAll, Utils.isShip && !Utils.isLobby);
+        CheatToggles.kickVents = GUILayout.Toggle(CheatToggles.kickVents, " Keep players out of vents");
+        UIHelpers.Hint("Vent clearing stays active until you turn it off.");
+        UIHelpers.EndSection();
     }
 }

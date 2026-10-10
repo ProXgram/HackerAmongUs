@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class MultiRoleUI : MonoBehaviour
 {
@@ -29,7 +29,7 @@ public class MultiRoleUI : MonoBehaviour
     {
         get
         {
-            if (!MultiRoleHandler.Active || MalumMenu.isPanicked || MenuUI.isGUIActive ||
+            if (!MultiRoleHandler.Active || HAUPlugin.isPanicked || MenuUI.isGUIActive ||
                 Utils.isMeeting || Utils.isExiling || Minigame.Instance ||
                 !HudManager.InstanceExists) return false;
 
@@ -58,12 +58,13 @@ public class MultiRoleUI : MonoBehaviour
 
     private void OnGUI()
     {
+        if (!IsNotesCloseVisible && !IsVisible) return;
+        using var theme = UIHelpers.UseTheme(false);
         if (IsNotesCloseVisible)
         {
             var savedBackground = GUI.backgroundColor;
             try
             {
-                UIHelpers.ApplyUIColor();
                 if (GUI.Button(NotesCloseRect, "Close Detective Notes"))
                     MultiRoleDetectiveHandler.CloseNotes();
             }
@@ -84,10 +85,9 @@ public class MultiRoleUI : MonoBehaviour
         var previousEnabled = GUI.enabled;
         try
         {
-            UIHelpers.ApplyUIColor();
             ClampWindow();
             windowRect = GUI.Window((int)WindowId.MultiRoleUI, windowRect,
-                (GUI.WindowFunction)DrawWindow, "Multi Role");
+                (GUI.WindowFunction)DrawWindow, "HAU / Multi Role", GUIStylePreset.Window);
             ClampWindow();
         }
         finally

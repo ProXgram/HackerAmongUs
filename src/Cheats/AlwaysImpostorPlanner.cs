@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 
 internal static class AlwaysImpostorPlanner
 {

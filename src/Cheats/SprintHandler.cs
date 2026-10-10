@@ -1,12 +1,12 @@
 using System;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class SprintHandler
 {
-    public const float MaximumMultiplier = 8f;
-    public const float MaximumSpeed = 40f;
+    public const float MaximumMultiplier = 10f;
+    public const float MaximumSpeed = 50f;
 
     private static PlayerPhysics _physics;
     private static IntPtr _playerPointer;
@@ -17,8 +17,8 @@ public static class SprintHandler
     public static bool IsSprinting => _physics;
     public static string StatusText => _statusText;
 
-    public static string Indicator => CheatToggles.sprint && !MalumMenu.isPanicked &&
-        Input.GetKey(Utils.StringToKeycode(MalumMenu.sprintKeybind.Value)) ? _statusText : "";
+    public static string Indicator => CheatToggles.sprint && !HAUPlugin.isPanicked &&
+        Input.GetKey(Utils.StringToKeycode(HAUPlugin.sprintKeybind.Value)) ? _statusText : "";
 
     public static void Tick()
     {
@@ -34,8 +34,8 @@ public static class SprintHandler
                 _physics.Pointer != physics.Pointer))
                 Reset();
 
-            var key = Utils.StringToKeycode(MalumMenu.sprintKeybind.Value);
-            if (!CheatToggles.sprint || MalumMenu.isPanicked || MovementAutomation.Active || !Application.isFocused ||
+            var key = Utils.StringToKeycode(HAUPlugin.sprintKeybind.Value);
+            if (!CheatToggles.sprint || HAUPlugin.isPanicked || MovementAutomation.Active || !Application.isFocused ||
                 MenuUI.isGUIActive || key == KeyCode.None ||
                 !Utils.isClient || (!Utils.isInGame && !Utils.isFreePlay && !Utils.isLobby) ||
                 !local || (!ship && !Utils.isLobby) || !physics || !local.AmOwner || local.Data == null ||
@@ -66,7 +66,7 @@ public static class SprintHandler
             if (!Input.GetKey(key))
             {
                 Reset();
-                _statusText = "Sprint: hold " + MalumMenu.sprintKeybind.Value;
+                _statusText = "Sprint: hold " + HAUPlugin.sprintKeybind.Value;
                 return;
             }
 
@@ -79,7 +79,7 @@ public static class SprintHandler
                 _baseSpeed = physics.Speed;
             }
 
-            var multiplier = MalumMenu.sprintMultiplier.Value;
+            var multiplier = HAUPlugin.sprintMultiplier.Value;
             if (float.IsNaN(multiplier) || float.IsInfinity(multiplier)) multiplier = 2f;
             multiplier = Mathf.Clamp(multiplier, 1f, MaximumMultiplier);
             // Always multiply the captured speed, never the previously boosted value.
@@ -90,7 +90,7 @@ public static class SprintHandler
         catch (Exception exception)
         {
             Reset();
-            MalumMenu.Log?.LogWarning("Sprint paused: " + exception.Message);
+            HAUPlugin.Log?.LogWarning("Sprint paused: " + exception.Message);
         }
     }
 
@@ -110,7 +110,7 @@ public static class SprintHandler
         }
         catch (Exception exception)
         {
-            MalumMenu.Log?.LogWarning("Sprint cleanup: " + exception.Message);
+            HAUPlugin.Log?.LogWarning("Sprint cleanup: " + exception.Message);
         }
     }
 }

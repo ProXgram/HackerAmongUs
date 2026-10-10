@@ -140,7 +140,7 @@ namespace UnityEngine
         public static float Sin(float value) => MathF.Sin(value);
     }
 }
-namespace MalumMenu
+namespace HAU
 {
     public static class Utils { public static bool isClient, isLobby, isInGame, isFreePlay, isMeeting, isExiling; }
     public static class MenuUI { public static bool isGUIActive; }
@@ -151,7 +151,7 @@ namespace MalumMenu
         public void LogInfo(object message) { }
         public void LogWarning(object message) { }
     }
-    public static class MalumMenu
+    public static class HAUPlugin
     {
         public static FixtureLogger Log = new();
         public static bool isPanicked;

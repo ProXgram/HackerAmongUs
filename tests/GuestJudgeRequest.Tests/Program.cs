@@ -1,5 +1,5 @@
 using AmongUs.GameOptions;
-using MalumMenu;
+using HAU;
 
 var tests = new (string Name, Action Run)[]
 {
@@ -56,7 +56,7 @@ static PlayerControl SetUp(bool bind = true)
     Calls.RoleRequests.Clear();
     Calls.OnRoleRequest = null;
     Calls.KillRequests = 0;
-    MalumMenu.MalumMenu.Log = new();
+    HAU.HAUPlugin.Log = new();
     AmongUsClient.Instance = new() { Pointer = NextPointer(), GameId = 123, HostId = 20, IsGamePublic = false };
     ShipStatus.Instance = new() { Pointer = NextPointer() };
     HudManager.Instance = new() { Pointer = NextPointer() };
@@ -289,7 +289,7 @@ static void GameplayGuards()
         Require(GuestRoundTest.RoleRequestBlockReason != "", $"{context.Name} had no block reason.");
         GuestRoundTest.SendOwnRoleRequestOnce();
         Require(Calls.RoleRequests.Count == 0, $"{context.Name} sent a native request.");
-        Require(MalumMenu.MalumMenu.Log.Errors.Count == 0, $"{context.Name} threw instead of rejecting safely.");
+        Require(HAU.HAUPlugin.Log.Errors.Count == 0, $"{context.Name} threw instead of rejecting safely.");
     }
 }
 

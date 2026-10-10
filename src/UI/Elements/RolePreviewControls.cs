@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class RolePreviewControls
 {
@@ -13,6 +13,6 @@ public static class RolePreviewControls
 
         if (CheatToggles.alwaysImpostor)
             GUILayout.Label(AlwaysImpostorHandler.StatusText, GUIStylePreset.TabSubtitle,
-                GUILayout.Width(270f));
+                GUILayout.MaxWidth(Mathf.Min(420f, MenuUI.ContentWidth - 32f)));
     }
 }

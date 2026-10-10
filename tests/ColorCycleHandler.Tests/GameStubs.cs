@@ -41,7 +41,7 @@ public sealed class PlayerControl : NativeObject
     public void CmdCheckColor(byte color)
     {
         if (!AmOwner || Pointer != LocalPlayer?.Pointer || Data == null || Data.Disconnected || Data.IsDead ||
-            !MalumMenu.Utils.isLobby || MalumMenu.Utils.isInGame || MalumMenu.Utils.isFreePlay || CurrentOutfitType != PlayerOutfitType.Default)
+            !HAU.Utils.isLobby || HAU.Utils.isInGame || HAU.Utils.isFreePlay || CurrentOutfitType != PlayerOutfitType.Default)
             throw new InvalidOperationException("Invalid owner/lobby request");
         if (color >= Math.Min(Palette.PlayerColors?.Length ?? 0, Palette.ShadowColors?.Length ?? 0))
             throw new InvalidOperationException("Invalid color request");
@@ -69,10 +69,10 @@ namespace BepInEx.Configuration
 {
     public sealed class ConfigEntry<T> { public T Value; public ConfigEntry(T value) => Value = value; }
 }
-namespace MalumMenu
+namespace HAU
 {
     public static class Utils { public static bool isClient, isLobby, isInGame, isFreePlay; }
-    public static class MalumMenu
+    public static class HAUPlugin
     {
         public static bool isPanicked;
         public static BepInEx.Configuration.ConfigEntry<float> rainbowColorInterval = new(0.6f);

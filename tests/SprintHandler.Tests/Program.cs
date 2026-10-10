@@ -1,6 +1,6 @@
-using MalumMenu;
+using HAU;
 using UnityEngine;
-using Plugin = MalumMenu.MalumMenu;
+using Plugin = HAU.HAUPlugin;
 
 int total = 0, failed = 0;
 var blocked = new (string Name, Action Change)[]
@@ -74,7 +74,7 @@ foreach (float baseline in new[] { 1.234567f, -1.234567f, 0f })
         SprintHandler.Reset(); Equal(physics.PeekSpeed, baseline, "idle reset changed speed");
     });
 
-foreach (var test in new (float Baseline, float Multiplier, float Expected)[] { (2f, 0f, 2f), (2f, 99f, 16f), (2f, 2.5f, 5f), (8f, 4f, 32f), (-8f, 4f, -32f), (8f, 8f, 40f), (-8f, 8f, -40f), (2f, float.NaN, 4f), (2f, float.PositiveInfinity, 4f), (2f, float.NegativeInfinity, 4f) })
+foreach (var test in new (float Baseline, float Multiplier, float Expected)[] { (2f, 0f, 2f), (2f, 99f, 20f), (2f, 2.5f, 5f), (8f, 4f, 32f), (-8f, 4f, -32f), (8f, 8f, 50f), (-8f, 8f, -50f), (8f, 10f, 50f), (-8f, 10f, -50f), (2f, float.NaN, 4f), (2f, float.PositiveInfinity, 4f), (2f, float.NegativeInfinity, 4f) })
     Run($"multiplier {test.Multiplier} respects configured limits and signed cap", () =>
     {
         SetUp(test.Baseline); Plugin.sprintMultiplier.Value = test.Multiplier;
@@ -83,13 +83,13 @@ foreach (var test in new (float Baseline, float Multiplier, float Expected)[] { 
         SprintHandler.Reset(); Equal(physics.PeekSpeed, test.Baseline, "clamped sprint did not restore baseline");
     });
 
-Run("eight-times sprint exceeds the previous speed cap and restores on release", () =>
+Run("ten-times sprint holds without compounding and restores on release", () =>
 {
-    SetUp(3.25f); Plugin.sprintMultiplier.Value = 8f;
+    SetUp(3.25f); Plugin.sprintMultiplier.Value = 10f;
     var physics = PlayerControl.LocalPlayer.MyPhysics;
     for (int frame = 0; frame < 100; frame++)
     {
-        SprintHandler.Tick(); Equal(physics.PeekSpeed, 26f, "eight-times sprint was clipped or compounded");
+        SprintHandler.Tick(); Equal(physics.PeekSpeed, 32.5f, "ten-times sprint was clipped or compounded");
     }
     Input.Pressed.Clear(); SprintHandler.Tick();
     Require(BitConverter.SingleToInt32Bits(physics.PeekSpeed) == BitConverter.SingleToInt32Bits(3.25f), "release changed the original speed bits");
@@ -109,10 +109,10 @@ Run("multiplier changes while held use the original snapshot", () =>
     SetUp(2f); Plugin.sprintMultiplier.Value = 4f;
     var physics = PlayerControl.LocalPlayer.MyPhysics; SprintHandler.Tick();
     Equal(physics.PeekSpeed, 8f, "initial four-times multiplier was wrong");
-    Plugin.sprintMultiplier.Value = 8f;
+    Plugin.sprintMultiplier.Value = 10f;
     for (int frame = 0; frame < 100; frame++)
     {
-        SprintHandler.Tick(); Equal(physics.PeekSpeed, 16f, "raising multiplier while held compounded boosted speed");
+        SprintHandler.Tick(); Equal(physics.PeekSpeed, 20f, "raising multiplier while held compounded boosted speed");
     }
     Plugin.sprintMultiplier.Value = 3f; SprintHandler.Tick(); Equal(physics.PeekSpeed, 6f, "new multiplier compounded boosted speed");
     Plugin.sprintMultiplier.Value = 1f; SprintHandler.Tick(); Equal(physics.PeekSpeed, 2f, "minimum multiplier did not use baseline");

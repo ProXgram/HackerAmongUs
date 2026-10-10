@@ -7,5 +7,6 @@ public enum WindowId
     RolesUI = 4,
     ProtectUI = 5,
     OverloadUI = 6,
-    MultiRoleUI = 7
+    MultiRoleUI = 7,
+    OutfitPickerUI = 8
 }

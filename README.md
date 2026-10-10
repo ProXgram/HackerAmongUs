@@ -1,65 +1,96 @@
-# MalumMenu Enhanced
+# Hacker Among Us (HAU)
 
-An Among Us mod menu by **Rifegul**.
+**An Among Us mod by Rifegul. Version 1.0.**
 
-Windows PC edition for **Steam / Microsoft Store / Epic Games / Xbox App**.
-For Among Us **19.0.0 / 2026.9.29** on Windows 10/11, 64-bit.
+A redesigned menu with clear categories, a new look and detailed controls.
+For **Among Us 19.0.0 / 2026.9.29**, on **Windows 10/11, 64-bit**.
 
-## Installation
+## Install
 
-Choose one of these two ways. All downloads are on the [download page](https://github.com/ProXgram/MalumMenuEnhanced/releases/tag/v1.1.0).
+### Automatic installer / Steam, Microsoft Store and Xbox App
 
-### All-in-one installer — Steam / Microsoft Store / Xbox App
+**[Download HAUSetup.exe](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAUSetup.exe)**
 
-**[Download the installer](https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhancedSetup.exe)**
+Close Among Us, open the file and click **Install**. It finds your game and
+installs the mod and loader. If needed, click **Browse** and select `Among Us.exe`.
 
-Close Among Us, open the downloaded file and click **Install**. The installer
-finds your game and downloads what it needs. If needed, click **Browse** and
-select `Among Us.exe`.
+### Manual ZIP / all supported PC launchers
 
-### Manual ZIP
+- **[Steam ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Steam.zip)**
+- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-MicrosoftStore-EpicGames-XboxApp.zip)**
 
-- **[Steam ZIP](https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Steam.zip)**
-- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-MicrosoftStore-EpicGames-XboxApp.zip)**
+Close Among Us, extract your ZIP and copy **everything inside it** directly
+beside `Among Us.exe`. Open the game normally, wait for the first launch to
+finish, then press **Delete**.
 
-1. Download the ZIP for your launcher and close Among Us.
-2. Open your game folder using [these short steps](docs/INSTALL.md#find-your-game-folder).
-3. Extract the ZIP and copy **everything inside it** directly beside `Among Us.exe`.
-4. Open Among Us normally. Wait for the first launch to finish, then press **Delete**.
+[Find your game folder and view the full instructions](docs/INSTALL.md).
 
-Each ZIP includes the mod and its loader. Xbox / Microsoft Store gameplay has
-been tested. Steam and Epic Games gameplay have not yet been tested. This edition
-is for Windows PC.
+## The new menu
+
+![HAU menu](docs/screenshots/hau-home.png)
+
+| Section | What you can find |
+| --- | --- |
+| Home | Shortcuts, your current activity and whether you are host or guest. |
+| Movement | Sprint up to **10×**, walking speed, follow, orbit, Lag Mode and teleport controls. |
+| Player Tools | Meeting/report tools, door requests and chat settings. |
+| Appearance | Outfit studio, random outfits, nickname editing, colors and visual effects. |
+| Information | Player labels, camera controls, map markers and direction lines. |
+| Tasks | Manually enabled Automatic Tasks, AI Tasks and the task list. |
+| Abilities | Multi Role, ability settings and clearly labeled local previews. |
+| Host Controls | Hosted role assignment, Ghost Voting, shared round rules, meetings and player actions. |
+| Practice | Freeplay role experiments. |
+| Settings | Menu options, key choices, profiles and update settings. |
+| About | Edition and game compatibility details. |
+| Logs | Choose events to record and open or clear the event log. |
+
+Each section groups related controls. **Buttons perform an action; switches
+stay on until disabled.** Host controls stay disabled when you are a guest.
+
+## Outfit studio
+
+![HAU outfit studio](docs/screenshots/hau-outfit-picker.png)
+
+This capture shows the interface while the local game's startup issue prevents
+the cosmetic catalog from loading. Item selection and outfit changes still
+need a live lobby or Freeplay check.
+
+Open **Appearance → Outfit & name → Open full outfit picker**. Browse colors,
+hats, skins, visors, pets and nameplates. Search, inspect an item and equip just
+that slot. Availability and what other players see depend on the game's checks.
+
+## Tasks and movement
+
+- **Sprint:** enable it in Movement and hold your chosen sprint key with the menu closed.
+- **AI Tasks:** press Start AI Tasks under Tasks, then close the menu. It walks to your own task consoles.
+- **Automatic Tasks:** turn it on yourself each round. It never starts from a saved profile.
+- **F8:** stops movement automation and color cycling.
+
+Multi Role combines vent access, tracking, Vitals and Detective tools in one
+panel. Your assigned online role stays the same. Vent and other network requests
+still depend on host validation.
+
+**Ghost Voting needs the host and each voting ghost to enable the mod.**
+Multiplayer vote counting remains untested.
 
 ## Automatic updates
 
-Steam / Microsoft Store / Xbox App editions check for a newer compatible release when Among Us opens. Updates
-install after you close the game and keep your settings. Turn this off under
-**Delete → Settings → Automatic updates**.
+Steam / Microsoft Store / Xbox App editions check for newer compatible releases
+when Among Us starts. Updates install after you close the game, keeping your
+settings. The switch is under **Settings → Automatic updates**.
 
-A game update that breaks compatibility needs a new mod build first. If the
-mod cannot start, run the latest installer. Epic Games uses manual updates.
+If a game update breaks compatibility, a compatible mod release must be
+published first. If the mod cannot start, run the latest installer. Epic Games
+uses manual ZIP updates.
 
-## Screenshots
+Earlier editions were tested in Xbox / Microsoft Store gameplay. HAU 1.0 has
+passed build and fixture checks; its live round checks are pending while the
+local unmodified game also stays on a black startup screen. Steam and Epic
+Games gameplay remain untested.
 
-![All-in-one installer](docs/screenshots/installer.jpg)
-
-![MalumMenu Enhanced in Among Us](docs/screenshots/menu.jpg)
-
-## Features
-
-- Multi Role: vent access, tracking, Vitals and Detective tools.
-- Sprint up to 8×, follow, orbit, teleport and Lag Mode.
-- Manual task automation and AI Tasks.
-- Appearance controls and random outfits.
-- Separate host controls, including Ghost Voting.
-
-Some actions need host support. See [feature details](FORK.md) for tested limits.
-
-[Manual installation](docs/INSTALL.md) · [Source](https://github.com/ProXgram/MalumMenuEnhanced/releases/download/v1.1.0/MalumMenuEnhanced-1.1.0-Source.zip) · [Build instructions](installer/README.md)
-
-Based on MalumMenu by **scp222thj** and **astra1dev (Astral)**.
-[Credits](CREDITS.md) · [GPL-3.0 license](LICENSE)
+[Download page](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0) ·
+[Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Source.zip) ·
+[GPL-3.0 license](LICENSE) · [Attribution](CREDITS.md)
 
 This mod is not affiliated with or endorsed by Innersloth LLC. Among Us belongs
 to Innersloth LLC.

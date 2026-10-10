@@ -1,6 +1,6 @@
-using MalumMenu;
-using RoleSlot = MalumMenu.AlwaysImpostorPlanner.RoleSlot;
-using Swap = MalumMenu.AlwaysImpostorPlanner.Swap;
+using HAU;
+using RoleSlot = HAU.AlwaysImpostorPlanner.RoleSlot;
+using Swap = HAU.AlwaysImpostorPlanner.Swap;
 
 var tests = new (string Name, Action Run)[]
 {

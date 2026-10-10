@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using AmongUs.GameOptions;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class AlwaysImpostorHandler
 {
@@ -73,12 +73,12 @@ public static class AlwaysImpostorHandler
         {
             CheatToggles.setFakeRole = false;
             RoleManager.Instance.SetRole(local, RoleTypes.Impostor);
-            MalumMenu.Log.LogInfo("Always Impostor: assigned Impostor in Freeplay.");
+            HAUPlugin.Log.LogInfo("Always Impostor: assigned Impostor in Freeplay.");
         }
         catch (Exception error)
         {
             _freeplayFailed = true;
-            MalumMenu.Log.LogError("Always Impostor: Freeplay assignment failed: " + error);
+            HAUPlugin.Log.LogError("Always Impostor: Freeplay assignment failed: " + error);
         }
     }
 
@@ -113,7 +113,7 @@ public static class AlwaysImpostorHandler
             !controls.TryGetValue(swap.DonorPlayerId, out var donor))
         {
             _lastHostedResult = "No living impostor available to swap.";
-            MalumMenu.Log.LogWarning("Always Impostor: no valid role swap; original roles retained.");
+            HAUPlugin.Log.LogWarning("Always Impostor: no valid role swap; original roles retained.");
             return;
         }
 
@@ -125,12 +125,12 @@ public static class AlwaysImpostorHandler
             ApplyNetworkRole(donor, originalLocalRole);
             ApplyNetworkRole(local, originalDonorRole);
             _lastHostedResult = "Active: " + originalDonorRole;
-            MalumMenu.Log.LogInfo("Always Impostor: swapped assigned roles for the hosted round.");
+            HAUPlugin.Log.LogInfo("Always Impostor: swapped assigned roles for the hosted round.");
         }
         catch (Exception error)
         {
             _lastHostedResult = "Assignment failed; see Console log.";
-            MalumMenu.Log.LogError("Always Impostor: role swap failed: " + error);
+            HAUPlugin.Log.LogError("Always Impostor: role swap failed: " + error);
             try
             {
                 ApplyNetworkRole(donor, originalDonorRole);
@@ -138,7 +138,7 @@ public static class AlwaysImpostorHandler
             }
             catch (Exception rollbackError)
             {
-                MalumMenu.Log.LogError("Always Impostor: role rollback failed: " + rollbackError);
+                HAUPlugin.Log.LogError("Always Impostor: role rollback failed: " + rollbackError);
             }
         }
     }

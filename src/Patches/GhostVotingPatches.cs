@@ -2,7 +2,7 @@ using System;
 using HarmonyLib;
 using InnerNet;
 
-namespace MalumMenu;
+namespace HAU;
 
 // The host must enable the same mode to count ghost votes. No death state is
 // serialized or changed outside a single synchronous vote-selection call.

@@ -2,7 +2,7 @@ using HarmonyLib;
 using Il2CppSystem;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.SetKillTimer))]
 public static class PlayerControl_SetKillTimer
@@ -32,8 +32,8 @@ public static class PlayerControl_CmdCheckMurder
         // Direct kill RPC should only be used when absolutely necessary as to avoid detection from anticheat mods
         if (!CheatToggles.killAnyone && !CheatToggles.zeroKillCd && !Utils.isVanished(__instance.Data) &&
             !Utils.isMeeting &&
-            (MalumPPMCheats.oldRole == null ||
-             Utils.getBehaviourByRoleType((AmongUs.GameOptions.RoleTypes)MalumPPMCheats.oldRole).IsImpostor))
+            (PlayerActions.oldRole == null ||
+             Utils.getBehaviourByRoleType((AmongUs.GameOptions.RoleTypes)PlayerActions.oldRole).IsImpostor))
             return true;
         if (!__instance.Data.Role.IsValidTarget(target.Data))
         {

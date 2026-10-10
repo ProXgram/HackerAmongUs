@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace MalumMenu;
+namespace HAU;
 public static class OverloadHandler
 {
     public static float cooldown;

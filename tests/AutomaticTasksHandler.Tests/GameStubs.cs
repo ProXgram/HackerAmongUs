@@ -89,7 +89,7 @@ namespace UnityEngine
     public static class Time { public static double realtimeSinceStartupAsDouble; }
 }
 
-namespace MalumMenu
+namespace HAU
 {
     public enum MovementMode { Off, AiTasks }
     public static class MovementAutomation { public static MovementMode Mode; }
@@ -103,7 +103,7 @@ namespace MalumMenu
         public static bool isExiling;
     }
     public static class CheatToggles { public static bool automaticTasks; }
-    public static class MalumMenu { public static TestLogger Log = new(); }
+    public static class HAUPlugin { public static TestLogger Log = new(); }
     public sealed class TestLogger
     {
         public List<string> Errors = [];

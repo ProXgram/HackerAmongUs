@@ -1,4 +1,4 @@
-using MalumMenu;
+using HAU;
 
 var cases = new (string Name, Action Arrange)[]
 {
@@ -94,7 +94,7 @@ void Run(string name, Action action)
     try
     {
         action();
-        Require(MalumMenu.MalumMenu.Log.Errors.Count == 0, "Handler threw and silently entered its error state.");
+        Require(HAU.HAUPlugin.Log.Errors.Count == 0, "Handler threw and silently entered its error state.");
         Console.WriteLine($"PASS {name}");
     }
     catch (Exception exception)
@@ -122,7 +122,7 @@ static void SetUp()
     HudManager.Existing = null;
     HudManager.ReturnMissing = false;
     GameOptionsManager.Instance = new() { CurrentGameOptions = new() };
-    MalumMenu.MalumMenu.Log = new();
+    HAU.HAUPlugin.Log = new();
 }
 
 static void Require(bool condition, string message)

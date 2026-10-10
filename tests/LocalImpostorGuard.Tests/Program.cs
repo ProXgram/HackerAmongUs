@@ -1,5 +1,5 @@
 using AmongUs.GameOptions;
-using MalumMenu;
+using HAU;
 
 var tests = new (string Name, Action Run)[]
 {
@@ -53,7 +53,7 @@ static PlayerControl SetUp(RoleTypes original = RoleTypes.Crewmate, bool apply =
     Utils.isHost = false;
     GameOptionsManager.Instance = new GameOptionsManager();
     RoleManager.Instance = new RoleManager();
-    MalumMenu.MalumMenu.Log = new TestLogger();
+    HAU.HAUPlugin.Log = new TestLogger();
     ConsoleUI.Messages.Clear();
     CheatToggles.alwaysImpostor = true;
     CheatToggles.setFakeRole = false;
@@ -215,33 +215,33 @@ static void NewRoundRequiresFreshRole()
 static void LogsOncePerApplication()
 {
     var player = SetUp();
-    var baseline = MalumMenu.MalumMenu.Log.Entries.Count();
+    var baseline = HAU.HAUPlugin.Log.Entries.Count();
     Require(LocalImpostorHandler.BlockOwnKill(player), "First guarded kill passed.");
-    var afterFirst = MalumMenu.MalumMenu.Log.Entries.Count();
+    var afterFirst = HAU.HAUPlugin.Log.Entries.Count();
     Require(afterFirst == baseline + 1, "First blocked action did not emit exactly one log.");
     Require(ConsoleUI.Messages.Count == 1, "First blocked action did not emit one visible console message.");
     for (var request = 0; request < 100; request++)
         Require(LocalImpostorHandler.BlockOwnKill(player), "Repeated guarded kill passed.");
-    Require(MalumMenu.MalumMenu.Log.Entries.Count() == afterFirst, "Repeated blocked actions spammed the log.");
+    Require(HAU.HAUPlugin.Log.Entries.Count() == afterFirst, "Repeated blocked actions spammed the log.");
     Require(ConsoleUI.Messages.Count == 1, "Repeated blocked actions spammed the visible console.");
     CheatToggles.alwaysImpostor = false;
     LocalImpostorHandler.Tick();
     CheatToggles.alwaysImpostor = true;
     LocalImpostorHandler.Tick();
-    baseline = MalumMenu.MalumMenu.Log.Entries.Count();
+    baseline = HAU.HAUPlugin.Log.Entries.Count();
     Require(LocalImpostorHandler.BlockOwnKill(player), "Reapplied local assignment was unguarded.");
-    Require(MalumMenu.MalumMenu.Log.Entries.Count() == baseline + 1, "New local assignment did not get its own first blocked action log.");
+    Require(HAU.HAUPlugin.Log.Entries.Count() == baseline + 1, "New local assignment did not get its own first blocked action log.");
 }
 
 static void ReadOnlyGuardQuery()
 {
     var player = SetUp();
     var pointer = player.Data.Role.Pointer;
-    var logs = MalumMenu.MalumMenu.Log.Entries.Count();
+    var logs = HAU.HAUPlugin.Log.Entries.Count();
     var roleCalls = RoleManager.Instance.SetRoleCalls;
     for (var query = 0; query < 100; query++)
         Require(LocalImpostorHandler.BlocksKillRequests(player), "Query failed for a retained assignment.");
-    Require(MalumMenu.MalumMenu.Log.Entries.Count() == logs, "Read-only guard query emitted a log.");
+    Require(HAU.HAUPlugin.Log.Entries.Count() == logs, "Read-only guard query emitted a log.");
     Require(player.Data.Role.Pointer == pointer && RoleManager.Instance.SetRoleCalls == roleCalls, "Read-only guard query mutated the role.");
 }
 
@@ -301,7 +301,7 @@ static void FailedRestoreDoesNotResetLog()
     CheatToggles.alwaysImpostor = true;
     LocalImpostorHandler.Tick();
     Require(LocalImpostorHandler.BlockOwnKill(player), "Reenabled retained assignment was unguarded.");
-    Require(MalumMenu.MalumMenu.Log.Warning.Count == 1, "A toggle reset logging for the same applied role.");
+    Require(HAU.HAUPlugin.Log.Warning.Count == 1, "A toggle reset logging for the same applied role.");
     Require(ConsoleUI.Messages.Count == 1, "A toggle repeated the visible console warning for the same role.");
 }
 
@@ -319,7 +319,7 @@ static void ActualPrefixesBlock()
     }
     Require(buttonOriginalCalls == 0, "Kill-button prefix permitted the normal action.");
     Require(rpcOriginalCalls == 0, "Outbound RPC prefix permitted the normal send.");
-    Require(MalumMenu.MalumMenu.Log.Entries.Count() == 2, "Repeated prefixes should have one application log and one blocked-action log.");
+    Require(HAU.HAUPlugin.Log.Entries.Count() == 2, "Repeated prefixes should have one application log and one blocked-action log.");
     RoleManager.Instance.ThrowBeforeRole = RoleTypes.Crewmate;
     CheatToggles.alwaysImpostor = false;
     LocalImpostorHandler.Tick();
@@ -346,9 +346,9 @@ static void ActualPrefixesAllow()
 static void RequireAllowed(PlayerControl player, string context)
 {
     Require(!LocalImpostorHandler.BlocksKillRequests(player), $"{context} was rejected by the query.");
-    var logs = MalumMenu.MalumMenu.Log.Entries.Count();
+    var logs = HAU.HAUPlugin.Log.Entries.Count();
     Require(!LocalImpostorHandler.BlockOwnKill(player), $"{context} was rejected by the action helper.");
-    Require(MalumMenu.MalumMenu.Log.Entries.Count() == logs, $"Allowed {context} emitted a blocked-action log.");
+    Require(HAU.HAUPlugin.Log.Entries.Count() == logs, $"Allowed {context} emitted a blocked-action log.");
 }
 
 static void Require(bool condition, string message)

@@ -83,7 +83,7 @@ public sealed class RoleManager
     };
 }
 
-namespace MalumMenu
+namespace HAU
 {
     public static class Utils
     {
@@ -113,7 +113,7 @@ namespace MalumMenu
         public void Close() => CloseCalls++;
     }
 
-    public static class MalumMenu
+    public static class HAUPlugin
     {
         public static TestLogger Log = new();
     }

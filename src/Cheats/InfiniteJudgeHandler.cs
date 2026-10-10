@@ -1,7 +1,7 @@
 using System;
 using AmongUs.GameOptions;
 
-namespace MalumMenu;
+namespace HAU;
 
 // Replenishes the owning practice Judge's local charge only in Freeplay.
 // Online extra Overrule requests were rejected by the production server.
@@ -129,7 +129,7 @@ public static class InfiniteJudgeHandler
 
         judge.HasAnOverruleUse = true;
         _grantedUse = true;
-        MalumMenu.Log.LogInfo("Infinite Judge: restored own Freeplay Overrule use for this meeting.");
+        HAUPlugin.Log.LogInfo("Infinite Judge: restored own Freeplay Overrule use for this meeting.");
     }
 
     public static void OnUseConsumed(JudgeRole judge)

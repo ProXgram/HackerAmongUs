@@ -1,5 +1,5 @@
-using MalumMenu;
-using Context = MalumMenu.GuestRoundTestPolicy.Context;
+using HAU;
+using Context = HAU.GuestRoundTestPolicy.Context;
 
 var valid = new Context(
     Online: true,

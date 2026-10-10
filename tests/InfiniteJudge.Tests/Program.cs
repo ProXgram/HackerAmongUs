@@ -1,5 +1,5 @@
 using AmongUs.GameOptions;
-using MalumMenu;
+using HAU;
 
 var tests = new (string Name, Action Run)[]
 {
@@ -66,7 +66,7 @@ static JudgeRole SetUp(bool charge = false, bool enabled = true, bool intro = tr
     Utils.isHost = false;
     CheatToggles.infiniteJudge = enabled;
     GameOptionsManager.Instance = new();
-    MalumMenu.MalumMenu.Log = new();
+    HAU.HAUPlugin.Log = new();
     ConsoleUI.Messages.Clear();
     MeetingHud.Instance = null;
     NetworkActions.Attempts = 0;
@@ -468,7 +468,7 @@ static void OnlineNeverRefills(bool host)
     InfiniteJudgeHandler.Tick();
     JudgeRole_OnMeetingStart_InfiniteJudge.Prefix(role);
     Require(!role.HasAnOverruleUse, "Online toggle cycling rearmed a consumed native use.");
-    Require(MalumMenu.MalumMenu.Log.Info.Count == 0, "Online context logged a successful practice grant.");
+    Require(HAU.HAUPlugin.Log.Info.Count == 0, "Online context logged a successful practice grant.");
 }
 
 static void ExitPracticeClearsGrantedUse()

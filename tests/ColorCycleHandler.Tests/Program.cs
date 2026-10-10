@@ -1,6 +1,6 @@
-using MalumMenu;
+using HAU;
 using UnityEngine;
-using Plugin = MalumMenu.MalumMenu;
+using Plugin = HAU.HAUPlugin;
 
 int total = 0, failures = 0;
 foreach (var guard in new (string Name, Action Change)[]

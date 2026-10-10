@@ -1,44 +1,23 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class AnimationsTab : ITab
 {
-    public string name => "Animations";
+    public string name => "Effects";
 
     public void Draw()
     {
-        GUILayout.BeginVertical(GUILayout.Width(MenuUI.windowWidth * 0.425f));
-        GUILayout.Label("Effect requests depend on the map and game checks.");
-
-        DrawGeneral();
-
-        GUILayout.Space(15);
-
-        DrawClientSided();
-
-        GUILayout.EndVertical();
-    }
-
-    private void DrawGeneral()
-    {
-        CheatToggles.animShields = GUILayout.Toggle(CheatToggles.animShields, " Shields");
-
-        CheatToggles.animAsteroids = GUILayout.Toggle(CheatToggles.animAsteroids, " Asteroids");
-
-        CheatToggles.animEmptyGarbage = GUILayout.Toggle(CheatToggles.animEmptyGarbage, " Empty Garbage");
-
-        CheatToggles.animMedScan = GUILayout.Toggle(CheatToggles.animMedScan, " Medbay Scan");
-
-        CheatToggles.animCamsInUse = GUILayout.Toggle(CheatToggles.animCamsInUse, " Cams In Use");
-
-        // CheatToggles.animPet = GUILayout.Toggle(CheatToggles.animPet, " Pet");
-    }
-
-    private void DrawClientSided()
-    {
-        GUILayout.Label("Client-Sided", GUIStylePreset.TabSubtitle);
-
-        CheatToggles.moonWalk = GUILayout.Toggle(CheatToggles.moonWalk, " Moonwalk (my screen)");
+        UIHelpers.BeginSection("Task effects", "Visual effect requests depend on the current map, role and host checks.");
+        UIHelpers.Action("Play shield animation / Skeld", ref CheatToggles.animShields, Utils.isShip);
+        UIHelpers.Action("Empty garbage animation / Skeld", ref CheatToggles.animEmptyGarbage, Utils.isShip);
+        CheatToggles.animAsteroids = GUILayout.Toggle(CheatToggles.animAsteroids, " Repeat asteroid firing / Skeld or Polus");
+        CheatToggles.animMedScan = GUILayout.Toggle(CheatToggles.animMedScan, " Show Medbay scan effect");
+        CheatToggles.animCamsInUse = GUILayout.Toggle(CheatToggles.animCamsInUse, " Show security cameras in use");
+        UIHelpers.Hint("Effects do not complete the matching task. Camera effects are unavailable on Mira HQ and Fungle.");
+        UIHelpers.EndSection();
+        UIHelpers.BeginSection("Movement appearance", "A local visual effect on your own screen.");
+        CheatToggles.moonWalk = GUILayout.Toggle(CheatToggles.moonWalk, " Moonwalk");
+        UIHelpers.EndSection();
     }
 }

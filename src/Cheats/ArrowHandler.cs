@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Linq;
 
-namespace MalumMenu;
+namespace HAU;
 
 public static class ArrowHandler
 {
@@ -35,10 +35,10 @@ public static class ArrowHandler
                 if (task.Arrow != null)
                 {
                     _cachedArrowTemplate = task.Arrow.gameObject;
-                    MalumMenu.Log.LogInfo($"Cached Arrow.gameObject for task {task.TaskType}");
+                    HAUPlugin.Log.LogInfo($"Cached Arrow.gameObject for task {task.TaskType}");
                     return;
                 }
-                MalumMenu.Log.LogInfo($"No Arrow.gameObject found for task {task.TaskType}");
+                HAUPlugin.Log.LogInfo($"No Arrow.gameObject found for task {task.TaskType}");
             }
         }
     }

@@ -2,7 +2,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(TextBoxTMP), nameof(TextBoxTMP.Update))]
 public static class TextBoxTMP_Update

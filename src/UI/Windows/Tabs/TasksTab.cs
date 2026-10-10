@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class TasksTab : ITab
 {
@@ -9,44 +9,30 @@ public class TasksTab : ITab
     public void Draw()
     {
         MovementAutomation.Pause();
-        GUILayout.BeginHorizontal();
-        GUILayout.BeginVertical(GUILayout.Width(250f));
+        UIHelpers.BeginSection("Automatic Tasks", "Completes your own assigned tasks. You must enable it manually each round.");
+        CheatToggles.automaticTasks = GUILayout.Toggle(CheatToggles.automaticTasks, " Enable for this round");
+        if (CheatToggles.automaticTasks) GUILayout.Label(AutomaticTasksHandler.StatusText);
+        UIHelpers.Hint("Off at the start of each round. Saved profiles do not start task completion.");
+        UIHelpers.EndSection();
 
-        GUILayout.Label("My tasks", GUIStylePreset.TabSubtitle);
-        GUILayout.Label("These controls use your own\nreal assigned tasks.");
-        CheatToggles.automaticTasks = GUILayout.Toggle(CheatToggles.automaticTasks,
-            " Automatic Tasks");
-        GUILayout.Label("Turn it on yourself when you\nwant tasks completed.");
-        if (CheatToggles.automaticTasks)
-            GUILayout.Label(AutomaticTasksHandler.StatusText, GUIStylePreset.TabSubtitle);
-
-        GUILayout.Space(15f);
-        GUILayout.Label("Task display", GUIStylePreset.TabSubtitle);
-        CheatToggles.taskArrows = GUILayout.Toggle(CheatToggles.taskArrows, " Task Arrows");
-        CheatToggles.showTasksMenu = GUILayout.Toggle(CheatToggles.showTasksMenu,
-            " Show Tasks Menu");
-
-        GUILayout.EndVertical();
-        GUILayout.Space(12f);
-        GUILayout.BeginVertical(GUILayout.Width(240f));
-
-        GUILayout.Label("AI Tasks", GUIStylePreset.TabSubtitle);
-        GUILayout.Label("Walks to your own task consoles\nand completes each step there.");
-        bool isRunning = MovementAutomation.Mode == MovementMode.AiTasks;
-        if (GUILayout.Button(isRunning ? "Stop AI Tasks" : "Start AI Tasks"))
+        UIHelpers.BeginSection("AI Tasks", "Walks to your task consoles and completes each step after reaching it.");
+        bool running = MovementAutomation.Mode == MovementMode.AiTasks;
+        if (GUILayout.Button(running ? "Stop AI Tasks" : "Start AI Tasks"))
         {
-            if (isRunning) MovementAutomation.Stop();
+            if (running) MovementAutomation.Stop();
             else MovementAutomation.Start(MovementMode.AiTasks);
         }
-
         GUILayout.Label(AiTasksHandler.StatusText);
         GUILayout.Label(MovementAutomation.StatusText);
         if (!string.IsNullOrEmpty(MovementAutomation.LastNavigationIssue))
-            GUILayout.Label("Last route issue: " + MovementAutomation.LastNavigationIssue);
-        GUILayout.Label("Close the menu and chat to walk.\nF8 stops movement.");
-        GUILayout.Label("Starting AI Tasks turns\nAutomatic Tasks off. One movement\nmode runs at a time.");
+            UIHelpers.Hint("Last route issue: " + MovementAutomation.LastNavigationIssue);
+        UIHelpers.Hint("Close the menu and chat to walk. F8 stops movement. Starting AI Tasks turns Automatic Tasks off.");
+        UIHelpers.EndSection();
 
-        GUILayout.EndVertical();
-        GUILayout.EndHorizontal();
+        UIHelpers.BeginSection("Task display");
+        CheatToggles.taskArrows = GUILayout.Toggle(CheatToggles.taskArrows, " Point arrows toward my tasks");
+        CheatToggles.showTasksMenu = GUILayout.Toggle(CheatToggles.showTasksMenu, " Open task list window");
+        UIHelpers.Hint("The task list shows observed player tasks. Completion buttons apply only to your own tasks.");
+        UIHelpers.EndSection();
     }
 }

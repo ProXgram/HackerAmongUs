@@ -1,7 +1,7 @@
 #if GUEST_KILL_EXPERIMENT
 using UnityEngine;
 
-namespace MalumMenu;
+namespace HAU;
 
 public class GuestRoundTestTab : ITab
 {
@@ -55,7 +55,7 @@ public class GuestRoundTestTab : ITab
 #if !JUDGE_ROLE_EXPERIMENT
             GUILayout.Space(12);
             GUILayout.Label("Own kill decision test", GUIStylePreset.TabSubtitle);
-            GUILayout.Label("You can test this separately using Roles > Always Impostor. " +
+            GUILayout.Label("You can test this separately using Abilities > Previews. " +
                 "Approach a crewmate with normal target selection and cooldown.");
             var killBlockReason = GuestRoundTest.KillRequestBlockReason;
             GUI.enabled = previouslyEnabled && string.IsNullOrEmpty(killBlockReason);

@@ -1,22 +1,22 @@
 using HarmonyLib;
 
-namespace MalumMenu;
+namespace HAU;
 
 [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.FixedUpdate))]
 public static class ShipStatus_FixedUpdate
 {
     public static void Postfix(ShipStatus __instance)
     {
-        MalumSabotageCheats.Process(__instance);
-        MalumCheats.OpenSabotageMapCheat();
+        SabotageTools.Process(__instance);
+        GameActions.OpenSabotageMapCheat();
 
-        MalumCheats.CloseMeetingCheat();
-        MalumCheats.SkipMeetingCheat();
-        MalumCheats.CallMeetingCheat();
-        MalumCheats.WalkInVentCheat();
-        MalumCheats.KickVentsCheat();
+        GameActions.CloseMeetingCheat();
+        GameActions.SkipMeetingCheat();
+        GameActions.CallMeetingCheat();
+        GameActions.WalkInVentCheat();
+        GameActions.KickVentsCheat();
 
-        MalumPPMCheats.ReportBodyPPM();
+        PlayerActions.ReportBodyPPM();
     }
 }
 
@@ -25,6 +25,6 @@ public static class FungleShipStatus_FixedUpdate
 {
     public static void Postfix(FungleShipStatus __instance)
     {
-        MalumSabotageCheats.ProcessFungle(__instance);
+        SabotageTools.ProcessFungle(__instance);
     }
 }
