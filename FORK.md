@@ -8,10 +8,6 @@
 - Clears queued map requests when joining, starting or ending a game.
 - Keeps kill permissions tied to the real assignment when a genuine Impostor uses a local role preview.
 
-Installed and checked on Xbox / Microsoft Store. Reactor, oxygen, lights and
-communications activation and repair, plus native sabotage-map clicks, passed
-in Skeld Freeplay. Online play, Steam and Epic Games remain untested.
-
 ## Earlier HAU changes
 
 HAU introduced the charcoal/cyan menu, separate ESP and Host Controls sections,

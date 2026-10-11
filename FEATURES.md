@@ -120,11 +120,4 @@ A game update may need a compatible HAU release first.
 About shows version details. Logs records selected events from the current
 session, keeping up to 300 entries.
 
-## Tested
-
-HAU 1.0.2 is installed on Xbox / Microsoft Store. Reactor, oxygen, lights and
-communications activation and repair, plus native sabotage-map clicks, passed
-in Skeld Freeplay. Online play, Steam and Epic Games remain untested. Offline
-tests do not prove what other clients see or which requests a host accepts.
-
 [Install](docs/INSTALL.md) · [Release notes](FORK.md) · [License](LICENSE)

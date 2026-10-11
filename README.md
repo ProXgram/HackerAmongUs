@@ -66,12 +66,6 @@ under **Settings → Automatic updates**. Epic Games uses manual ZIP updates.
 A game update may require a new HAU release. If HAU cannot load, run the latest
 installer.
 
-## Tested
-
-HAU 1.0.2 is installed on Xbox / Microsoft Store. Skeld Freeplay checks passed
-for reactor, oxygen, lights and communications activation and repair, plus
-native sabotage-map clicks. Online play, Steam and Epic Games remain untested.
-
 [Release](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0.2) ·
 [Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.2/HAU-1.0.2-Source.zip) ·
 [License](LICENSE) · [Credits](CREDITS.md)
