@@ -3,8 +3,8 @@ using AmongUs.GameOptions;
 
 namespace HAU;
 
-// Replenishes the owning practice Judge's local charge only in Freeplay.
-// Online extra Overrule requests were rejected by the production server.
+
+
 public static class InfiniteJudgeHandler
 {
     private static IntPtr _playerPointer;
@@ -32,7 +32,7 @@ public static class InfiniteJudgeHandler
         _grantedUse = false;
     }
 
-    // A network round must not inherit any practice binding or granted use.
+
     public static void OnRoundIntro()
     {
         RemoveGrantedUse();
@@ -78,7 +78,7 @@ public static class InfiniteJudgeHandler
             return;
         }
 
-        // Practice has no round intro and allows arbitrary practice roles.
+
         if (Utils.isClient && Utils.isFreePlay && local && local.Data != null &&
             local.Data.Role && (!_practiceBinding ||
                 local.Pointer != _playerPointer || local.Data.Role.Pointer != _rolePointer))
@@ -92,7 +92,7 @@ public static class InfiniteJudgeHandler
             ? local.Data.Role.TryCast<JudgeRole>() : null;
         if (!IsCurrentAssignedJudge(judge))
         {
-            // Do not accept a replacement fake Judge or a later fake-alive flag.
+
             _invalidated = true;
             _grantedUse = false;
             return;
@@ -100,8 +100,8 @@ public static class InfiniteJudgeHandler
 
         if (!CheatToggles.infiniteJudge && _grantedUse)
         {
-            // This use was granted from a spent (false) state, never from the
-            // original unspent charge. Native consumption clears our marker.
+
+
             RemoveGrantedUse();
         }
     }

@@ -11,7 +11,7 @@
         <Title>Hacker Among Us</Title>
         <AssemblyTitle>Hacker Among Us</AssemblyTitle>
         <Company>Rifegul</Company>
-        <VersionPrefix>1.0.1</VersionPrefix>
+        <VersionPrefix>1.0.2</VersionPrefix>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
         <Description>Hacker Among Us (HAU) by Rifegul.</Description>
         <Authors>Rifegul</Authors>
@@ -28,9 +28,7 @@
         <VersionSuffix>judge-test</VersionSuffix>
     </PropertyGroup>
 
-    <!--<ItemGroup>
-        <EmbeddedResource Include=".\Assets\**" />
-    </ItemGroup>-->
+
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.788" Private="false" ExcludeAssets="runtime;native" />
@@ -44,8 +42,7 @@
         <InteropPython Condition="'$(InteropPython)' == ''">python</InteropPython>
     </PropertyGroup>
 
-    <!-- The obsolete MSBuild package uses an API removed in Interop 1.5.3.
-         Generate with the pinned upstream CLI instead; proxies are build inputs only. -->
+
     <Target Name="PrepareHAUInteropReferences" BeforeTargets="ResolveAssemblyReferences" Condition="'$(DesignTimeBuild)' != 'true'">
         <Exec Command="&quot;$(InteropPython)&quot; &quot;$(MSBuildProjectDirectory)/../scripts/prepare-interop.py&quot; --quiet" />
         <ItemGroup>

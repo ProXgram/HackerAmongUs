@@ -1,4 +1,3 @@
-"""Build-input regression fixtures; no network or installed game is used."""
 import importlib.util
 import json
 from pathlib import Path
@@ -34,8 +33,8 @@ class BuildInputs(unittest.TestCase):
         source = folder / "input.zip"
         with zipfile.ZipFile(source, "w") as archive:
             for name in names:
-                # ZipInfo normally normalizes Windows separators; construct the
-                # raw member name so the malformed archive fixture keeps them.
+
+
                 member = zipfile.ZipInfo()
                 member.filename = name
                 archive.writestr(member, b"fixture")

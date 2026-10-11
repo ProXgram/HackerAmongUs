@@ -1,4 +1,4 @@
-// Recorder stubs only: these methods never connect to a game or network.
+
 using AmongUs.GameOptions;
 
 namespace AmongUs.GameOptions

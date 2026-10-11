@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace HAU;
 
-// Compiled calls exist only in the bounded native input probe build.
+
 public static class PointerInputDiagnostics
 {
 #if HAU_POINTER_DIAGNOSTICS
@@ -61,7 +61,7 @@ public static class PointerInputDiagnostics
             if (BeforeClose.Count >= 20) BeforeClose.Dequeue();
             string entry = $"before handler={handler} allowed={allowed} {State(pointer)}";
             BeforeClose.Enqueue(entry);
-            // Independent guide activation may happen before GUI.Button closes.
+
             if (handler == "MatchInfoGuide.Open" && _guideBeforeLogs++ < 2) Write(entry);
             return;
         }

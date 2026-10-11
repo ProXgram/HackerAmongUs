@@ -22,7 +22,9 @@ public class ShipStatus : Il2CppObjectBase
     public static ShipStatus Instance;
     public Dictionary<SystemTypes,Il2CppObjectBase> Systems = [];
     public List<(SystemTypes System,byte Amount)> Requests = [];
-    public void RpcUpdateSystem(SystemTypes system,byte amount) => Requests.Add((system,amount));
+    public Action<SystemTypes,byte> OnRequest;
+    public void RpcUpdateSystem(SystemTypes system,byte amount)
+    { Requests.Add((system,amount)); OnRequest?.Invoke(system,amount); }
 }
 public class FungleShipStatus : ShipStatus { public Dictionary<int,object> sporeMushrooms = []; }
 public class AmongUsClient : Il2CppObjectBase { public static AmongUsClient Instance; }
@@ -47,10 +49,8 @@ namespace HAU
     {
         public static bool Ready=true;
         public static bool GameplayReady => Ready && PlayerControl.LocalPlayer && PlayerControl.LocalPlayer.AmOwner &&
-            PlayerControl.LocalPlayer.Data && !PlayerControl.LocalPlayer.Data.Disconnected && AmongUsClient.Instance;
+            PlayerControl.LocalPlayer.Data && !PlayerControl.LocalPlayer.Data.Disconnected && AmongUsClient.Instance && ShipStatus.Instance;
     }
-    public static class LocalImpostorHandler
-    { public static bool Blocks; public static bool BlocksSabotageRequests(PlayerControl player)=>Blocks; }
     public static class CheatToggles
     { public static bool reactorSab,oxygenSab,commsSab,elecSab,unfixableLights,mushSab,mushSpore,closeAllDoors,openAllDoors,spamCloseAllDoors,spamOpenAllDoors; }
     public static class DoorsHandler { public static void CloseAllDoors(){} public static void OpenAllDoors(){} }

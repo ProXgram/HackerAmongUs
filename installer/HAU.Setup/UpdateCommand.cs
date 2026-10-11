@@ -3,7 +3,7 @@ using HAU.Updates;
 
 namespace HAU.Setup;
 
-/// <summary>The signed updater's noninteractive entry point. Never closes or relaunches Among Us.</summary>
+
 internal static class UpdateCommand
 {
     internal static async Task<int> RunAsync(string[] args)

@@ -32,8 +32,8 @@ Check(typeof(Harmony).Assembly.GetName().Version == new Version(2, 10, 2, 0), "U
 
 try
 {
-    // Real PatchAll resolves annotations and installs interceptors. Tests below
-    // call originals directly, rather than calling Prefix as a fixture helper.
+
+
     harmony.PatchAll(typeof(PassiveUiElement_Patches).Assembly);
     foreach (var original in targets)
         Check(Harmony.GetPatchInfo(original)?.Prefixes.Any(patch => patch.owner == owner) == true,

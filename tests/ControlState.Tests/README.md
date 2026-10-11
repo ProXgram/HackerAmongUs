@@ -1,10 +1,11 @@
 # Control state and profile checks
 
-`dotnet run --project tests/ControlState.Tests -c Release`
+Run from the repository root with the .NET 10 SDK:
 
-Links the actual profile writer/reader, control policy and keyboard listener.
-The suite checks independently audited one-shot actions, old true-valued
-profiles, partial/missing profiles, preserved field IDs and shortcuts,
-host/guest/practice boundaries, focus/menu/chat/panic, and F8 cleanup.
-Temporary files are confined to a unique test directory. It does not load or
-modify Among Us, its saved profile, or any network session.
+```powershell
+dotnet run --project tests/ControlState.Tests -c Release
+```
+
+Links the profile reader/writer, control policy and keyboard listener. Checks cover one-shot actions, old profiles, missing fields, stable field IDs and shortcuts, host/guest/Freeplay rules, focus/menu/chat pauses, panic and F8 cleanup.
+
+Temporary files use a unique test directory. The suite does not load the game, modify its saved profile or contact a network session.

@@ -28,7 +28,7 @@ public sealed record InstallResult(string GameDirectory, string BackupDirectory,
     public bool LoaderUpgraded { get; init; }
 }
 
-/// <summary>Installs only verified, pinned releases. No administrator access is requested.</summary>
+
 public sealed class InstallerService
 {
     private const long MaxDownload = 128L * 1024 * 1024;
@@ -101,7 +101,7 @@ public sealed class InstallerService
             if (!CheckCompatibleLoader(Path.Combine(stage, "loader"), architecture))
                 throw new InvalidDataException("The downloaded loader is incomplete or incompatible. Please download setup again.");
 
-            // Downloads and extraction finish before any changes to the game.
+
             ct.ThrowIfCancellationRequested();
             error = ValidateGameDirectory(game);
             if (error != null) throw new InvalidOperationException(error);
@@ -120,7 +120,7 @@ public sealed class InstallerService
                     loaderUpgraded = true;
                     loaderFiles = loaderFiles.Where(relative => !MatchesFile(SafePaths.Under(game, relative),
                         Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(SafePaths.Under(Path.Combine(stage, "loader"), relative)))))).ToList();
-                    // Custom compatible Doorstop preferences are kept even when they differ from the archive.
+
                     loaderFiles.RemoveAll(relative => relative.Equals("doorstop_config.ini", StringComparison.OrdinalIgnoreCase));
                 }
                 else
@@ -150,7 +150,7 @@ public sealed class InstallerService
                 RequireGameClosed();
             }, _beforeChange);
             progress?.Report(new("Backing up your previous menu", 60));
-            // These backups live outside the loader's plugin scan directory.
+
             foreach (var old in previousMenus) transaction.BackupMenu(old, Path.GetRelativePath(plugins, old));
             progress?.Report(new("Installing the verified files", 75));
             foreach (var file in loaderFiles)
@@ -219,7 +219,7 @@ public sealed class InstallerService
             var data = Path.Combine(full, "Among Us_Data");
             SafePaths.CheckAncestors(data);
             if (!Directory.Exists(data)) return "Among Us_Data is missing. Repair Among Us in your game launcher, then try again.";
-            // Xbox's launch executable can be an unreadable alias. Read the native Unity files instead.
+
             var native = ReadPeArchitecture(Path.Combine(full, "GameAssembly.dll"));
             if (native == null || ReadPeArchitecture(Path.Combine(full, "UnityPlayer.dll")) != native)
                 return "The game's native files have an unsupported or mismatched architecture. Repair Among Us in your launcher, then try again.";
@@ -236,7 +236,7 @@ public sealed class InstallerService
         => ReadPeArchitecture(Path.Combine(directory, "GameAssembly.dll"))
             ?? throw new InvalidDataException("The game's native architecture could not be verified.");
 
-    /// <summary>Reads the native game's PlayerSettings; caller-supplied version text is never trusted.</summary>
+
     public static string GetGameVersion(string directory)
     {
         var error = ValidateGameDirectory(directory);
@@ -245,7 +245,7 @@ public sealed class InstallerService
             ?? throw new InvalidDataException("The installed game's version could not be verified. Repair Among Us in your launcher.");
     }
 
-    /// <summary>Reads assembly identity without loading or executing the installed mod.</summary>
+
     public static Version GetInstalledModVersion(string directory)
         => ReadModVersion(SafePaths.Under(Path.GetFullPath(directory), PluginRelative));
 
@@ -273,7 +273,7 @@ public sealed class InstallerService
             Version installed;
             try { installed = ReadModVersion(path); }
             catch (Exception ex) when (ex is BadImageFormatException or InvalidDataException)
-            { continue; } // Legacy identities and unreadable previous menus can be backed up and repaired.
+            { continue; }
             if (installed > UpdateManifestVerifier.ParseNumericVersion(_catalog.ModVersion))
                 throw new InvalidOperationException("A newer HAU version is already installed. Download its latest setup before replacing it.");
         }
@@ -396,7 +396,7 @@ public sealed class InstallerService
             return "The Steam game's native files have mismatched architectures. Verify Among Us files in Steam, then try again.";
         if (GetGameArchitecture(folder) != GameArchitecture.X64)
             return "This older 32-bit Steam build is not supported. Update Among Us in Steam to the 64-bit 2026.9.29 release, then try again.";
-        // The Steam app manifest identifies the game, but does not establish its gameplay version.
+
         if (ReadUnityVersion(folder) != "2026.9.29")
             return "This Steam Among Us version could not be verified or is not supported. Update or verify Among Us in Steam. This setup supports Among Us 2026.9.29.";
         return null;
@@ -418,22 +418,22 @@ public sealed class InstallerService
             var dataOffset = BinaryPrimitives.ReadInt64BigEndian(bytes.AsSpan(32, 8));
             if (declaredSize != bytes.Length || dataOffset < 48 || dataOffset > bytes.Length || metadataSize > dataOffset - 48) return null;
             var metadata = new UnityDataReader(bytes, 48, checked(48 + (int)metadataSize));
-            // The following PlayerSettings layout is verified against this exact Unity release schema.
+
             if (metadata.CString() != "2022.3.44f1" || metadata.Int32() != 19 || metadata.Byte() != 0) return null;
             var types = new int[metadata.Count(4096)];
             for (var i = 0; i < types.Length; i++)
             {
                 types[i] = metadata.Int32();
-                metadata.Skip(3); // stripped flag and script type index
-                if (types[i] == 114) metadata.Skip(16); // script identifier
-                metadata.Skip(16); // old type hash; release builds contain no type tree
+                metadata.Skip(3);
+                if (types[i] == 114) metadata.Skip(16);
+                metadata.Skip(16);
             }
             var objectCount = metadata.Count(65536);
             (int Start, int Size)? playerSettings = null;
             for (var i = 0; i < objectCount; i++)
             {
                 metadata.Align();
-                metadata.Skip(8); // path identifier
+                metadata.Skip(8);
                 var relative = metadata.Int64();
                 var size = metadata.UInt32();
                 var type = metadata.Int32();
@@ -446,24 +446,24 @@ public sealed class InstallerService
             if (playerSettings == null) return null;
             var settings = new UnityDataReader(bytes, playerSettings.Value.Start,
                 playerSettings.Value.Start + playerSettings.Value.Size);
-            // Fixed-size blocks and variable fields come from PlayerSettings' Unity 2022.3.44f1
-            // release schema: AssetRipper/TypeTreeDumps, InfoJson/2022.3.44f1.json.
+
+
             settings.Skip(36);
             if (settings.String() != "Innersloth" || settings.String() != "Among Us") return null;
             settings.Skip(104);
-            settings.Skip(settings.Count(256) * 16); // splash-screen logos
+            settings.Skip(settings.Count(256) * 16);
             settings.Align();
             settings.Skip(124);
             var mipmapGroups = settings.Count(256);
             for (var i = 0; i < mipmapGroups; i++) { settings.String(); settings.Skip(4); }
-            settings.Skip(settings.Count(256) * 4); // stack-trace logging settings
+            settings.Skip(settings.Count(256) * 4);
             settings.Align();
             settings.Skip(76);
-            settings.String(); // macAppStoreCategory
+            settings.String();
             settings.Skip(144);
-            settings.String(); // visionOSBundleVersion
-            settings.String(); // tvOSBundleVersion
-            var version = settings.String(); // bundleVersion, exposed by Application.version
+            settings.String();
+            settings.String();
+            var version = settings.String();
             return version.Length is > 0 and <= 64 && version.All(c => char.IsAsciiDigit(c) || c == '.') ? version : null;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException or OverflowException)
@@ -710,7 +710,7 @@ public sealed class InstallerService
         var files = new List<string>();
         var seen = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         long total = 0;
-        // Validate the whole archive before extracting any entry.
+
         foreach (var entry in archive.Entries)
         {
             var path = SafePaths.ZipName(entry.FullName);
@@ -930,7 +930,7 @@ internal static class SafePaths
         var current = Path.GetFullPath(path);
         while (!string.IsNullOrEmpty(current))
         {
-            // GetAttributes also detects broken links, unlike File.Exists/Directory.Exists.
+
             try
             {
                 if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
@@ -943,7 +943,7 @@ internal static class SafePaths
     }
 }
 
-/// <summary>Records originals before each change and reverses changes in reverse order.</summary>
+
 internal sealed class FileTransaction(string game, string stage, string backup, Action guard, Action<string>? beforeChange)
 {
     private readonly List<(string Path, string? Original)> _changes = [];

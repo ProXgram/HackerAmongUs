@@ -26,8 +26,11 @@ public class ShipTab : ITab
         CheatToggles.commsSab = GUILayout.Toggle(CheatToggles.commsSab, " Communications");
         UIHelpers.Action("Trigger mushroom mixup / Fungle", ref CheatToggles.mushSab, Utils.isShip);
         UIHelpers.Action("Trigger spores / Fungle", ref CheatToggles.mushSpore, Utils.isShip);
-        UIHelpers.Action("Open sabotage map", ref CheatToggles.sabotageMap, Utils.isShip);
+        bool mapReady = OwnedActionContext.GameplayReady && !Utils.isMeeting && Utils.isNormalGame;
+        UIHelpers.Action("Open sabotage map", ref CheatToggles.sabotageMap, mapReady);
+        if (CheatToggles.sabotageMap && mapReady) MenuUI.CloseMenuFromPointer();
         CheatToggles.showDoorsMenu = GUILayout.Toggle(CheatToggles.showDoorsMenu, " Open door controls window");
+        UIHelpers.Hint(SabotageTools.StatusText);
         UIHelpers.EndSection();
         UIHelpers.Hint("Vent controls are in Abilities. Ghost Voting and shared rules are in Host Controls.");
     }

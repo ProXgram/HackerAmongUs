@@ -668,7 +668,7 @@ Test("Steam PlayerSettings version is checked rather than unrelated matching tex
 {
     using var f = new Fixture(steam: true);
     var unsupported = Fixture.UnitySettingsBytes("2025.1.1").Concat(Encoding.UTF8.GetBytes("2026.9.29")).ToArray();
-    // Keep the serialized file header valid so rejection reaches the actual bundleVersion field.
+
     BinaryPrimitives.WriteUInt32BigEndian(unsupported.AsSpan(4, 4), (uint)unsupported.Length);
     BinaryPrimitives.WriteInt64BigEndian(unsupported.AsSpan(24, 8), unsupported.Length);
     File.WriteAllBytes(Path.Combine(f.Game, "Among Us_Data", "globalgamemanagers"), unsupported);
@@ -919,7 +919,7 @@ sealed class Fixture : IDisposable
         {
             File.WriteAllText(SteamManifest, "\"AppState\" { \"appid\" \"945360\" \"name\" \"Among Us\" \"installdir\" \"Among Us\" \"buildid\" \"123\" }");
             Write("steam_api64.dll", "Steam native API marker");
-            // Fixture contains a bounded PlayerSettings object, not just a version string elsewhere in the file.
+
             File.WriteAllBytes(Path.Combine(Game, "Among Us_Data", "globalgamemanagers"), UnitySettingsBytes("2026.9.29"));
         }
         else

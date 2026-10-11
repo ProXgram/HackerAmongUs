@@ -82,8 +82,8 @@ public static class SprintHandler
             var multiplier = HAUPlugin.sprintMultiplier.Value;
             if (float.IsNaN(multiplier) || float.IsInfinity(multiplier)) multiplier = 2f;
             multiplier = Mathf.Clamp(multiplier, 1f, MaximumMultiplier);
-            // Always multiply the captured speed, never the previously boosted value.
-            // Preserve the sign used by Invert Controls within the sprint speed limit.
+
+
             physics.Speed = Mathf.Clamp(_baseSpeed * multiplier, -MaximumSpeed, MaximumSpeed);
             _statusText = $"Sprint active: {Mathf.Abs(physics.Speed):0.##} speed";
         }
@@ -103,7 +103,7 @@ public static class SprintHandler
         _shipPointer = IntPtr.Zero;
         _baseSpeed = 0f;
 
-        // Restore the captured object only, never a replacement player's physics.
+
         try
         {
             if (previous) previous.Speed = speed;

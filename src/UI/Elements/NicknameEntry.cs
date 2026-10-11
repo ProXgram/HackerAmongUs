@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace HAU;
 
-/// <summary>Draft-only nickname input using the game's supported keyboard input path.</summary>
+
 public static class NicknameEntry
 {
     private const int MaximumLength = 128;
@@ -70,7 +70,7 @@ public static class NicknameEntry
         {
             if (Input.GetKeyDown(KeyCode.A)) _selectAll = true;
             else if (Input.GetKeyDown(KeyCode.V)) PasteClipboard();
-            // Shortcut letters must not become ordinary nickname text.
+
             return;
         }
 
@@ -82,7 +82,7 @@ public static class NicknameEntry
             var character = input[index];
             if (character is '\r' or '\n')
             {
-                StopEditing(); // Enter ends editing; applying remains explicit.
+                StopEditing();
                 break;
             }
             if (character == '\b')
@@ -134,7 +134,7 @@ public static class NicknameEntry
 
     private static void PasteClipboard()
     {
-        // Called only by the explicit Paste button or Ctrl+V while editing.
+
         var clipboard = GUIUtility.systemCopyBuffer;
         var previous = _selectAll ? "" : NicknamePreset.NameInput ?? "";
         NicknamePreset.NameInput = Filter(previous + (clipboard ?? ""));

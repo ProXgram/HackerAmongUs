@@ -2,7 +2,7 @@ using System;
 
 namespace HAU;
 
-/// <summary>Consumes the release at one GUI-close position for at most two frames.</summary>
+
 public sealed class NativePointerReleaseGuard
 {
     private int _closeFrame = -1;

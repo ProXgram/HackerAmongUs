@@ -1,17 +1,11 @@
-# Guest Judge request offline regression harness
+# Guest Judge request checks
+
+Run from the repository root with the .NET 10 SDK:
 
 ```powershell
 dotnet run --project tests/GuestJudgeRequest.Tests/GuestJudgeRequest.Tests.csproj -c Release
 ```
 
-The project compiles the actual guest experiment and policy source with both
-`GUEST_KILL_EXPERIMENT` and `JUDGE_ROLE_EXPERIMENT`. Its typed native-method
-recorder verifies the own-player Judge argument, synchronous attempt
-consumption, one attempt per round including thrown calls and cancel/rebind,
-read-only UI/binding paths, round identity validation, role and gameplay
-eligibility, explicit unverified remote status, and complete kill-path exclusion.
+Compiles the guest experiment and policy with `GUEST_KILL_EXPERIMENT` and `JUDGE_ROLE_EXPERIMENT`. Checks cover the own-player Judge argument, one attempt per round, thrown calls, cancel/rebind, read-only UI paths, round identity, eligibility and kill-path exclusion.
 
-All game types and RPC methods are offline stubs. No live game, host, server,
-socket, Harmony patch installation, or role mutation is involved. Passing tests
-show what the client would ask the typed method to do; they do not show that
-the real host/server accepts a guest role change or avoids disconnecting it.
+Native methods are local recorders. These checks do not establish that a real host/server accepts a guest role request or avoids disconnecting the requester.

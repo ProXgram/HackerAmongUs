@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace HAU;
 
-// A local ability bundle. The player's real role and native ability button
-// remain untouched; no role-assignment or tracking messages are sent.
+
+
 public static class MultiRoleHandler
 {
     private static PlayerControl _target;

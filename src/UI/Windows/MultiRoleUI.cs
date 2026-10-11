@@ -11,7 +11,7 @@ public class MultiRoleUI : MonoBehaviour
 
     public static Rect windowRect;
     private GUIStyle _wrappedLabel;
-    // Keep the notebook control below the native map's upper-left Close button.
+
     private static readonly Rect NotesCloseRect = new(12f, 180f, 174f, 32f);
 
     public static bool IsNotesCloseVisible => MultiRoleDetectiveHandler.NotesOpen &&
@@ -40,7 +40,7 @@ public class MultiRoleUI : MonoBehaviour
 
     private void Start()
     {
-        // Leave space below the panel for the game's native ability buttons.
+
         windowRect = new Rect(Screen.width - WindowWidth - 16f,
             Screen.height - ExpandedHeight - 118f, WindowWidth, ExpandedHeight);
         ClampWindow();

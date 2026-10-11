@@ -93,7 +93,7 @@ public static class UIHelpers
     {
         if (CheatToggles.rgbMode)
         {
-            GUI.backgroundColor = Color.HSVToRGB(MenuUI.hue, 1f, 1f); // Set background color based on hue
+            GUI.backgroundColor = Color.HSVToRGB(MenuUI.hue, 1f, 1f);
         }
         else
         {

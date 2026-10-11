@@ -19,13 +19,14 @@ public class RoleManager:NativeObject {public static RoleManager Instance=new();
 public class Collider:NativeObject {public bool enabled=true;} public class Cosmetics:NativeObject {public int ColorId;public Pet CurrentPet;} public class Pet:NativeObject {public Vector2 PettingPlayerPosition;public Transform transform=new();}
 public class PlayerPhysics:NativeObject {public uint NetId;public bool AmOwner=true;public PlayerControl myPlayer;}
 public class NetTransform:NativeObject {public List<Vector2> Snaps=[];public void RpcSnapTo(Vector2 p)=>Snaps.Add(p);}
-public class AmongUsClient:NativeObject {public static AmongUsClient Instance=new();public int Starts,PetRequests;public List<System.Collections.IEnumerator> Pending=[];public void SendStartGame()=>Starts++;public void StartCoroutine(System.Collections.IEnumerator e)=>Pending.Add(e);public void LateBroadcastReliableMessage(IGameDataMessage m)=>PetRequests++; }
+public class AmongUsClient:NativeObject {public static AmongUsClient Instance=new();public int Starts,PetRequests;public List<System.Collections.IEnumerator> Pending=[];public void SendStartGame()=>Starts++;public void StartCoroutine(System.Collections.IEnumerator e)=>Pending.Add(e);public void LateBroadcastReliableMessage(IGameDataMessage m)=>PetRequests++;public void Update(){}public void OnGameJoined(){}public void CoStartGame(){}public void OnGameEnd(){} }
+public class EndGameResult {public string GameOverReason;}
 public class ShipStatus:NativeObject {public static ShipStatus Instance=new();public float EmergencyCooldown;public List<Vent> AllVents=[];public int SecurityRequests;public void RpcUpdateSystem(SystemTypes s,int b)=>SecurityRequests++;}
 public class Vent {public int Id;}
 public static class VentilationSystem {public enum Operation{BootImpostors} public static int Boots;public static void Update(Operation o,int id)=>Boots++;}
 public class MeetingHud:NativeObject {public enum MeetingStates{Discussion,NotVoted,Voted,Results} public static MeetingHud Instance;public MeetingStates state;public struct VoterState{}public bool DespawnOnDestroy;public GameObject gameObject=new();public int Votes;public void RpcVotingComplete(Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<VoterState> x,NetworkedPlayerInfo p,bool a,bool b,ushort n)=>Votes++;}
 public class MeetingRoomManager {public static MeetingRoomManager Instance=new();public void AssignSelf(PlayerControl p,object o){} }
-public class HudManager:NativeObject {public static HudManager Instance=new();public static bool InstanceExists=>Instance;public bool IsIntroDisplayed;public AbilityButton ImpostorVentButton=new();public ChatController Chat=new();public Notifier Notifier=new();public AbilityButton AbilityButton=new();public void StartCoroutine(object o){}public object CoFadeFullScreen(Color a,Color b,float t,bool v)=>null;public void SetMapAndInfoButtonsEnabled(bool v){}public void SetHudActive(bool v){}public void OpenMeetingRoom(PlayerControl p){}public void ToggleMapVisible(MapOptions m){} }
+public class HudManager:NativeObject {public static HudManager Instance=new();public static bool InstanceExists=>Instance;public bool IsIntroDisplayed;public AbilityButton ImpostorVentButton=new();public ChatController Chat=new();public Notifier Notifier=new();public AbilityButton AbilityButton=new();public int MapOpens;public bool MenuActiveAtMapOpen;public MapOptions.Modes LastMapMode;public void StartCoroutine(object o){}public object CoFadeFullScreen(Color a,Color b,float t,bool v)=>null;public void SetMapAndInfoButtonsEnabled(bool v){}public void SetHudActive(bool v){}public void OpenMeetingRoom(PlayerControl p){}public void ToggleMapVisible(MapOptions m){MapOpens++;MenuActiveAtMapOpen=HAU.MenuUI.isGUIActive;LastMapMode=m.Mode;} }
 public class ChatController:NativeObject {public bool IsOpenOrOpening;}public class Notifier {public void AddDisconnectMessage(string s){} } public class AbilityButton {public GameObject gameObject=new();public void ResetCoolDown(){} public void SetCooldownFill(float v){} }
 public class Minigame:NativeObject {public static Minigame Instance;}
 public class ExileController:NativeObject {public static ExileController Instance;public void ReEnableGameplay(){} public void WrapUp(){} }
@@ -65,17 +66,28 @@ namespace UnityEngine {
 namespace UnityEngine.SceneManagement {public struct Scene {public int handle;}public static class SceneManager {public static int Handle=1;public static Scene GetActiveScene()=>new(){handle=Handle};}}
 namespace HAU {
  public static class HAUPlugin {public static bool isPanicked;}
- public static class MenuUI {public static bool isGUIActive;}
- public static class MovementAutomation {public static bool NeedsGroundCollision;}
- public static class LocalImpostorHandler {public static bool Blocks;public static bool BlocksKillRequests(PlayerControl p)=>Blocks;public static bool BlockOwnKill(PlayerControl p)=>Blocks;}
+ public static class MenuUI {public static bool isGUIActive;public static void CloseMenu()=>isGUIActive=false;}
+ public static class MovementAutomation {public static bool NeedsGroundCollision;public static void Reset(){} }
+ public static class LocalImpostorHandler {public static bool Blocks;public static bool BlocksKillRequests(PlayerControl p)=>Blocks;public static bool BlockOwnKill(PlayerControl p)=>Blocks;public static void Tick(){}public static void Reset(){} }
  public static class ProtectUI {public static Il2CppSystem.Collections.Generic.List<PlayerControl> playersToProtect=[];}
- public static class Utils {public static bool isClient=true,isInGame=true,isHost,isFreePlay,isLobby,isMeeting,isExiling;public static int Murders,Tasks;public static byte MapId;public static List<byte> Animations=new();public static bool isPlayer=>PlayerControl.LocalPlayer;public static void MurderPlayer(PlayerControl p,MurderResultFlags f)=>Murders++;public static void CompleteTask(PlayerTask t)=>Tasks++;public static void ForceSetScanner(PlayerControl p,bool v){}public static void ForcePlayAnimation(byte v)=>Animations.Add(v);public static byte GetCurrentMapID()=>MapId;
+ public static class Utils {public static bool isClient=true,isInGame=true,isNormalGame=true,isHost,isFreePlay,isLobby,isMeeting,isExiling;public static int Murders,Tasks;public static byte MapId;public static List<byte> Animations=new();public static bool isPlayer=>PlayerControl.LocalPlayer;public static void MurderPlayer(PlayerControl p,MurderResultFlags f)=>Murders++;public static void CompleteTask(PlayerTask t)=>Tasks++;public static void ForceSetScanner(PlayerControl p,bool v){}public static void ForcePlayAnimation(byte v)=>Animations.Add(v);public static byte GetCurrentMapID()=>MapId;
  public static RoleBehaviour GetBehaviourByRoleType(RoleTypes r)=>new(){Role=r,IsDead=r is RoleTypes.CrewmateGhost or RoleTypes.ImpostorGhost,TeamType=r is RoleTypes.Impostor or RoleTypes.ImpostorGhost or RoleTypes.Shapeshifter or RoleTypes.Phantom or RoleTypes.Viper?RoleTeamTypes.Impostor:RoleTeamTypes.Crewmate};
  public static Il2CppSystem.Collections.Generic.List<NetworkedPlayerInfo> GetAllPlayerData(){var list=new Il2CppSystem.Collections.Generic.List<NetworkedPlayerInfo>();foreach(var p in PlayerControl.AllPlayerControls)if(p&&p.Data!=null)list.Add(p.Data);return list;}}
  public enum OutfitPreset {Crewmate,Dead,Impostor,Shapeshifter,Phantom,Viper,Tracker,Noisemaker,Engineer,Scientist,Detective,Judge}
  public class PlayerPickMenu:NativeObject {public static PlayerPickMenu playerpickMenu;public static NetworkedPlayerInfo targetPlayerData;public static Action Callback;public static Il2CppSystem.Collections.Generic.List<NetworkedPlayerInfo> Choices;public void Close(){playerpickMenu=null;}public static void OpenPlayerPickMenu(Il2CppSystem.Collections.Generic.List<NetworkedPlayerInfo> c,Action callback){Choices=c;Callback=callback;playerpickMenu=new();}public static NetworkedPlayerInfo CustomPPMChoice(string name,OutfitPreset o,RoleBehaviour role)=>new(){Role=role,RoleType=role.Role};}
 }
 
-namespace HAU {public static class CheatToggles {public static bool animAsteroids,animCamsInUse,animEmptyGarbage,animMedScan,animPet,animShields,callMeeting,closeMeeting,completeMyTasks,ejectPlayer,endlessBattery,endlessSsDuration,endlessTracking,endlessVentTime,forceRole,forceStartGame,freecam,kickVents,killAll,killAllCrew,killAllImps,killPlayer,noClip,noGameEnd,noTrackingCooldown,noTrackingDelay,noVentCooldown,noVitalsCooldown,reportBody,sabotageMap,setFakeAlive,setFakeRole,skipMeeting,spectate,telekillPlayer,teleportCursor,teleportPlayer,unlockVents,walkInVents;public static AmongUs.GameOptions.RoleTypes? forcedRole;public static void DisablePPMCheats(string n){} }}
+namespace HAU {public static class CheatToggles {public static bool automaticTasks,logGameState,animAsteroids,animCamsInUse,animEmptyGarbage,animMedScan,animPet,animShields,callMeeting,closeMeeting,completeMyTasks,ejectPlayer,endlessBattery,endlessSsDuration,endlessTracking,endlessVentTime,forceRole,forceStartGame,freecam,kickVents,killAll,killAllCrew,killAllImps,killPlayer,noClip,noGameEnd,noTrackingCooldown,noTrackingDelay,noVentCooldown,noVitalsCooldown,reportBody,sabotageMap,setFakeAlive,setFakeRole,skipMeeting,spectate,telekillPlayer,teleportCursor,teleportPlayer,unlockVents,walkInVents;public static AmongUs.GameOptions.RoleTypes? forcedRole;public static void DisablePPMCheats(string n){} }}
 
 namespace HAU {public static class MultiRoleHandler {public static bool VentAccess;} }
+
+namespace HAU
+{
+ public static class PlayerDisplayOverrides {public static void SpoofLevel(){} }
+ public static class AlwaysImpostorHandler {public static void TickFreeplay(){}public static void ResetFreeplayAttempt(){} }
+ public static class AutomaticTasksHandler {public static void Tick(){}public static void Reset(){} }
+ public static class InfiniteJudgeHandler {public static void Tick(){}public static void Reset(){} }
+ public static class ColorCycleHandler {public static void Stop(){} }
+ public static class SprintHandler {public static void Reset(){} }
+ public static class ConsoleUI {public static void Log(string text){} }
+}

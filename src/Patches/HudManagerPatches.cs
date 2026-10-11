@@ -6,13 +6,13 @@ namespace HAU;
 [HarmonyPatch(typeof(HudManager), nameof(HudManager.Start))]
 public static class HudManager_Start
 {
-	// Postfix patch of HudManager.Start to give minimap access to impostors too
+
 	public static void Postfix(HudManager __instance)
 	{
-		__instance.MapButton.OnClick.RemoveAllListeners(); // Remove previous OnClick action
+		__instance.MapButton.OnClick.RemoveAllListeners();
 
-		// Always open normal map when map button is clicked
-		// To access sabotage map, sabotage button can be used
+
+
 		__instance.MapButton.OnClick.AddListener((Action) (() =>
         {
 			__instance.ToggleMapVisible(new MapOptions
@@ -29,9 +29,9 @@ public static class HudManager_Update
 {
 	public static void Postfix(HudManager __instance)
     {
-		__instance.ShadowQuad.gameObject.SetActive(!InformationTools.IsFullbrightActive()); // Fullbright
+		__instance.ShadowQuad.gameObject.SetActive(!InformationTools.IsFullbrightActive());
 
-		if (Utils.IsChatUiActive()) // AlwaysChat
+		if (Utils.IsChatUiActive())
 		{
 			__instance.Chat.gameObject.SetActive(true);
 		}
@@ -45,7 +45,7 @@ public static class HudManager_Update
 		InformationTools.ZoomOut(__instance);
 		InformationTools.FreecamCheat();
 
-		// Close PlayerPickMenu if there is no PPM cheat enabled
+
 		if (PlayerPickMenu.playerpickMenu != null && CheatToggles.ShouldPPMClose())
 		{
             PlayerPickMenu.playerpickMenu.Close();

@@ -1,96 +1,80 @@
 # Hacker Among Us (HAU)
 
-**An Among Us mod by Rifegul. Version 1.0.1.**
+**Among Us mod by Rifegul · 1.0.2**
 
-A redesigned menu with clear categories, a new look and detailed controls.
-For **Among Us 19.0.0 / 2026.9.29**, on **Windows 10/11, 64-bit**.
+For Among Us **19.0.0 / 2026.9.29** on Windows 10/11, 64-bit.
 
 ## Install
 
-### Automatic installer / Steam, Microsoft Store and Xbox App
+**[Download HAUSetup.exe](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.2/HAUSetup.exe)**
 
-**[Download HAUSetup.exe](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAUSetup.exe)**
+Close Among Us, open the installer and click **Install HAU**. It supports Steam,
+Microsoft Store and Xbox App. If it cannot find your game, select `Among Us.exe`
+with **Browse**. Open the game normally and press **Delete**.
 
-Close Among Us, open the file and click **Install**. It finds your game and
-installs the mod and loader. If needed, click **Browse** and select `Among Us.exe`.
+For manual installation, copy the ZIP's contents into the folder containing
+`Among Us.exe`:
 
-### Manual ZIP / all supported PC launchers
+- [Steam ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.2/HAU-1.0.2-Steam.zip)
+- [Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.2/HAU-1.0.2-MicrosoftStore-EpicGames-XboxApp.zip)
 
-- **[Steam ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-Steam.zip)**
-- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-MicrosoftStore-EpicGames-XboxApp.zip)**
+[Full install instructions](docs/INSTALL.md)
 
-Close Among Us, extract your ZIP and copy **everything inside it** directly
-beside `Among Us.exe`. Open the game normally, wait for the first launch to
-finish, then press **Delete**.
-
-[Find your game folder and view the full instructions](docs/INSTALL.md).
-
-## The new menu
+## Menu
 
 ![HAU menu](docs/screenshots/hau-home.png)
 
-| Section | What you can find |
+| Section | Features |
 | --- | --- |
-| Home | Shortcuts, your current activity and whether you are host or guest. |
-| Movement | Sprint up to **10×**, walking speed, follow, orbit, Lag Mode and teleport controls. |
-| Player Tools | Meeting/report tools, door requests and chat settings. |
-| Appearance | Outfit studio, random outfits, nickname editing, colors and visual effects. |
-| ESP | Player labels, camera controls, map markers and direction lines. |
-| Tasks | Manually enabled Automatic Tasks, AI Tasks and the task list. |
-| Abilities | Multi Role, ability settings and clearly labeled local previews. |
-| Host Controls | Hosted role assignment, Ghost Voting, shared round rules, meetings and player actions. |
-| Practice | Freeplay role experiments. |
-| Settings | Menu options, key choices, profiles and update settings. |
-| About | Edition and game compatibility details. |
-| Logs | Choose events to record and open or clear the event log. |
+| Home | Status and shortcuts |
+| Movement | Sprint up to 10×, speed, follow, orbit, Lag Mode and teleport |
+| Player Tools | Meetings, reports, sabotage requests, doors and chat |
+| Appearance | Outfit studio, random outfits, names, colors and effects |
+| ESP | Player labels, Freecam, spectating, map markers and tracers |
+| Tasks | Automatic Tasks, Task Walker and task lists |
+| Abilities | Multi Role, ability settings and local role previews |
+| Host Controls | Hosted roles, Ghost Voting, round rules and player actions |
+| Practice | Freeplay role controls |
+| Settings | Menu keys, profiles and updates |
+| About / Logs | Version details and event logs |
 
-Each section groups related controls. **Buttons perform an action; switches
-enable settings or show their current state.** Shared host actions stay disabled
-for guests; Ghost Voting has a local opt-in.
+**Delete** opens or closes the menu. **F8** stops movement automation and color
+cycling. Automatic Tasks must be enabled each round. Task Walker walks to your
+own task consoles; close the menu and chat after starting it.
+
+Multi Role combines vent access, tracking, Vitals and Detective tools. Local
+previews do not change your online assignment. Guest requests still depend on
+the host. Ghost Voting needs the host and each voting ghost to enable the mod;
+multiplayer vote counting is untested.
+
+[Full feature guide](FEATURES.md)
 
 ## Outfit studio
 
 ![HAU outfit studio](docs/screenshots/hau-outfit-picker.png)
 
-The picker shows the game's loaded catalog. Cached images appear when their
-layout supports previews; unavailable atlas previews show a placeholder.
-
 Open **Appearance → Outfit & name → Open full outfit picker**. Browse colors,
-hats, skins, visors, pets and nameplates. Search, inspect an item and equip just
-that slot. Availability and what other players see depend on the game's checks.
+hats, skins, visors, pets and nameplates. Search, inspect an item and equip one
+slot. The game validates cosmetics; other players' visibility is not guaranteed.
 
-## Tasks and movement
+## Updates
 
-- **Sprint:** enable it in Movement and hold your chosen sprint key with the menu closed.
-- **AI Tasks:** press Start AI Tasks under Tasks, then close the menu. It walks to your own task consoles.
-- **Automatic Tasks:** turn it on yourself each round. It never starts from a saved profile.
-- **F8:** stops movement automation and color cycling.
+Steam, Microsoft Store and Xbox App check for compatible updates at startup.
+Updates install after you close Among Us. Settings are preserved. The switch is
+under **Settings → Automatic updates**. Epic Games uses manual ZIP updates.
 
-Multi Role combines vent access, tracking, Vitals and Detective tools in one
-panel. Your assigned online role stays the same. Vent and other network requests
-still depend on host validation.
+A game update may require a new HAU release. If HAU cannot load, run the latest
+installer.
 
-**Ghost Voting needs the host and each voting ghost to enable the mod.**
-Multiplayer vote counting remains untested.
+## Tested
 
-## Automatic updates
+HAU 1.0.2 is installed on Xbox / Microsoft Store. Skeld Freeplay checks passed
+for reactor, oxygen, lights and communications activation and repair, plus
+native sabotage-map clicks. Online play, Steam and Epic Games remain untested.
 
-Steam / Microsoft Store / Xbox App editions check for newer compatible releases
-when Among Us starts. Updates install after you close the game, keeping your
-settings. The switch is under **Settings → Automatic updates**.
+[Release](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0.2) ·
+[Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.2/HAU-1.0.2-Source.zip) ·
+[License](LICENSE) · [Credits](CREDITS.md)
 
-If a game update breaks compatibility, a compatible mod release must be
-published first. If the mod cannot start, run the latest installer. Epic Games
-uses manual ZIP updates.
-
-HAU 1.0.1 builds with official BepInEx Unity IL2CPP x64 build 788. Startup and
-Freeplay have been checked on Xbox / Microsoft Store. Automated regression
-checks cover the control, movement, task, outfit and update handlers. Steam,
-Epic Games and multiplayer behavior remain untested for this release.
-
-[Download page](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0.1) ·
-[Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-Source.zip) ·
-[GPL-3.0 license](LICENSE) · [Attribution](CREDITS.md)
-
-This mod is not affiliated with or endorsed by Innersloth LLC. Among Us belongs
-to Innersloth LLC.
+HAU is not affiliated with or endorsed by Innersloth LLC. Among Us belongs to
+Innersloth LLC.

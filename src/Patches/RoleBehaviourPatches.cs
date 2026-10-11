@@ -56,7 +56,7 @@ public static class TrackerRole_FixedUpdate
 [HarmonyPatch(typeof(PhantomRole), nameof(PhantomRole.IsValidTarget))]
 public static class PhantomRole_IsValidTarget
 {
-    // Postfix patch of PhantomRole.IsValidTarget to allow killing while invisible
+
     public static void Postfix(PhantomRole __instance, NetworkedPlayerInfo target, ref bool __result)
     {
         if (CheatToggles.killVanished && (Utils.isHost || Utils.isFreePlay) && LocalRoleTargeting.CanOverride(__instance))
@@ -69,8 +69,8 @@ public static class PhantomRole_IsValidTarget
 [HarmonyPatch(typeof(ImpostorRole), nameof(ImpostorRole.IsValidTarget))]
 public static class ImpostorRole_IsValidTarget
 {
-    // Postfix patch of ImpostorRole.IsValidTarget to allow forbidden kill targets for killAnyone cheat
-    // Allows killing ghosts (with seeGhosts), impostors, players in vents, etc...
+
+
     public static void Postfix(ImpostorRole __instance, NetworkedPlayerInfo target, ref bool __result)
     {
         if (CheatToggles.killAnyone && (Utils.isHost || Utils.isFreePlay) && LocalRoleTargeting.CanOverride(__instance))
@@ -83,7 +83,7 @@ public static class ImpostorRole_IsValidTarget
 [HarmonyPatch(typeof(ImpostorRole), nameof(ImpostorRole.FindClosestTarget))]
 public static class ImpostorRole_FindClosestTarget
 {
-    // Prefix patch of ImpostorRole.FindClosestTarget to allow for infinite kill reach
+
     public static bool Prefix(ImpostorRole __instance, ref PlayerControl __result)
     {
         if (!CheatToggles.killReach || !LocalRoleTargeting.CanOverride(__instance)) return true;
@@ -97,7 +97,7 @@ public static class ImpostorRole_FindClosestTarget
 [HarmonyPatch(typeof(DetectiveRole), nameof(DetectiveRole.FindClosestTarget))]
 public static class DetectiveRole_FindClosestTarget
 {
-    // Prefix patch of DetectiveRole.FindClosestTarget to allow for infinite interrogate reach
+
     public static bool Prefix(DetectiveRole __instance, ref PlayerControl __result)
     {
         if (!CheatToggles.interrogateReach || !LocalRoleTargeting.CanOverride(__instance)) return true;
@@ -111,7 +111,7 @@ public static class DetectiveRole_FindClosestTarget
 [HarmonyPatch(typeof(TrackerRole), nameof(TrackerRole.FindClosestTarget))]
 public static class TrackerRole_FindClosestTarget
 {
-    // Prefix patch of TrackerRole.FindClosestTarget to allow for infinite track reach
+
     public static bool Prefix(TrackerRole __instance, ref PlayerControl __result)
     {
         if (!CheatToggles.trackReach || !LocalRoleTargeting.CanOverride(__instance)) return true;
@@ -122,9 +122,9 @@ public static class TrackerRole_FindClosestTarget
     }
 }
 
-// Range overrides only change target selection for the current owning role.
-// Native role validation still determines eligibility; an empty snapshot is a
-// valid "no target" result, never an unchecked index into a candidate list.
+
+
+
 internal static class LocalRoleTargeting
 {
     internal static bool CanOverride(RoleBehaviour role)

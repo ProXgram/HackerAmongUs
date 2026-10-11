@@ -1,88 +1,64 @@
-# Hacker Among Us Setup
+# HAU installer
 
-HAU is Rifegul's edition. Its single-file Windows installer needs no separate
-.NET installation. Users choose Among Us and click **Install HAU**.
+The Windows installer supports Steam, Microsoft Store and Xbox App for Among
+Us 19.0.0 / 2026.9.29. It includes its .NET runtime, verifies downloaded files,
+preserves other plugins and backs up replaced menus. Epic Games uses manual ZIPs.
 
-Automatic installation supports Steam, Microsoft Store and Xbox App on
-Windows 10/11 x64, for Among Us 19.0.0 / 2026.9.29. Epic Games uses the manual
-ZIP. The installer validates the game, downloads verified files, preserves
-other plugins, and backs up previous menus outside `BepInEx/plugins`.
+Supported old settings are imported into `HAU.cfg` and `HAUProfile.txt` when
+those files are absent. Existing HAU settings stay intact. Loader upgrades
+require a recognized inventory and support rollback; unknown or mixed files
+stop the upgrade.
 
-Legacy configuration and profile files are copied into `HAU.cfg` and
-`HAUProfile.txt` only when those targets are absent. Section names become
-`HAU.*`; old originals stay intact. Existing HAU settings are preserved.
-Every installer change participates in backup and rollback. It never changes
-permissions, requests administrator access, or replaces a newer HAU version.
+## Build packages
 
-## Build and package
-
-Finish and test the HAU build first:
+Test the finished DLL first. From the repository root:
 
 ```powershell
-python scripts/package-hau.py --version 1.0.1 --dll <FINISHED-HAU.dll>
+python scripts/package-hau.py --version 1.0.2 --dll src/bin/Release/net6.0/HAU.dll
 ```
 
-The report gives the plugin ZIP and DLL SHA256 values. Pin the ZIP hash in
-`HAU.Setup/SetupForm.cs`, then build with the .NET 10 SDK:
+Use the report's ZIP hash in `installer/HAU.Setup/SetupForm.cs`, then publish
+with the .NET 10 SDK:
 
 ```powershell
 dotnet publish installer/HAU.Setup/HAU.Setup.csproj -c Release -o artifacts/setup/hau/publish
 ```
 
-The output is `HAUSetup.exe`. Package each manual variant with the verified
-hashes; add `--platform steam` for the Steam ZIP:
+The output is `HAUSetup.exe`. Build both manual ZIPs with the verified hashes:
 
 ```powershell
-python scripts/package-manual.py --version 1.0.1 --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
+python scripts/package-manual.py --version 1.0.2 --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
+python scripts/package-manual.py --version 1.0.2 --platform steam --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
 ```
 
-The 1.0.1 manual packages contain the unchanged official BepInEx Unity IL2CPP
-788 x64 loader, its audited licenses and corresponding source. The installer
-can upgrade the exact verified 755 inventory with persistent backups and
-rollback. Unknown or mixed loader files stop the upgrade. They contain no game files.
-Manual upgrades must remove legacy menu DLLs and duplicate HAU copies before
-launching. First launch imports saved settings without deleting originals.
+## Publish 1.0.2
 
-## Automatic updates
+1. Finish testing and place `HAUSetup.exe` in `downloads/setup/`.
+2. Stage the signed manifest:
 
-HAU checks the signed `updates/hau/latest.json` at startup on supported
-Steam / Microsoft Store / Xbox App installations. The helper verifies the
-publisher signature, product, game support, version, file sizes and hashes.
-It waits for Among Us to close and applies the same backup/rollback process.
-It never closes or restarts the game. Epic Games uses manual ZIP updates.
+   ```powershell
+   python scripts/sign-update-manifest.py --version 1.0.2 --private-key <KEY-OUTSIDE-THE-REPOSITORY> --game-version 2026.9.29 --stage
+   python scripts/package-setup.py --release 1.0.2
+   ```
 
-A new Among Us release needs a tested compatible HAU release. If a game
-update prevents the old plugin from loading, run the latest installer.
+3. Publish `hau-v1.0.2` with `HAUSetup.exe`, the plugin ZIP, both manual ZIPs and the source ZIP.
+4. Verify the public files and signature before promoting `updates/hau/1.0.2.json` to `updates/hau/latest.json`.
 
-## Publish
+Keep signing keys outside the repository. Leave earlier releases and the legacy
+`updates/latest.json` unchanged.
 
-1. Test the finished plugin and installer, then capture
-   `docs/screenshots/hau-installer.png`, `hau-home.png` and
-   `hau-outfit-picker.png`.
-2. Put `HAUSetup.exe` in `downloads/setup/`. Sign the new manifest using
-   `scripts/sign-update-manifest.py --version 1.0.1 --private-key
-   <KEY-OUTSIDE-THE-REPOSITORY> --game-version 2026.9.29 --stage`.
-3. Verify the signature, then run
-   `scripts/package-setup.py --release 1.0.1` to create the final matching source.
-4. Publish tag `hau-v1.0.1` in [HackerAmongUs](https://github.com/ProXgram/HackerAmongUs)
-   with `HAU-1.0.1-Plugin.zip`, `HAUSetup.exe`, both manual ZIPs and the source ZIP
-   before activating the signed manifest on `main`.
-5. Verify every public asset's bytes, then copy the staged
-   `updates/hau/1.0.1.json` to `updates/hau/latest.json` and publish the feed.
+## Updates and licenses
 
-Historical MalumMenu Enhanced releases and `updates/latest.json` stay intact.
-The HAU product channel permits its version reset to 1.0; true HAU downgrades
-remain blocked.
+On supported launchers, the updater checks the signed HAU feed at startup,
+verifies compatibility and file hashes, and installs after Among Us closes.
+It does not close or restart the game. Epic Games uses manual ZIP updates.
 
-## Licenses and checks
+HAU retains [GPL-3.0](../LICENSE) and [source attribution](../CREDITS.md).
+Runtime notices remain in `HAU.Setup/Legal`, `ManualLegal` and `ManualLegal788`;
+the installer displays them under **Credits & licenses**. Release archives
+include the required notices and corresponding source.
 
-Our source retains [GPL-3.0](../LICENSE) and the original mod credits.
-Required runtime notices are embedded under **Credits & licenses**; their
-source files remain unchanged in `HAU.Setup/Legal` and `ManualLegal`. The 788
-manual inventory is versioned separately in `ManualLegal788`, including
-Il2CppInterop 1.5.3 under LGPL-3.0. Earlier releases and notices stay intact.
-
-Maintainer checks are in `tests/Setup.Core.Tests`, `tests/AutoUpdate.Tests`,
-`tests/AutomaticUpdate.Tests` and `tests/UpdateManifest.Tests`. The Core test
-option `--verify-release-plugin <ZIP>` checks the actual HAU ZIP with the
-verified loader in isolated Steam and Xbox fixtures.
+Installer/update checks are in `tests/Setup.Core.Tests`, `tests/AutoUpdate.Tests`,
+`tests/AutomaticUpdate.Tests` and `tests/UpdateManifest.Tests`.
+The Core option `--verify-release-plugin <ZIP>` checks the packaged plugin
+against isolated Steam and Xbox installation fixtures.

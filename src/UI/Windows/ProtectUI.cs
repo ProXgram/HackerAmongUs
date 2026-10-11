@@ -15,7 +15,7 @@ public class ProtectUI : MonoBehaviour
 
     private void Start()
     {
-        // Instantiate 2D area of ProtectUI
+
         windowRect = new(
             Screen.width / 2f - windowWidth / 2f,
             Screen.height / 2f - windowHeight / 2f,
@@ -45,7 +45,7 @@ public class ProtectUI : MonoBehaviour
         {
             if (!player.Data || !player.Data.Role || string.IsNullOrEmpty(player.Data.PlayerName))
             {
-                if (playersToProtect.Contains(player))  // Ensure to remove invalid players from the list
+                if (playersToProtect.Contains(player))
                 {
                     playersToProtect.Remove(player);
                 }
@@ -115,7 +115,7 @@ public class ProtectUI : MonoBehaviour
         }
         else
         {
-            if (PlayerControl.AllPlayerControls.Count == playersToProtect.Count)  // Only clear the list if all players were being kept protected
+            if (PlayerControl.AllPlayerControls.Count == playersToProtect.Count)
             {
                 playersToProtect.Clear();
             }

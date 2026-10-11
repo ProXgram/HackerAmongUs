@@ -79,8 +79,8 @@ namespace HAU
 {
     public sealed class Flag { public bool Value; }
     public static class HAUPlugin { public static Flag menuAllowClickThrough = new Flag(); }
-    // Registration tests exercise actual Harmony interception independently of
-    // the separately linked pointer-release algorithm regression suite.
+
+
     public static class PointerInputGuard
     {
         public static bool Block;

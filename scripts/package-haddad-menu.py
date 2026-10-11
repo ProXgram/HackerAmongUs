@@ -1,4 +1,3 @@
-"""Package the plugin and matching source; optionally include a Windows BepInEx loader."""
 from pathlib import Path, PurePosixPath
 import hashlib
 import json
@@ -9,7 +8,7 @@ import argparse
 from datetime import date
 
 root = Path(__file__).resolve().parents[1]
-parser = argparse.ArgumentParser(description=__doc__)
+parser = argparse.ArgumentParser(description='Package the plugin and matching source; optionally include a Windows BepInEx loader.')
 parser.add_argument("--version", default="1.0")
 parser.add_argument("--dll", type=Path, help="Built DLL; defaults to src/bin/Release/net6.0/MalumMenuEnhanced.dll, with the current isolated build as a fallback.")
 parser.add_argument("--loader-package", type=Path, help="Compatible Windows 64-bit BepInEx 6 IL2CPP ZIP to include in the full Windows package. Without this, produce Plugin.zip for an existing BepInEx installation.")

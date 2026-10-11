@@ -1,4 +1,3 @@
-"""Package the single-file setup program with its corresponding repository source."""
 from pathlib import Path, PurePosixPath
 import argparse
 import hashlib
@@ -9,8 +8,8 @@ import subprocess
 import zipfile
 
 root = Path(__file__).resolve().parents[1]
-parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--release", default="1.0.1", help="Release source archive version")
+parser = argparse.ArgumentParser(description='Package the single-file setup program with its corresponding repository source.')
+parser.add_argument("--release", default="1.0.2", help="Release source archive version")
 args = parser.parse_args()
 if not re.fullmatch(r"[0-9]+\.[0-9]+(?:\.[0-9]+){0,2}", args.release):
     parser.error("Use a numeric release version, for example 1.1.0.")

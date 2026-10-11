@@ -1,18 +1,11 @@
-# GUI close-release regression harness
+# Pointer release checks
+
+Run from the repository root with the .NET 10 SDK:
 
 ```powershell
 dotnet run --project tests/PointerInputGuard.Tests/PointerInputGuard.Tests.csproj -c Release
 ```
 
-Links the production pointer-release guard and actual PassiveUiElement prefix.
-The regression scenario uses the observed close point outside the main menu:
-after the outfit picker becomes hidden, the consumed release cannot activate a
-native button underneath. A regression uses the observed AU19 native event:
-both GUI event types are `Used` after the button consumes the left mouse-up.
-An independently observed left release arms the guard; `Used` alone does not.
-It also verifies a delayed release frame, expiration,
-outside-window input, click-through preferences, keyboard/programmatic closes,
-pointer jitter, malformed coordinates and frame-clock changes.
+Links the pointer-release guard and `PassiveUiElement` prefix. Checks cover consumed outfit-picker close clicks, `Used` GUI events, independently observed mouse releases, delayed frames, expiration, input outside the guard window, click-through settings, keyboard closes, pointer jitter, invalid coordinates and clock changes.
 
-The GUI state and native-button callbacks are offline contracts. This does not
-run Unity/Harmony or replace a live close-click check.
+GUI events and button callbacks are stubs. These checks do not run Unity or install Harmony patches; native close-click behavior needs a game check.

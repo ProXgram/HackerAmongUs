@@ -413,14 +413,14 @@ Run("walking frame drift retains the far route and checks the current body cente
         actor.TruePosition = next; Time.realtimeSinceStartupAsDouble += 0.02;
     }
 });
-Run("static AI route also retains safe cache across small frame center drift", () =>
+Run("static Task Walker route also retains safe cache across small frame center drift", () =>
 {
     SetUp(); var actor = Actor(0.1564f, new(0, 0.1091f)); Physics2D.Obstacles.Add(new(1.8f, -1, 2.2f, 1));
     Require(NavigationRouter.Direction(Vector2.zero, new(4, 0), out _).sqrMagnitude > 0f, "static route fixture failed");
     actor.Collider.CenterOffset = new(-0.0217f, 0.1078f);
     int before = Physics2D.Queries, centers = Physics2D.Centers.Count;
     Require(NavigationRouter.Direction(Vector2.zero, new(4, 0), out _).sqrMagnitude > 0f && Physics2D.Queries - before <= 15,
-        "small translation restarted the static AI planner");
+        "small translation restarted the static Task Walker planner");
     Require(Near(Physics2D.Centers[centers], actor.Collider.CenterOffset), "static route used stale center geometry");
 });
 Run("substantial body center jump still discards old moving clearance", () =>
@@ -579,8 +579,8 @@ Run("completed stale route without a live reachable join signals endpoint failur
             "fixture completed before its doorway changed");
         Time.realtimeSinceStartupAsDouble += 0.02;
     }
-    // Keep the actor clear while closing its tiny room after the pending
-    // planner cached the old exit. The rest of the historical detour remains open.
+
+
     Physics2D.Obstacles.Add(new(0.3f, -0.5f, 0.5f, 0.5f));
     Physics2D.Obstacles.Add(new(-0.5f, -0.5f, -0.3f, 0.5f));
     Physics2D.Obstacles.Add(new(-0.5f, 0.3f, 0.5f, 0.5f));

@@ -27,7 +27,7 @@ void Reset()
     CheatToggles.showConsole = CheatToggles.showDoorsMenu = CheatToggles.showOverload =
         CheatToggles.showProtectMenu = CheatToggles.showRolesMenu = CheatToggles.showTasksMenu = false;
     Pointer(1019, 113);
-    // Clear a previous expired release using the real runtime guard.
+
     PointerInputGuard.BlocksNativePointer(new Vector2(1019, 113));
 }
 void Pointer(float x, float topY) => Input.mousePosition = new Vector3(x, Screen.height - topY, 0);

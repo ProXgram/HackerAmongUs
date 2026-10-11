@@ -4,8 +4,8 @@ using InnerNet;
 
 namespace HAU;
 
-// The host must enable the same mode to count ghost votes. No death state is
-// serialized or changed outside a single synchronous vote-selection call.
+
+
 internal static class GhostVoting
 {
     [ThreadStatic] private static IntPtr _scopedLocalGhost;
@@ -45,9 +45,9 @@ internal static class GhostVoting
         var area = FindArea(meeting, local.PlayerId);
         if (!area || area.DidVote) return;
 
-        // Assign the Harmony state before changing the flag, so its finalizer
-        // can restore it even if a later native call throws. Nested Select calls
-        // inherit this scope and leave the original target's AmDead untouched.
+
+
+
         scope = new LocalDeadScope(local.Data, _scopedLocalGhost);
         _scopedLocalGhost = local.Data.Pointer;
         local.Data.IsDead = false;
@@ -76,9 +76,9 @@ internal static class GhostVoting
                 return;
         }
 
-        // Run the original CastVote with its duplicate-vote, dirty-bit, tally,
-        // meeting-completion and Judge behavior. Only its source-death gate is
-        // opened temporarily; no RPC, other player's vote or role is fabricated.
+
+
+
         scope = new VoteAreaDeadScope(area);
         area.AmDead = false;
     }

@@ -1,5 +1,5 @@
-// These local types replace game/Unity/config APIs. No game or network library
-// is referenced; destroyed physics throws if the handler tries to access it.
+
+
 public class UnityObjectStub
 {
     private static int _nextPointer = 100;

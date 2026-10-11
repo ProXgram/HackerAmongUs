@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Local contracts only. The harness references no game, network or Unity library.
+
 public class NativeObject
 {
     private static int _next = 10;
@@ -72,8 +72,8 @@ public sealed class PlayerPhysics : NativeObject
         if (!float.IsFinite(direction.x) || !float.IsFinite(direction.y) || direction.sqrMagnitude > 1.00001f)
             throw new InvalidOperationException("Unbounded movement input");
         MovementWrites++; LastInput = direction;
-        // Model signed-speed multiplication to exercise inverted-control compensation.
-        // This is a local contract, not proof of native GameAssembly execution.
+
+
         PhysicalVelocity = direction * TrueSpeed;
     }
 }
@@ -237,7 +237,7 @@ namespace HAU
             return RecoveryDirection;
         }
     }
-    public static class AiTasksHandler
+    public static class TaskWalkerHandler
     {
         public static bool Available = true, IsFinished, NativeActionAllowed = true;
         public static bool RequireGroundBody;
@@ -250,10 +250,10 @@ namespace HAU
         {
             goal = Goal; arrivalDistance = ArrivalDistance;
             if ((!Utils.isInGame && !Utils.isFreePlay) || !ShipStatus.Instance)
-            { status = "AI waiting for round"; return false; }
+            { status = "Task Walker waiting for round"; return false; }
             if (RequireGroundBody && (!PlayerControl.LocalPlayer.Collider || !PlayerControl.LocalPlayer.Collider.enabled))
-            { status = "AI collision geometry unavailable"; return false; }
-            status = IsFinished ? "AI finished" : Available ? "AI going" : "AI waiting";
+            { status = "Task Walker collision geometry unavailable"; return false; }
+            status = IsFinished ? "Task Walker finished" : Available ? "Task Walker going" : "Task Walker waiting";
             return Available && !IsFinished;
         }
         public static void OnArrived() { Arrivals++; if (NativeActionAllowed) NativeSteps++; }

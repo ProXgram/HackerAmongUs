@@ -50,12 +50,12 @@ public static class PassiveUiElement_Patches
         return registered == expected && expected == 9;
     }
 
-    // Prevent mod-window interactions from also activating native pointer handlers.
+
     [HarmonyPrefix]
     public static bool Prefix(MethodBase __originalMethod = null)
     {
-        // Input.mousePosition has a bottom-left origin
-        // Convert it to a top-left origin by flipping the Y coordinate
+
+
         Vector2 mousePosition = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
 
         bool allowed = AllowsNativePointer(mousePosition);
@@ -64,19 +64,19 @@ public static class PassiveUiElement_Patches
         return allowed;
     }
 
-    // MatchInfoHudButton has its own MonoBehaviour input path; it must use the
-    // same window/release policy even when no PassiveUiElement callback occurs.
+
+
     public static bool AllowsNativePointer(Vector2 mousePosition)
     {
 
         if (PointerInputGuard.BlocksNativePointer(mousePosition)) return false;
 
-        // Ability-panel clicks must never also activate a native action below it.
+
         if (MultiRoleUI.BlocksNativeInput(mousePosition)) return false;
         if (OutfitPickerUI.IsOpen && OutfitPickerUI.windowRect.Contains(mousePosition)) return false;
         if (HAUPlugin.menuAllowClickThrough.Value) return true;
 
-        // Rect.Contains() uses GUI coordinates (top-left origin)
+
         return !((MenuUI.isGUIActive && MenuUI.windowRect.Contains(mousePosition)) ||
                  (CheatToggles.showConsole && ConsoleUI.windowRect.Contains(mousePosition)) ||
                  (CheatToggles.showDoorsMenu && DoorsUI.windowRect.Contains(mousePosition)) ||

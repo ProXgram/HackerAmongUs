@@ -26,12 +26,12 @@ internal sealed class SetupForm : Form
     private bool finished;
     private string lastError = "";
 
-    internal static readonly SetupCatalog Catalog = new("1.0.1",
+    internal static readonly SetupCatalog Catalog = new("1.0.2",
         new DownloadArtifact(new Uri("https://builds.bepinex.dev/projects/bepinex_be/788/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788%2B5b766a3.zip"),
             "F4CC496BD098A0DF4164B81E3737297707F13A47C2478DBA2F60EEFAB784817A", "BepInEx loader"),
-        new DownloadArtifact(new Uri("https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-Plugin.zip"),
-            "7B754C7024760A0ACEE2B7565868EFF6E0CBEBF01C7D4C4E8D75BC196EF562A8", "Hacker Among Us"))
-        { ExpectedPluginVersion = new Version(1, 0, 1, 0) };
+        new DownloadArtifact(new Uri("https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.2/HAU-1.0.2-Plugin.zip"),
+            "D76C8A983BA10634868ED7813F0423024707E36FA53A6DD6AB011D8E76BFF1DB", "Hacker Among Us"))
+        { ExpectedPluginVersion = new Version(1, 0, 2, 0) };
 
     public SetupForm()
     {
@@ -266,7 +266,7 @@ internal sealed class SetupForm : Form
             if (manifest.SupportsGameVersion(gameVersion) && manifest.IsNewerThan(Catalog.ModVersion))
                 selected = AutoUpdateService.CreateCatalog(manifest, Catalog.Loader);
         }
-        catch (HttpRequestException) { /* The built-in verified release remains available. */ }
+        catch (HttpRequestException) {   }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested) { }
         var current = Path.Combine(directory, "BepInEx", "plugins", "HAU.dll");
         if (File.Exists(current) && InstallerService.GetInstalledModVersion(directory) > UpdateManifestVerifier.ParseNumericVersion(selected.ModVersion))

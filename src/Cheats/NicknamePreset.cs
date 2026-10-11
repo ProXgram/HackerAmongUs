@@ -56,7 +56,7 @@ public static class NicknamePreset
             {
                 player.Customization.Name = name;
                 player.Save();
-                // This requests only the user's own ordinary player name.
+
                 if (inLobby) local.RpcSetName(name);
             }
             catch

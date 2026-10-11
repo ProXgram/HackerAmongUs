@@ -35,7 +35,7 @@ try
     Check(saved.Contains("seeRoles = True = KeyCode.None"), "persistent ESP switch is saved");
     Check(saved.Contains("completeMyTasks = False = KeyCode.F1"), "request shortcut is retained");
 
-    // An old profile can contain every request as true; loading must not replay any of them.
+
     File.WriteAllLines(HAUPlugin.ProfilePath, CheatToggles.ToggleFields.Keys.Select(id => id + " = True = KeyCode.F3"));
     foreach (string state in nonRestorableState) CheatToggles.ToggleFields[state].SetValue(null, false);
     Utils.isHost = true;
@@ -61,7 +61,7 @@ try
     CheatToggles.LoadTogglesFromProfile();
     Check(CheatToggles.reactorSab && CheatToggles.commsSab, "profile load does not request a repair by replacing live sabotage states");
 
-    // A partial or missing profile must also clear already queued requests.
+
     File.WriteAllText(HAUPlugin.ProfilePath, "# old partial profile\nseeRoles = True = KeyCode.A\nunknown = True = KeyCode.B\n");
     CheatToggles.completeMyTasks = CheatToggles.killAll = CheatToggles.panicMode = true;
     CheatToggles.LoadTogglesFromProfile();

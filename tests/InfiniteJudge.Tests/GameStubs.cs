@@ -1,5 +1,5 @@
-// Offline substitutes for native identities and properties. Production code
-// is linked unchanged. Any modeled network action fails the harness.
+
+
 using AmongUs.GameOptions;
 
 namespace AmongUs.GameOptions
@@ -33,7 +33,7 @@ public sealed class JudgeRole : RoleBehaviour
 {
     public bool HasAnOverruleUse;
     public bool HasAlreadyOverruledThisMeeting;
-    // Other native-state stand-ins are sentinels: this feature may touch none.
+
     public ushort OverruleNonce = 42;
     public byte TargetPlayerId = 7;
     public bool TaskGateUnlocked;

@@ -145,7 +145,7 @@ Run("tracking recomputes current position and room at its update interval", () =
     Enable();
     MultiRoleHandler.CycleTarget();
     Require(MultiRoleHandler.TrackingText.Contains("5.0m, up", StringComparison.Ordinal), "first reading did not use current distance and direction");
-    MultiRoleHandler.Tick(); // Arm interval after initial selection.
+    MultiRoleHandler.Tick();
     target.Position = new(-8, 0);
     Utils.CurrentRoom = new() { RoomId = "Electrical" };
     Time.unscaledTime = 0.1f;
@@ -433,7 +433,7 @@ Run("later real kill replaces a protected no-death attempt's stale locations", (
     SetUp(); var suspect = AddPlayer(2); var victim = AddPlayer(9); Enable();
     Utils.CurrentRoom = new() { RoomId = "First failed attempt" };
     var rejected = MultiRoleDetectiveHandler.CapturePendingDeath(victim, MurderResultFlags.DecisionByHost);
-    MultiRoleDetectiveHandler.ConfirmDeath(rejected, victim); // Protected locally; no native death.
+    MultiRoleDetectiveHandler.ConfirmDeath(rejected, victim);
     Time.unscaledTime = 1;
     Utils.CurrentRoom = new() { RoomId = "Later real kill" };
     var accepted = MultiRoleDetectiveHandler.CapturePendingDeath(victim, MurderResultFlags.Succeeded);
@@ -718,7 +718,7 @@ Run("selected death marker uses captured position, map scale and mirrored ship o
     first.Position = new(4, 6); second.Position = new(10, 8);
     ShipStatus.Instance.MapScale = 2;
     Enable(); ConfirmedDeath(first); ConfirmedDeath(second);
-    first.Position = second.Position = new(99, 99); // Dead actors move during later animations.
+    first.Position = second.Position = new(99, 99);
     MultiRoleHandler.OpenDetectiveNotes();
     var notes = DetectiveNotesMinigame.Instances.Single();
     MultiRoleDetectiveHandler.OpenCaseMap(notes);

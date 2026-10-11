@@ -1,18 +1,11 @@
-# Role-targeting regression harness
+# Role targeting checks
 
-Run from the repository root:
+Run from the repository root with the .NET 10 SDK:
 
 ```powershell
 dotnet run --project tests/RoleTargeting.Tests/RoleTargeting.Tests.csproj -c Release
 ```
 
-Links the actual Impostor, Detective and Tracker range prefixes from
-`src/Patches/RoleBehaviourPatches.cs`. Local game contracts exercise empty and
-null snapshots, malformed or stale native references, current owning-role
-bindings, native predicate dispatch, dead/disconnected actors, missing or
-disabled colliders, nearest eligible selection, toggle/context fallback and
-preservation of existing Impostor target rules.
+Links the Impostor, Detective and Tracker range prefixes from `RoleBehaviourPatches.cs`. Checks cover missing or stale references, role ownership, native predicates, dead/disconnected actors, collider eligibility, nearest-target selection, context fallback and existing Impostor rules.
 
-These checks do not install the mod, execute IL2CPP/Harmony, send network
-requests or prove multiplayer acceptance. Native API compatibility is checked
-separately against the game's published interop SDK.
+Game types are local stubs. These checks do not install Harmony patches or establish IL2CPP compatibility or multiplayer acceptance.

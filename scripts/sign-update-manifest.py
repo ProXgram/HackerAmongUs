@@ -1,12 +1,3 @@
-"""Sign the latest compatible Hacker Among Us release with a publisher key.
-
-Requires Python and the cryptography package. Build the plugin ZIP and setup
-program first, then supply --version, --private-key and optional repeated
---game-version values. Store the private key outside this repository; it is
-never included in the manifest. --dry-run verifies and signs without writing.
---stage writes a versioned envelope without activating the live update feed.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -94,7 +85,7 @@ def publisher_key(private_path: Path) -> rsa.RSAPrivateKey:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description='Sign the latest compatible Hacker Among Us release with a publisher key.')
     parser.add_argument("--version", required=True, type=numeric_version, help="Matching numeric mod version and GitHub release tag.")
     parser.add_argument("--private-key", required=True, type=Path, help="Publisher RSA PEM private key stored outside this repository.")
     parser.add_argument("--game-version", action="append", type=numeric_version, help="Supported Among Us version; repeat for multiple versions.")

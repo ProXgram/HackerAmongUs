@@ -1,5 +1,5 @@
-// Deliberately minimal offline substitutes. Production handler code is linked
-// unchanged; none of these types open sockets or invoke the installed game.
+
+
 using AmongUs.GameOptions;
 
 namespace AmongUs.GameOptions

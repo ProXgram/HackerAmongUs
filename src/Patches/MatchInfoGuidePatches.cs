@@ -8,7 +8,7 @@ public static class MatchInfoGuide_CreatePlayerEntries
 {
     private static Vector2 _anchoredPosition = new Vector2(0f, 0f);
 
-    // Prefix patch of MatchInfoGuide.CreatePlayerEntries for seePlayerInfo and seeRoles cheats
+
     public static bool Prefix(MatchInfoGuide __instance)
     {
         __instance.PlayerPool.ReclaimAll();
@@ -21,8 +21,8 @@ public static class MatchInfoGuide_CreatePlayerEntries
 
             component.NameText.text = Utils.GetNameTag(networkedPlayerInfo, networkedPlayerInfo.PlayerName, false, true);
 
-            // Adjust the text position to improve readability
-            // Always start from the original anchoredPosition to prevent cumulative shifting on each open
+
+
             if (_anchoredPosition == Vector2.zero)
             {
                 _anchoredPosition = component.NameText.rectTransform.anchoredPosition;

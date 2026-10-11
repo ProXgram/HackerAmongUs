@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace HAU;
 
-// The camera tools restore only the objects captured by this instance, never a
-// newly joined player's movement or a replacement camera's follower settings.
+
+
 public static class CameraToolHandler
 {
     private enum Mode { None, Freecam, Spectate }

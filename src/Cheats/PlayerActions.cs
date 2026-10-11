@@ -76,7 +76,7 @@ public static class PlayerActions
 
             if (!_reportBodyActive)
             {
-                // Close any player pick menus already open & their cheats
+
                 if (PlayerPickMenu.playerpickMenu != null)
                 {
                     PlayerPickMenu.playerpickMenu.Close();
@@ -84,7 +84,7 @@ public static class PlayerActions
                 }
 
                 var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
-                // A report still uses the normal native request and an observed dead player.
+
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action) (() =>
                 {
                     if (!ChoiceIsCurrent(context) || !OwnedActionContext.StartMeeting) return;
@@ -96,7 +96,7 @@ public static class PlayerActions
                 _reportBodyActive = true;
             }
 
-            // Deactivate cheat if menu is closed
+
             if (PlayerPickMenu.playerpickMenu == null)
             {
                 CheatToggles.reportBody = false;
@@ -119,7 +119,7 @@ public static class PlayerActions
         {
             if (!_ejectPlayerActive)
             {
-                // Close any player pick menus already open & their cheats
+
                 if (PlayerPickMenu.playerpickMenu != null)
                 {
                     PlayerPickMenu.playerpickMenu.Close();
@@ -143,7 +143,7 @@ public static class PlayerActions
 
                 var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
                 var meetingPointer = MeetingHud.Instance.Pointer;
-                // Player pick menu to choose any living player and eject them during meeting
+
                 PlayerPickMenu.OpenPlayerPickMenu(playerInfo, (Action)(() =>
                 {
                     if (!ChoiceIsCurrent(context, hostMeeting: true) || MeetingHud.Instance.Pointer != meetingPointer) return;
@@ -155,7 +155,7 @@ public static class PlayerActions
                 _ejectPlayerActive = true;
             }
 
-            // Deactivate cheat if menu is closed
+
             if (PlayerPickMenu.playerpickMenu == null)
             {
                 CheatToggles.ejectPlayer = false;
@@ -174,7 +174,7 @@ public static class PlayerActions
         {
             if (!_killPlayerActive)
             {
-                // Close any player pick menus already open & their cheats
+
                 if (PlayerPickMenu.playerpickMenu != null)
                 {
                     PlayerPickMenu.playerpickMenu.Close();
@@ -189,7 +189,7 @@ public static class PlayerActions
                 }
 
                 var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
-                // Player pick menu made for killing any player by sending a successful MurderPlayer RPC call
+
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action)(() =>
                 {
                     if (!ChoiceIsCurrent(context, hostRound: true)) return;
@@ -201,7 +201,7 @@ public static class PlayerActions
                 _killPlayerActive = true;
             }
 
-            // Deactivate cheat if menu is closed
+
             if (PlayerPickMenu.playerpickMenu == null)
             {
                 CheatToggles.killPlayer = false;
@@ -220,7 +220,7 @@ public static class PlayerActions
         {
             if (!_telekillPlayerActive)
             {
-                // Close any player pick menus already open & their cheats
+
                 if (PlayerPickMenu.playerpickMenu != null)
                 {
                     PlayerPickMenu.playerpickMenu.Close();
@@ -235,8 +235,8 @@ public static class PlayerActions
                 }
 
                 var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
-                // Player pick menu made for killing any player by sending a successful MurderPlayer RPC call
-                // and immediatly teleporting back to original position
+
+
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action)(() =>
                 {
                     if (!ChoiceIsCurrent(context, hostRound: true)) return;
@@ -251,7 +251,7 @@ public static class PlayerActions
                 _telekillPlayerActive = true;
             }
 
-            // Deactivate cheat if menu is closed
+
             if (PlayerPickMenu.playerpickMenu == null)
             {
                 CheatToggles.telekillPlayer = false;
@@ -270,7 +270,7 @@ public static class PlayerActions
         {
             if (!_teleportPlayerActive)
             {
-                // Close any player pick menus already open & their cheats
+
                 if (PlayerPickMenu.playerpickMenu != null)
                 {
                     PlayerPickMenu.playerpickMenu.Close();
@@ -279,7 +279,7 @@ public static class PlayerActions
 
                 List<NetworkedPlayerInfo> playerDataList = new List<NetworkedPlayerInfo>();
 
-                // All players are saved to playerList apart from LocalPlayer
+
                 foreach (var player in PlayerControl.AllPlayerControls)
                 {
                     if (OwnedActionContext.ValidTarget(player, false) && !player.AmOwner)
@@ -288,7 +288,7 @@ public static class PlayerActions
                     }
                 }
 
-                // Player pick menu made for teleporting LocalPlayer to any player's position
+
                 var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action)(() =>
                 {
@@ -303,7 +303,7 @@ public static class PlayerActions
                 _teleportPlayerActive = true;
             }
 
-            // Deactivate cheat if menu is closed
+
             if (PlayerPickMenu.playerpickMenu == null)
             {
                 CheatToggles.teleportPlayer = false;
@@ -325,7 +325,7 @@ public static class PlayerActions
             if (!_setFakeRoleActive)
             {
 
-                // Close any player pick menus already open & their cheats
+
                 if (PlayerPickMenu.playerpickMenu != null)
                 {
                     PlayerPickMenu.playerpickMenu.Close();
@@ -344,36 +344,36 @@ public static class PlayerActions
                 var context = new OwnedActionContext.Snapshot(local);
                 List<NetworkedPlayerInfo> playerDataList = new List<NetworkedPlayerInfo>();
 
-                // Shapeshifter role can only be used if it was already assigned at the start of the game
-                // This is done to prevent the anticheat from kicking players
+
+
                 if (_oldRole == RoleTypes.Shapeshifter || Utils.isFreePlay)
                 {
                     playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Shapeshifter", OutfitPreset.Shapeshifter, Utils.GetBehaviourByRoleType(RoleTypes.Shapeshifter)));
                 }
 
-                // Phantom role can only be used if it was already assigned at the start of the game
-                // This is done to prevent the anticheat from kicking players
+
+
                 if (_oldRole == RoleTypes.Phantom || Utils.isFreePlay)
                 {
                     playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Phantom", OutfitPreset.Phantom, Utils.GetBehaviourByRoleType(RoleTypes.Phantom)));
                 }
 
-                // Viper role can only be used if it was already assigned at the start of the game
-                // This is done to prevent the anticheat from kicking players
+
+
                 if (_oldRole == RoleTypes.Viper || Utils.isFreePlay)
                 {
                     playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Viper", OutfitPreset.Viper, Utils.GetBehaviourByRoleType(RoleTypes.Viper)));
                 }
 
-                // Impostor role can only be used if it was already assigned at the start of the game or as host
-                // This is done to prevent the anticheat from kicking players
+
+
                 if ((_oldRole != null && Utils.GetBehaviourByRoleType((RoleTypes)_oldRole).TeamType == RoleTeamTypes.Impostor) || Utils.isFreePlay || Utils.isHost)
                 {
                     playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Impostor", OutfitPreset.Impostor, Utils.GetBehaviourByRoleType(RoleTypes.Impostor)));
                 }
 
-                // Judge role can only be used if it was already assigned at the start of the game
-                // This is done to prevent the anticheat from kicking players
+
+
                 if (_oldRole == RoleTypes.Judge || Utils.isFreePlay)
                 {
                     playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Judge", OutfitPreset.Judge, Utils.GetBehaviourByRoleType(RoleTypes.Judge)));
@@ -393,7 +393,7 @@ public static class PlayerActions
                     : Utils.isHost ? "Online host previews keep your assigned team. Use Host Controls for balanced Impostor assignment."
                     : "Local role preview only. Special roles require your original assignment; online actions still need host acceptance.";
 
-                // Player pick menu made for changing your roles with a custom choice list
+
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action) (() =>
                 {
                     if (!ChoiceIsCurrent(context) || !RoleManager.Instance) return;
@@ -402,7 +402,7 @@ public static class PlayerActions
                     if (choice == null || !choice.Role ||
                         !SpecialRoleAllowed(_oldRole, choice.Role.Role, Utils.isFreePlay, Utils.isHost)) return;
 
-                    if (PlayerControl.LocalPlayer.Data.IsDead) // Prevent accidential revives
+                    if (PlayerControl.LocalPlayer.Data.IsDead)
                     {
                         if (PlayerPickMenu.targetPlayerData.Role.TeamType == RoleTeamTypes.Impostor)
                         {
@@ -415,19 +415,19 @@ public static class PlayerActions
                     }
                     else
                     {
-                        /* if (PlayerPickMenu.targetPlayerData.Role.Role == RoleTypes.Shapeshifter && oldRole != RoleTypes.Shapeshifter){
 
-                            Utils.showPopup("\n<size=125%>Changing into the Shapeshifter role is not recommended\nsince shapeshifting will get you kicked by the anticheat");
 
-                        } else if (PlayerPickMenu.targetPlayerData.Role.Role == RoleTypes.Noisemaker && oldRole != RoleTypes.Noisemaker){
 
-                            Utils.showPopup("\n<size=125%>Changing into the Noisemaker role is not recommended\nsince dying won't trigger the alert for other players");
 
-                        } else if (oldRole == RoleTypes.Noisemaker){
 
-                            Utils.showPopup("\n<size=125%>Your \"real\" role is still Noisemaker\nso other players will still see the alert when you die");
 
-                        } */
+
+
+
+
+
+
+
 
                         RoleManager.Instance.SetRole(PlayerControl.LocalPlayer, PlayerPickMenu.targetPlayerData.Role.Role);
                     }
@@ -437,7 +437,7 @@ public static class PlayerActions
                 _setFakeRoleActive = true;
             }
 
-            // Deactivate cheat if menu is closed
+
             if (PlayerPickMenu.playerpickMenu == null)
             {
                 CheatToggles.setFakeRole = false;
@@ -462,7 +462,7 @@ public static class PlayerActions
             if (!_setFakeAliveActive)
             {
 
-                // Close any player pick menus already open & their cheats
+
                 if (PlayerPickMenu.playerpickMenu != null)
                 {
                     PlayerPickMenu.playerpickMenu.Close();
@@ -475,7 +475,7 @@ public static class PlayerActions
                 playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Alive", OutfitPreset.Crewmate, Utils.GetBehaviourByRoleType(RoleTypes.Crewmate)));
                 playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Dead", OutfitPreset.Dead, Utils.GetBehaviourByRoleType(RoleTypes.CrewmateGhost)));
 
-                // Player pick menu made for changing your alive state with a custom choice list
+
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action) (() =>
                 {
                     if (!ChoiceIsCurrent(context) || !Utils.isFreePlay || PlayerPickMenu.targetPlayerData?.Role == null) return;
@@ -492,7 +492,7 @@ public static class PlayerActions
                 _setFakeAliveActive = true;
             }
 
-            // Deactivate cheat if menu is closed
+
             if (PlayerPickMenu.playerpickMenu == null)
             {
                 CheatToggles.setFakeAlive = false;
@@ -535,7 +535,7 @@ public static class PlayerActions
                 playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Detective", OutfitPreset.Detective, Utils.GetBehaviourByRoleType(RoleTypes.Detective)));
                 playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Crewmate", OutfitPreset.Crewmate, Utils.GetBehaviourByRoleType(RoleTypes.Crewmate)));
 
-                // Player pick menu made for forcing a role onto another player
+
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action)(() =>
                 {
                     if (!ChoiceIsCurrent(context) || (!Utils.isHost && !Utils.isFreePlay) || PlayerPickMenu.targetPlayerData?.Role == null) return;
@@ -545,7 +545,7 @@ public static class PlayerActions
                 _forceRoleActive = true;
             }
 
-            // Deactivate cheat if menu is closed
+
             if (PlayerPickMenu.playerpickMenu == null)
             {
                 CheatToggles.forceRole = false;

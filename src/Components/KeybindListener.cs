@@ -16,18 +16,18 @@ public class KeybindListener : MonoBehaviour
             MovementAutomation.Stop();
             ColorCycleHandler.Stop();
         }
-        // Run before chat/panic early returns so a held boost cannot get stuck.
+
         SprintHandler.Tick();
         ColorCycleHandler.Tick();
         NicknameEntry.Tick();
         if (HAUPlugin.isPanicked || !Application.isFocused) return;
-        // Typing a nickname in the menu must not trigger cheat keybinds.
+
         if (MenuUI.isGUIActive) return;
 
-        // Keybinds aren't triggered from typing in the chat
+
         if (HudManager.InstanceExists && HudManager.Instance.Chat && HudManager.Instance.Chat.IsOpenOrOpening) return;
 
-        // Check each keybind to see if the user pressed it and toggle the corresponding cheat
+
         foreach (var (name, key) in CheatToggles.Keybinds)
         {
             if (key == KeyCode.None) continue;

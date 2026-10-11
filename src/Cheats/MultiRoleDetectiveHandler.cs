@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace HAU;
 
-// A detached notebook: never assign this behaviour as the player's role, and
-// never put its death records into the native DetectiveLocationsController.
+
+
 public static class MultiRoleDetectiveHandler
 {
     private const float PendingDeathLifetime = 15f;
@@ -56,8 +56,8 @@ public static class MultiRoleDetectiveHandler
         try
         {
             if (!EnsureSession()) return;
-            // The detached notebook and its map have no assigned role's input
-            // button. Close the owned map first, then Notes on a later Escape.
+
+
             if (_notes && Minigame.Instance && Minigame.Instance.Pointer == _notes.Pointer &&
                 !MenuUI.isGUIActive && HudManager.InstanceExists &&
                 !(HudManager.Instance.Chat && HudManager.Instance.Chat.IsOpenOrOpening) &&
@@ -147,7 +147,7 @@ public static class MultiRoleDetectiveHandler
             target.Pointer == PlayerControl.LocalPlayer.Pointer || !target.Collider || !target.Collider.enabled)
             return false;
         var prefab = GetPrefab();
-        // The native getter is a constant distance, without player/host state.
+
         return prefab && Vector2.Distance(PlayerControl.LocalPlayer.GetTruePosition(),
             target.GetTruePosition()) <= prefab.GetAbilityDistance();
     }
@@ -171,16 +171,16 @@ public static class MultiRoleDetectiveHandler
                     ReportError("This player is already in the selected case.");
                     return;
                 }
-            // Add only notebook data. Native Interrogate also disables the real
-            // SecondaryAbilityButton, so it must not be called for a detached role.
+
+
             if (record.Suspects.Count >= 3)
             {
                 ReportError("This case already has three suspects. Select another case in Notes.");
                 return;
             }
-            // Keep the actual data reference in our case model. Native
-            // DetectiveSuspect struct/list marshalling is unnecessary for this
-            // local notebook, and its native renderer casts the assigned role.
+
+
+
             record.Suspects.Add(info);
             Trace("Interrogate add complete count=" + record.Suspects.Count);
             _nextInterrogation = Time.unscaledTime + 1f;
@@ -195,9 +195,9 @@ public static class MultiRoleDetectiveHandler
         }
     }
 
-    // Native MurderPlayer accepts Succeeded or DecisionByHost. Both remain
-    // candidates until the victim is actually dead; protected decisions expire.
-    // Capture before native kill animation moves the killer and victim.
+
+
+
     internal static PendingDeath CapturePendingDeath(PlayerControl target, MurderResultFlags flags)
     {
         if ((flags & (MurderResultFlags.Succeeded | MurderResultFlags.DecisionByHost)) == 0 ||
@@ -206,8 +206,8 @@ public static class MultiRoleDetectiveHandler
             !target || !target.Data || target.Data.IsDead || target.Data.Disconnected ||
             Cases.ContainsKey(target.PlayerId)) return null;
 
-        // A host-decision request can be rejected by protection. A later kill
-        // attempt must take a fresh snapshot instead of reusing that candidate.
+
+
         PendingDeaths.Remove(target.PlayerId);
 
         var pending = new PendingDeath
@@ -264,10 +264,10 @@ public static class MultiRoleDetectiveHandler
             view.player.gameObject.SetActive(outfit != null);
             view.player.SetMaskLayer(maskLayer);
             Trace("RenderSuspect slot=" + index + " mask complete; outfit begin");
-            // Match native DetectiveNotesSuspectInterface.SetPlayerInfo:
-            // notebook portraits have no pet display and use a living avatar.
-            // Resolve the outfit with a guarded lookup outside the native
-            // UpdateFromPlayerData indexer path reached in the crash dump.
+
+
+
+
             if (outfit != null) view.player.UpdateFromPlayerOutfit(outfit,
                 (PlayerMaterial.MaskType)2, false, false, null, true);
             Trace("RenderSuspect slot=" + index + " outfit complete");
@@ -310,8 +310,8 @@ public static class MultiRoleDetectiveHandler
             var slot = notes.suspectContainers[index];
             Trace("RenderPage slot=" + index + " begin");
             if (!slot) continue;
-            // This notebook admits three suspects per case. The current native
-            // prefab also contains a fourth slot which is not usable here.
+
+
             slot.gameObject.SetActive(index < 3);
             if (index >= 3) continue;
             bool occupied = index < record.Suspects.Count;
@@ -348,11 +348,11 @@ public static class MultiRoleDetectiveHandler
             ReportError("No death position was recorded for this case.");
             return;
         }
-        // Native Detective map mode casts the assigned role. Normal map mode
-        // lets this detached notebook display the ship without replacing it.
-        // Native normal-map rendering rejects the notebook's movement lock.
-        // Supply its UI-only guard answer solely during this synchronous call;
-        // no movement flag is changed and later gameplay queries stay native.
+
+
+
+
+
         _openingCaseMap = true;
         try { HudManager.Instance.ToggleMapVisible(new MapOptions { Mode = MapOptions.Modes.Normal }); }
         finally { _openingCaseMap = false; }
@@ -361,9 +361,9 @@ public static class MultiRoleDetectiveHandler
             _caseMap = MapBehaviour.Instance;
             _caseMapLocalPosition = _caseMap.transform.localPosition;
             _caseMapDepthOwned = true;
-            // GenericShow uses the ordinary map's depth, which is behind the
-            // notebook. Lift only our map, keeping its native layout and scale.
-            // Save local position so later native map use gets its exact depth.
+
+
+
             var mapPosition = _caseMap.transform.position;
             var frontDepth = notes.transform.position.z - 10f;
             if (mapPosition.z > frontDepth) mapPosition.z = frontDepth;
@@ -409,8 +409,8 @@ public static class MultiRoleDetectiveHandler
             _victimMarkerMaterial.SetColor(PlayerMaterial.BodyColor, tint);
             _victimMarkerMaterial.SetColor(PlayerMaterial.VisorColor, Palette.VisorColor);
         }
-        // This point is the confirmed kill's pre-animation snapshot, never the
-        // victim's later ghost/body position. Match the native minimap scaling.
+
+
         var point = new Vector3(record.VictimPosition.x, record.VictimPosition.y, 0f);
         point /= ship.MapScale;
         point.x *= Mathf.Sign(ship.transform.localScale.x);
@@ -430,8 +430,8 @@ public static class MultiRoleDetectiveHandler
         if (!owned) { ReleaseCaseMap(); return; }
         try
         {
-            // A replaced singleton can belong to another tool. Release our
-            // original presentation without closing that other map's overlay.
+
+
             if (MapBehaviour.Instance && MapBehaviour.Instance.Pointer == owned.Pointer && owned.IsOpen)
                 owned.Close();
         }
@@ -544,9 +544,9 @@ public static class MultiRoleDetectiveHandler
     private static void AddNativePage(PendingDeath record)
     {
         var page = new DetectiveNotesPageInfo(record.Victim);
-        // Native Notes still owns victim fields, tabs, editable controls and
-        // masks. Its suspect list stays empty; our reference-only model renders
-        // suspect evidence after native layout without calling SetPlayerInfo.
+
+
+
         page.suspects = new Il2CppSystem.Collections.Generic.List<DetectiveSuspect>();
         if (record.Locations.TryGetValue(record.VictimId, out var room)) page.SetLocation(room);
         _detective.notesPageInfos.Add(page);
@@ -588,8 +588,8 @@ public static class MultiRoleDetectiveHandler
         if (!owned) { CloseCaseMap(); _notes = null; return; }
         try
         {
-            // Close dismisses the notebook-specific controller overlays and
-            // materials. ForceClose then ends its normal closing animation.
+
+
             owned.Close();
             owned.ForceClose();
         }
@@ -608,7 +608,7 @@ public static class MultiRoleDetectiveHandler
         _lastError = message;
     }
 
-    // Diagnostic builds can trace the local notebook's native presentation.
+
     [System.Diagnostics.Conditional("DEBUG")]
     internal static void Trace(string message) =>
         HAUPlugin.Log?.LogInfo("MultiRole Detective diagnostic: " + message);

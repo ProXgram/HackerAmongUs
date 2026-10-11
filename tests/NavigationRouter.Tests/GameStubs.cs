@@ -158,8 +158,8 @@ namespace UnityEngine
             float y = point.y - Math.Clamp(point.y, rect.MinY, rect.MaxY);
             return x * x + y * y <= radius * radius;
         }
-        // Conservatively sweep an expanded rectangle. This is deterministic
-        // synthetic collision geometry, not an implementation of Unity physics.
+
+
         private static bool Intersects(Vector2 from, Vector2 to, float radius, Rectangle rect)
         {
             float lower = 0, upper = 1;

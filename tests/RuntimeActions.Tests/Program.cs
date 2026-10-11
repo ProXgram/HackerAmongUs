@@ -9,7 +9,47 @@ using UnityEngine.SceneManagement;
 int checks=0;
 void Check(bool value,string label){if(!value)throw new Exception("FAIL "+label);checks++;}
 PlayerControl Target(RoleTypes role=RoleTypes.Crewmate){var p=new PlayerControl();p.Data=new(){Object=p,RoleType=role,Role=Utils.GetBehaviourByRoleType(role)};p.MyPhysics.myPlayer=p;return p;}
-void Reset(bool host=false,bool practice=false){PlayerActions.ResetSession();GameActions.StopShipAnimCheats();Time.frameCount=0;Time.realtimeSinceStartupAsDouble=0;Utils.Animations.Clear();Utils.MapId=0;foreach(var f in typeof(CheatToggles).GetFields(BindingFlags.Public|BindingFlags.Static))if(f.FieldType==typeof(bool))f.SetValue(null,false);HAUPlugin.isPanicked=MenuUI.isGUIActive=false;Utils.isClient=Utils.isInGame=true;Utils.isHost=host;Utils.isFreePlay=practice;Utils.isLobby=Utils.isMeeting=Utils.isExiling=false;Utils.Murders=Utils.Tasks=VentilationSystem.Boots=0;Application.isFocused=true;Input.Right=false;Input.H=Input.V=0;SceneManager.Handle=1;ShipStatus.Instance=new();AmongUsClient.Instance=new();HudManager.Instance=new();MeetingHud.Instance=null;Minigame.Instance=null;PlayerControl.LocalPlayer=Target();PlayerControl.AllPlayerControls=[PlayerControl.LocalPlayer,Target(),Target(RoleTypes.Impostor)];Camera.main=new();Camera.main.gameObject.Follower.Target=PlayerControl.LocalPlayer;RoleManager.Instance=new();PlayerPickMenu.playerpickMenu=null;PlayerPickMenu.Callback=null;PlayerPickMenu.Choices=null;LocalImpostorHandler.Blocks=false;ProtectUI.playersToProtect.Clear();}
+void Reset(bool host=false,bool practice=false){PlayerActions.ResetSession();GameActions.StopShipAnimCheats();Time.frameCount=0;Time.realtimeSinceStartupAsDouble=0;Utils.Animations.Clear();Utils.MapId=0;foreach(var f in typeof(CheatToggles).GetFields(BindingFlags.Public|BindingFlags.Static))if(f.FieldType==typeof(bool))f.SetValue(null,false);HAUPlugin.isPanicked=MenuUI.isGUIActive=false;Utils.isClient=Utils.isInGame=Utils.isNormalGame=true;Utils.isHost=host;Utils.isFreePlay=practice;Utils.isLobby=Utils.isMeeting=Utils.isExiling=false;Utils.Murders=Utils.Tasks=VentilationSystem.Boots=0;Application.isFocused=true;Input.Right=false;Input.H=Input.V=0;SceneManager.Handle=1;ShipStatus.Instance=new();AmongUsClient.Instance=new();HudManager.Instance=new();MeetingHud.Instance=null;Minigame.Instance=null;PlayerControl.LocalPlayer=Target();PlayerControl.AllPlayerControls=[PlayerControl.LocalPlayer,Target(),Target(RoleTypes.Impostor)];Camera.main=new();Camera.main.gameObject.Follower.Target=PlayerControl.LocalPlayer;RoleManager.Instance=new();PlayerPickMenu.playerpickMenu=null;PlayerPickMenu.Callback=null;PlayerPickMenu.Choices=null;LocalImpostorHandler.Blocks=false;ProtectUI.playersToProtect.Clear();}
+Reset();MenuUI.isGUIActive=true;DestroyableSingleton<HudManager>.Instance=new();GameActions.OpenSabotageMapCheat();Check(MenuUI.isGUIActive&&DestroyableSingleton<HudManager>.Instance.MapOpens==0,"without a sabotage-map request native map/menu state stays unchanged");
+CheatToggles.sabotageMap=true;GameActions.OpenSabotageMapCheat();var sabotageHud=DestroyableSingleton<HudManager>.Instance;Check(sabotageHud.MapOpens==1&&sabotageHud.LastMapMode==MapOptions.Modes.Sabotage,"queued sabotage-map request opens the native sabotage map");Check(!MenuUI.isGUIActive&&!sabotageHud.MenuActiveAtMapOpen,"HAU is closed before native sabotage map opens so its icons can receive input");Check(!CheatToggles.sabotageMap,"map request is consumed once");GameActions.OpenSabotageMapCheat();Check(sabotageHud.MapOpens==1,"later ship ticks cannot repeatedly toggle a consumed map request");
+Reset();MenuUI.isGUIActive=false;DestroyableSingleton<HudManager>.Instance=new();CheatToggles.sabotageMap=true;GameActions.OpenSabotageMapCheat();Check(DestroyableSingleton<HudManager>.Instance.MapOpens==1&&!MenuUI.isGUIActive,"keybind request with HAU already closed retains native map access");
+foreach (var invalidMapContext in new (string Label, Action Change)[]
+{
+    ("lobby", () => { Utils.isInGame=false; Utils.isLobby=true; }),
+    ("inactive game", () => Utils.isInGame=false),
+    ("meeting", () => Utils.isMeeting=true),
+    ("intro", () => HudManager.Instance.IsIntroDisplayed=true),
+    ("ejection", () => Utils.isExiling=true),
+    ("non-Normal mode", () => Utils.isNormalGame=false),
+    ("missing ship", () => ShipStatus.Instance=null),
+    ("missing HUD", () => HudManager.Instance=null),
+    ("foreign actor", () => PlayerControl.LocalPlayer.AmOwner=false),
+    ("disconnected actor", () => PlayerControl.LocalPlayer.Data.Disconnected=true),
+    ("panic", () => HAUPlugin.isPanicked=true)
+})
+{
+    Reset(); MenuUI.isGUIActive=true; DestroyableSingleton<HudManager>.Instance=new();
+    CheatToggles.sabotageMap=true; invalidMapContext.Change();
+    GameActions.OpenSabotageMapCheat();
+    Check(DestroyableSingleton<HudManager>.Instance.MapOpens==0 && MenuUI.isGUIActive && !CheatToggles.sabotageMap,
+        "invalid map request is consumed without opening native map or closing HAU / " + invalidMapContext.Label);
+}
+Reset();MenuUI.isGUIActive=true;DestroyableSingleton<HudManager>.Instance=new();HudManager.Instance.IsIntroDisplayed=true;CheatToggles.sabotageMap=true;GameActions.OpenSabotageMapCheat();HudManager.Instance.IsIntroDisplayed=false;GameActions.OpenSabotageMapCheat();Check(DestroyableSingleton<HudManager>.Instance.MapOpens==0&&MenuUI.isGUIActive,"discarded intro map request cannot replay once the round becomes ready");
+Reset(practice:true);Utils.isInGame=false;MenuUI.isGUIActive=true;DestroyableSingleton<HudManager>.Instance=new();CheatToggles.sabotageMap=true;GameActions.OpenSabotageMapCheat();Check(DestroyableSingleton<HudManager>.Instance.MapOpens==1&&!MenuUI.isGUIActive,"Normal Freeplay retains the native sabotage-map action without an online Started state");
+foreach (var sessionReset in new (string Label, Action Run)[]
+{
+    ("join", () => AmongUsClient_OnGameJoined.Postfix("offline-test")),
+    ("start", AmongUsClient_CoStartGame.Postfix),
+    ("end", () => AmongUsClient_OnGameEnd.Postfix(new EndGameResult()))
+})
+{
+    Reset(); MenuUI.isGUIActive=true; DestroyableSingleton<HudManager>.Instance=new();
+    CheatToggles.sabotageMap=true; sessionReset.Run();
+    Check(!CheatToggles.sabotageMap, "actual session hook discards queued sabotage-map action / " + sessionReset.Label);
+    GameActions.OpenSabotageMapCheat();
+    Check(DestroyableSingleton<HudManager>.Instance.MapOpens==0 && MenuUI.isGUIActive,
+        "queued map action cannot replay after session hook / " + sessionReset.Label);
+}
 foreach(var action in new Action[]{GameActions.KillAllCheat,GameActions.KillAllCrewCheat,GameActions.KillAllImpsCheat}){Reset();CheatToggles.killAll=CheatToggles.killAllCrew=CheatToggles.killAllImps=true;action();Check(Utils.Murders==0,"guest group kill never reaches transport");}
 Reset(host:true);CheatToggles.killAll=true;PlayerControl.AllPlayerControls.Add(null);var gone=Target();gone.Data.Disconnected=true;PlayerControl.AllPlayerControls.Add(gone);GameActions.KillAllCheat();Check(Utils.Murders==3&&!CheatToggles.killAll,"host batch skips invalid targets and consumes request");
 foreach(var invalid in new Action[]{()=>Utils.isHost=false,()=>Utils.isMeeting=true,()=>Utils.isExiling=true,()=>HudManager.Instance.IsIntroDisplayed=true,()=>PlayerControl.LocalPlayer.AmOwner=false,()=>PlayerControl.LocalPlayer.Data.Disconnected=true,()=>Utils.isInGame=false,()=>ShipStatus.Instance=null,()=>HAUPlugin.isPanicked=true}){Reset(host:true);invalid();CheatToggles.killAll=true;GameActions.KillAllCheat();Check(Utils.Murders==0&&!CheatToggles.killAll,"invalid group context clears request without RPC");}

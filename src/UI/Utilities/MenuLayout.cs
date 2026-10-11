@@ -1,6 +1,6 @@
 namespace HAU;
 
-/// <summary>Pixel geometry for the fixed sidebar and responsive content viewport.</summary>
+
 public static class MenuLayout
 {
     public const float SidebarWidth = 156f;

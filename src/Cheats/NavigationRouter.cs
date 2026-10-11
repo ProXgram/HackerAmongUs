@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace HAU;
 
-/// <summary>Returns ground movement only; never changes position or sends messages.</summary>
+
 public static class NavigationRouter
 {
     internal const float Clearance = 0.16f;
@@ -62,9 +62,9 @@ public static class NavigationRouter
 
     private static void RefreshGeometry(IntPtr shipPointer, Geometry geometry)
     {
-        // Render/body interpolation translates the observed center slightly
-        // between walking frames. It must not restart a multi-frame search.
-        // Every returned movement segment is still checked with current geometry.
+
+
+
         if (_ship != shipPointer || _cachedGeometry.Collider != geometry.Collider ||
             Math.Abs(_cachedGeometry.Radius - geometry.Radius) > 0.001f ||
             (_cachedGeometry.Offset - geometry.Offset).sqrMagnitude > GeometryOffsetResetDistance * GeometryOffsetResetDistance ||
@@ -115,7 +115,7 @@ public static class NavigationRouter
                 }
                 else
                 {
-                    // A bounding circle encloses corners of non-circular bodies.
+
                     float x = bounds.extents.x, y = bounds.extents.y;
                     bodyRadius = (float)Math.Sqrt(x * x + y * y);
                     GeometryStatus = "bounding circle for noncircular body";
@@ -164,7 +164,7 @@ public static class NavigationRouter
         catch (Exception error) { _physicsQueryFailed = true; RecordException("sweep", error); return false; }
     }
 
-    /// <summary>Short outward walking from existing contacts; never snaps or crosses a new obstacle.</summary>
+
     public static Vector2 RecoverDirection(Vector2 from, out string status)
     {
         SteeringDistance = 0f;
@@ -182,7 +182,7 @@ public static class NavigationRouter
                 if (!collider || collider.isTrigger) continue;
                 if (contacts.Count >= 16) { LastFailure = "recovery: contact limit"; return Vector2.zero; }
                 var normal = center - collider.ClosestPoint(center);
-                // Deeply inside a map collider has no reliable outward normal.
+
                 if (normal.sqrMagnitude < 0.000001f) { LastFailure = "recovery: deeply embedded contact"; return Vector2.zero; }
                 normal.Normalize();
                 contacts.Add(collider); normals.Add(normal); away += normal;
@@ -190,8 +190,8 @@ public static class NavigationRouter
             if (contacts.Count == 0 || away.sqrMagnitude < 0.000001f)
             { LastFailure = contacts.Count == 0 ? "recovery: no contact normal" : "recovery: opposing contacts"; return Vector2.zero; }
             float angle = (float)Math.Atan2(away.y, away.x);
-            // Prefer the shortest exit and the summed contact normal. Adjacent
-            // directions are permitted only when moving away from every contact.
+
+
             for (int distanceStep = 1; distanceStep <= 4; distanceStep++)
                 for (int directionStep = 0; directionStep < 16; directionStep++)
                 {
@@ -279,7 +279,7 @@ public static class NavigationRouter
         catch (Exception error) { RecordException("static routing", error); _path = null; return Vector2.zero; }
     }
 
-    /// <summary>Replans moving goals in bounded main-thread steps while checking live movement.</summary>
+
     public static Vector2 DirectionToMovingTarget(Vector2 from, Vector2 to, out string status)
     {
         MovingRouteFailed = false;
@@ -315,8 +315,8 @@ public static class NavigationRouter
                 _lastAttempt = now;
                 _movingSearchStartedAt = now;
                 _movingSearchGeometryResets = GeometryResetCount;
-                // Hold this search goal until completion. Restarting for every
-                // network update can prevent a moving player's route finishing.
+
+
                 _movingSearch = new GridPlanner.MovingSearch(from, to,
                     point => Stand(point, _cachedGeometry), (a, b) => Sweep(a, b, _cachedGeometry));
             }
@@ -331,9 +331,9 @@ public static class NavigationRouter
                     _lastAttempt = now;
                     if (search.Result.Path != null)
                     {
-                        // The actor may have continued along an older route
-                        // during the search. A nearest point across furniture
-                        // is not a usable join; try bounded visible alternatives.
+
+
+
                         int join = ReachableJoin(search.Result.Path, from,
                             point => Stand(point, geometry), (a, b) => Sweep(a, b, geometry));
                         if (join >= 0)
@@ -383,7 +383,7 @@ public static class NavigationRouter
                 "; retainedMovement=" + retainedMovement + "; geometryResetsDuringSearch=" +
                 (GeometryResetCount - _movingSearchGeometryResets) + "; " + Diagnostics);
         }
-        catch { } // Diagnostic consumers must not change movement decisions.
+        catch { }
     }
     private static void RecordBlocked(string point, Geometry geometry)
     {
@@ -433,8 +433,8 @@ public static class NavigationRouter
     {
         if (path == null || path.Count < 2 || walkable == null || clear == null) return -1;
         int nearest = ClosestWaypoint(path, from);
-        // Six checked attempts cover adjacent points, earlier corners and the
-        // original first step without scanning the path with native physics.
+
+
         int[] candidates = { nearest, nearest - 1, nearest + 1, nearest - 3, nearest - 7, 1 };
         for (int attempt = 0; attempt < candidates.Length; attempt++)
         {
@@ -626,7 +626,7 @@ public static class NavigationRouter
             if (clear(from, goal)) { result.Path = new List<Vector2> { from, goal }; return result; }
             int goalX = (int)Math.Round((goal.x - from.x) / CellSize);
             int goalY = (int)Math.Round((goal.y - from.y) / CellSize);
-            const int margin = 30; // Twelve metres beyond the endpoints for room/corridor detours.
+            const int margin = 30;
             int minX = Math.Min(0, goalX) - margin, maxX = Math.Max(0, goalX) + margin;
             int minY = Math.Min(0, goalY) - margin, maxY = Math.Max(0, goalY) + margin;
             var occupancy = new Dictionary<(int X, int Y), bool>();
@@ -682,8 +682,8 @@ public static class NavigationRouter
                         if (!Edge(current.Key, next)) continue;
                         float cost = current.Cost + CellSize * (dx != 0 && dy != 0 ? 1.41421356f : 1f);
                         if (nodes.TryGetValue(next, out var previous) && cost >= previous.Cost) continue;
-                        // Queue entries are immutable: an older, more expensive entry
-                        // cannot change another entry's priority or parent chain.
+
+
                         var candidate = new Node { Key = next, Cost = cost, Parent = current };
                         nodes[next] = candidate;
                         open.Enqueue(candidate, cost + (goal - Point(next)).magnitude);

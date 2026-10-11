@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace HAU;
 
-public enum MovementMode { Off, TurboOrbit, ZigzagDash, TeleportYoYo, ShadowFollow, AiTasks, LagWalk }
+public enum MovementMode { Off, TurboOrbit, ZigzagDash, TeleportYoYo, ShadowFollow, TaskWalker, LagWalk }
 
 public static class MovementAutomation
 {
@@ -27,7 +27,7 @@ public static class MovementAutomation
     private static float _phase;
     private static double _blockedSince = -1d;
     private static double _nextNavigationRetry;
-    private static bool _aiWaitingForRound;
+    private static bool _walkerWaitingForRound;
     private static Vector2 _progressPosition;
     private static Vector2 _progressGoal;
     private static bool _hasProgressGoal;
@@ -58,7 +58,7 @@ public static class MovementAutomation
 
     public static bool Active => Mode != MovementMode.Off;
     public static bool LagStationaryPhase => Mode == MovementMode.LagWalk && _lagStationarySnaps > 0;
-    public static bool NeedsGroundCollision => Mode == MovementMode.AiTasks ||
+    public static bool NeedsGroundCollision => Mode == MovementMode.TaskWalker ||
         Mode == MovementMode.ShadowFollow || Mode == MovementMode.TurboOrbit || Mode == MovementMode.LagWalk;
     public static MovementMode Mode { get; private set; }
     public static string StatusText { get; private set; } = "Movement: stopped";
@@ -95,11 +95,11 @@ public static class MovementAutomation
             return;
         }
         Mode = mode;
-        if (mode == MovementMode.AiTasks)
+        if (mode == MovementMode.TaskWalker)
         {
             CheatToggles.automaticTasks = false;
-            AiTasksHandler.Reset();
-            _aiWaitingForRound = Utils.isLobby;
+            TaskWalkerHandler.Reset();
+            _walkerWaitingForRound = Utils.isLobby;
         }
         _phase = 0f;
         _reportedNavigationIssue = false;
@@ -119,11 +119,11 @@ public static class MovementAutomation
 
     public static void Stop()
     {
-        bool wasAi = Mode == MovementMode.AiTasks;
+        bool wasWalker = Mode == MovementMode.TaskWalker;
         Pause();
         Mode = MovementMode.Off;
-        _aiWaitingForRound = false;
-        if (wasAi) AiTasksHandler.Reset();
+        _walkerWaitingForRound = false;
+        if (wasWalker) TaskWalkerHandler.Reset();
         _blockedSince = -1d;
         _nextNavigationRetry = 0d;
         ResetProgress();
@@ -190,7 +190,7 @@ public static class MovementAutomation
         var local = PlayerControl.LocalPlayer;
         if (!CanUseContext(local)) return;
         EnsureContext(local);
-        // RpcSnapTo expects transform coordinates, unlike task-navigation positions.
+
         Vector2 point = local.transform.position;
         if (!IsFinite(point)) return;
         if (!NavigationRouter.CanStand(local.GetTruePosition()))
@@ -210,14 +210,14 @@ public static class MovementAutomation
         {
             var local = PlayerControl.LocalPlayer;
             if (!local) { Reset(); return; }
-            // A postfix runs for every player. Only the actual owning physics may act.
+
             if (!physics || !physics.AmOwner || !local || !local.MyPhysics ||
                 physics.Pointer != local.MyPhysics.Pointer || !physics.myPlayer ||
                 physics.myPlayer.Pointer != local.Pointer) return;
             if (_physics && _physics.Pointer != physics.Pointer) ClearOwnMotion();
             bool awaitingShip = _shipPointer == IntPtr.Zero &&
                 (Mode == MovementMode.ShadowFollow || Mode == MovementMode.TurboOrbit);
-            if ((Mode == MovementMode.AiTasks && _aiWaitingForRound || awaitingShip) && Utils.isClient &&
+            if ((Mode == MovementMode.TaskWalker && _walkerWaitingForRound || awaitingShip) && Utils.isClient &&
                 Utils.isInGame && !ShipStatus.Instance && local.Data != null &&
                 !local.Data.IsDead && !local.Data.Disconnected)
             {
@@ -246,8 +246,8 @@ public static class MovementAutomation
                 Pause();
                 return;
             }
-            // Noclip may have disabled this body in the previous frame. Ground
-            // navigation needs real collision geometry before resolving a task.
+
+
             if (NeedsGroundCollision && local.Collider && !local.Collider.enabled)
                 local.Collider.enabled = true;
             _physics = physics;
@@ -275,7 +275,7 @@ public static class MovementAutomation
                 }
                 local.NetTransform.RpcSnapTo(destination);
                 _jumps++;
-                // Start from now: never send catch-up jumps after a stalled frame.
+
                 _nextJump = now + JumpInterval();
                 StatusText = "Yo-yo: jump " + _jumps + "/" + MaximumJumps;
                 if (_jumps >= MaximumJumps) { Stop(); StatusText = "Yo-yo: finished 12 jumps"; }
@@ -301,32 +301,32 @@ public static class MovementAutomation
                 }
                 else direction = new Vector2(side, 0f);
             }
-            else if (Mode == MovementMode.AiTasks)
+            else if (Mode == MovementMode.TaskWalker)
             {
-                if (!AiTasksHandler.TryGetDestination(out var goal, out var arrivalDistance, out var taskStatus))
+                if (!TaskWalkerHandler.TryGetDestination(out var goal, out var arrivalDistance, out var taskStatus))
                 {
                     Pause();
-                    if (AiTasksHandler.IsFinished) Stop();
+                    if (TaskWalkerHandler.IsFinished) Stop();
                     StatusText = taskStatus;
                     return;
                 }
                 if (!IsFinite(goal) || !IsFinite(arrivalDistance) || arrivalDistance < 0f)
                 {
                     Stop();
-                    StatusText = "AI tasks: invalid destination";
+                    StatusText = "Task Walker: invalid destination";
                     return;
                 }
                 if (Vector2.Distance(from, goal) <= arrivalDistance)
                 {
                     Pause();
-                    AiTasksHandler.OnArrived();
+                    TaskWalkerHandler.OnArrived();
                     StatusText = taskStatus;
                     return;
                 }
                 if (!IsFinite(physics.TrueSpeed) || Mathf.Abs(physics.TrueSpeed) < 0.001f)
                 {
                     Pause();
-                    StatusText = "AI tasks: increase your movement speed";
+                    StatusText = "Task Walker: increase your movement speed";
                     return;
                 }
                 if (!CheckProgress(from, goal, now, Mathf.Abs(physics.TrueSpeed)))
@@ -340,8 +340,8 @@ public static class MovementAutomation
                         return;
                     }
                     _recoveryUntil = now + 0.45d;
-                    // ClearOwnMotion released the snapshot; this tick may steer
-                    // again, so retain its owner for subsequent pause cleanup.
+
+
                     _physics = physics;
                     _motionPlayerPointer = local.Pointer;
                 }
@@ -372,15 +372,15 @@ public static class MovementAutomation
                     _lastTargetPosition = targetPosition;
                     _headingSampleAt = now;
                     _observedTarget = true;
-                    // A stationary target has no travel heading. Approach its
-                    // nearest side instead of assuming the north side is floor.
+
+
                     var towardTarget = targetPosition - from;
                     if (towardTarget.sqrMagnitude > 0.0001f)
                         _targetDirection = towardTarget.normalized;
                 }
                 Vector2 observedMotion = targetPosition - _lastTargetPosition;
-                // Accumulate meaningful motion instead of interpreting tiny
-                // network corrections as a complete reversal of the target.
+
+
                 if (observedMotion.sqrMagnitude >= 0.08f * 0.08f)
                 {
                     float previousAngle = Mathf.Atan2(_targetDirection.y, _targetDirection.x);
@@ -435,9 +435,9 @@ public static class MovementAutomation
                     _targetGoalAttempt + 1 < _goalChoiceCount;
                 if (alternateGoal)
                 {
-                    // Clear floor can still be in an inaccessible pocket of a
-                    // room. A completed failed search tries a different nearby
-                    // spot while keeping the total no-route timeout.
+
+
+
                     _targetGoalAttempt++;
                     _hasFollowGoal = false;
                     NavigationRouter.Reset();
@@ -451,11 +451,11 @@ public static class MovementAutomation
                         "; own=(" + from.x + "," + from.y + "); target=(" + targetPoint.x + "," + targetPoint.y + ")" +
                         "; " + NavigationRouter.Diagnostics);
                 }
-                // Retain the no-route timer across internal retries. External
-                // menu/meeting pauses use Pause(), which clears these timers.
+
+
                 ClearOwnMotion();
-                // A moving-target router can be preparing a route over several
-                // frames. Keep its work and cooldown instead of restarting it.
+
+
                 if (!movingTarget)
                 {
                     NavigationRouter.Reset();
@@ -469,7 +469,7 @@ public static class MovementAutomation
                 if (blockedFor >= 5d &&
                     (!movingTarget || (!NavigationRouter.IsMovingRoutePending && !alternateGoal) || blockedFor >= 30d))
                 {
-                    if (Mode == MovementMode.AiTasks)
+                    if (Mode == MovementMode.TaskWalker)
                     {
                         RetryOrSkipTask();
                         _blockedSince = -1d;
@@ -494,10 +494,10 @@ public static class MovementAutomation
                 physics.Speed = Mathf.Clamp(_baseSpeed * Mathf.Clamp(multiplier, 1f, 4f), -20f, 20f);
             }
             if (direction.sqrMagnitude > 1f) direction.Normalize();
-            if (Mode == MovementMode.AiTasks || movingTarget)
+            if (Mode == MovementMode.TaskWalker || movingTarget)
             {
-                // Validate the route before scaling its input: very high native
-                // speeds can require a small but valid steering magnitude.
+
+
                 if (!IsFinite(Time.fixedDeltaTime) || Time.fixedDeltaTime <= 0f ||
                     !IsFinite(physics.TrueSpeed)) { Stop(); return; }
                 if (Mathf.Abs(physics.TrueSpeed) < 0.001f) { Pause(); return; }
@@ -507,9 +507,9 @@ public static class MovementAutomation
                     walkSpeed = Mathf.Min(2.5f, 0.06f / dt);
                 else
                 {
-                    // Stop at the router's next checked waypoint, not merely
-                    // at the final player goal. Larger steps must not bounce
-                    // across a corner forever or cut its inside edge.
+
+
+
                     float steeringDistance = NavigationRouter.SteeringDistance;
                     if (float.IsNaN(steeringDistance) || steeringDistance <= 0f)
                     { ClearOwnMotion(); StatusText = "Movement: waiting for a clear ground route"; return; }
@@ -522,9 +522,9 @@ public static class MovementAutomation
                     float step = Mathf.Min(walkSpeed * dt, Mathf.Min(targetDistance, steeringDistance));
                     if (!recovery)
                     {
-                        // Check the actual boosted step using live geometry.
-                        // A few bounded reductions allow tight turns without
-                        // sending an unchecked high-speed movement segment.
+
+
+
                         var unit = direction.normalized;
                         bool clear = false;
                         for (int attempt = 0; attempt < 4 && step > 0.001f; attempt++)
@@ -549,13 +549,13 @@ public static class MovementAutomation
                 }
                 direction *= Mathf.Min(1f, walkSpeed / Mathf.Abs(physics.TrueSpeed));
             }
-            // Native steering multiplies by signed Speed. Automated routes must
-            // still head toward their destination when Invert Controls is on.
-            if ((Mode == MovementMode.AiTasks || movingTarget ? physics.TrueSpeed : physics.Speed) < 0f) direction = -direction;
+
+
+            if ((Mode == MovementMode.TaskWalker || movingTarget ? physics.TrueSpeed : physics.Speed) < 0f) direction = -direction;
             physics.SetNormalizedVelocity(direction);
             _blockedSince = -1d;
             LastNavigationIssue = "";
-            StatusText = Mode == MovementMode.AiTasks ? activityStatus : Mode + ": active";
+            StatusText = Mode == MovementMode.TaskWalker ? activityStatus : Mode + ": active";
         }
         catch (Exception error)
         {
@@ -583,8 +583,8 @@ public static class MovementAutomation
         float interval = HAUPlugin.lagInterval.Value;
         if (!IsFinite(interval)) interval = 0.75f;
         interval = Mathf.Clamp(interval, 0.5f, 2f);
-        // Uneven corrections while ordinary walking continues. A late frame
-        // never accumulates missed corrections or sends multiple requests.
+
+
         float variation = (_lagCorrectionIndex % 4) switch
         { 1 => 1.4f, 2 => 1.1f, 3 => 1.7f, _ => 1f };
         return Math.Min(2d, interval * (double)variation);
@@ -602,8 +602,8 @@ public static class MovementAutomation
 
     private static void LagTick(PlayerControl local, PlayerPhysics physics, HudManager hud, double now)
     {
-        // Native FixedUpdate supplies normal walking. Only the short stationary
-        // phase overrides velocity; both phases require a continuously held key.
+
+
         Vector2 input = hud.joystick != null ? hud.joystick.DeltaL : Vector2.zero;
         if (!IsFinite(input) || !IsFinite(input.sqrMagnitude) || input.sqrMagnitude <= 0.01f)
         {
@@ -626,16 +626,16 @@ public static class MovementAutomation
             (LagStationaryPhase && ((from - _lagStationaryAnchor).sqrMagnitude > 0.04f || now >= _lagStationaryUntil)) ||
             direction.x * _lagInputDirection.x + direction.y * _lagInputDirection.y < 0.8f)
         {
-            // Turning, an external teleport, or a stalled clock invalidates the
-            // old trail. Never pull the player back to a previous movement leg.
+
+
             BeginLagHistory(from, direction, now);
             StatusText = "Lag mode: walking normally";
             return;
         }
         _lagLastClock = now;
         _lagLastPosition = from;
-        // Deliberate stationary time must not hit the ordinary-walking stall
-        // guard below. Input/clock/position invalidation still runs before this.
+
+
         if (LagStationaryPhase)
         {
             if (now < _lagNextJump)
@@ -651,8 +651,8 @@ public static class MovementAutomation
             _lagCorrectionIndex++;
             if (_lagStationarySnaps == 0)
             {
-                // Leave this tick's freshly supplied native velocity intact.
-                // Walking resumes immediately, even when both snaps were blocked.
+
+
                 BeginLagHistory(_lagStationaryAnchor, direction, now);
                 StatusText = "Lag mode: walking again";
             }
@@ -682,8 +682,8 @@ public static class MovementAutomation
         }
         if (now < _lagNextJump) return;
         _lagNextJump = now + LagInterval();
-        // Require substantial actual walking; a held key against a wall must
-        // not manufacture a teleport or replay a previous successful segment.
+
+
         if (_lagWalkDistance < 0.25f) return;
         float limit = HAUPlugin.lagJumpDistance.Value;
         if (!IsFinite(limit)) limit = 1.25f;
@@ -696,22 +696,22 @@ public static class MovementAutomation
             Vector2 motion = from - sample.Position;
             float distance = motion.magnitude;
             if (!IsFinite(distance) || distance < 0.08f) continue;
-            // Fast walking and a short distance setting still need a visible
-            // correction. Clip the observed segment, then sweep that segment.
+
+
             recentMotion = motion * (Mathf.Min(distance, limit) / distance);
             break;
         }
         if (recentMotion.sqrMagnitude < 0.0064f) return;
-        // Forward corrections follow actual recent travel, including inverted
-        // native controls. They are independent occasional teleports, not an
-        // automatic return to a saved position after every backward snap.
+
+
+
         bool forward = _lagCorrectionIndex % 5 == 1 || _lagCorrectionIndex % 5 == 4;
         Vector2 displacement = forward ? recentMotion : -recentMotion;
         bool sent = TryLagSnap(local, from, transformPosition, ref displacement);
         _lagCorrectionIndex++;
         _lagNextJump = now + LagInterval();
-        // Begin a new observed walking trail at the actual correction endpoint.
-        // The teleport itself is never counted as ordinary walked distance.
+
+
         LagHistory.Clear();
         _lagWalkDistance = 0f;
         _lagLastPosition = sent ? from + displacement : from;
@@ -768,7 +768,7 @@ public static class MovementAutomation
                 previous.SetNormalizedVelocity(Vector2.zero);
             }
         }
-        catch (Exception) { } // Destroyed native objects must not redirect cleanup to another player.
+        catch (Exception) { }
     }
 
     private static bool TryFollowGoal(Vector2 from, Vector2 target, double now, out Vector2 goal)
@@ -782,8 +782,8 @@ public static class MovementAutomation
         float bearing = Mathf.Atan2(-_targetDirection.y, -_targetDirection.x);
         var choices = new List<(float Score, Vector2 Point)>(24);
         float bestScore = float.PositiveInfinity;
-        // A wall can occupy the preferred trailing point while another side
-        // is open. Search a bounded set using the real body's clearance.
+
+
         for (int radiusIndex = 0; radiusIndex < 3; radiusIndex++)
         {
             float radius = radiusIndex == 0 ? 0.65f : radiusIndex == 1 ? 1f : 0.35f;
@@ -842,8 +842,8 @@ public static class MovementAutomation
         _goalChoiceCount = choices.Count;
         if (choices.Count == 0) return false;
         goal = choices[Math.Min(_targetGoalAttempt, choices.Count - 1)];
-        // A floor-only fallback has not proved its approach reachable. Keep
-        // candidate ordering stable until a checked direct arc chooses a turn.
+
+
         return true;
     }
 
@@ -887,12 +887,12 @@ public static class MovementAutomation
 
     private static void RetryOrSkipTask()
     {
-        var alternate = AiTasksHandler.TryAlternateApproach();
-        if (!alternate) AiTasksHandler.SkipCurrent("No clear walking route to this task step");
+        var alternate = TaskWalkerHandler.TryAlternateApproach();
+        if (!alternate) TaskWalkerHandler.SkipCurrent("No clear walking route to this task step");
         ResetProgress();
         NavigationRouter.Reset();
-        StatusText = alternate ? "AI tasks: trying another side of the task"
-            : "AI tasks: skipped an unreachable step";
+        StatusText = alternate ? "Task Walker: trying another side of the task"
+            : "Task Walker: skipped an unreachable step";
     }
 
     private static bool CanUseContext(PlayerControl local) => Utils.isClient && local &&
@@ -905,20 +905,20 @@ public static class MovementAutomation
         IntPtr shipPointer = ship ? ship.Pointer : IntPtr.Zero;
         if (_playerPointer != IntPtr.Zero && (_playerPointer != local.Pointer || _shipPointer != shipPointer))
         {
-            // AI can be armed in this lobby before automatic tasks run at intro.
-            // The game-joined reset still cancels it when joining another lobby.
-            var startAiRound = Mode == MovementMode.AiTasks && _aiWaitingForRound && shipPointer != IntPtr.Zero;
+
+
+            var startWalkerRound = Mode == MovementMode.TaskWalker && _walkerWaitingForRound && shipPointer != IntPtr.Zero;
             bool keepTargetMode = _playerPointer == local.Pointer && _shipPointer == IntPtr.Zero &&
                 shipPointer != IntPtr.Zero &&
                 (Mode == MovementMode.ShadowFollow || Mode == MovementMode.TurboOrbit) && IsValidTarget();
             var previousMode = Mode;
             var previousTarget = _target;
             Reset();
-            if (startAiRound)
+            if (startWalkerRound)
             {
-                Mode = MovementMode.AiTasks;
+                Mode = MovementMode.TaskWalker;
                 CheatToggles.automaticTasks = false;
-                AiTasksHandler.Reset();
+                TaskWalkerHandler.Reset();
             }
             else if (keepTargetMode)
             {

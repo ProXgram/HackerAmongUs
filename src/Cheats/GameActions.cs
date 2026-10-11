@@ -18,14 +18,14 @@ public static class GameActions
     {
         if (!CheatToggles.closeMeeting) return;
 
-        if (Utils.isMeeting) // Closes MeetingHud window if it's open
+        if (Utils.isMeeting)
         {
 
-            // Destroy MeetingHud window gameobject
+
             MeetingHud.Instance.DespawnOnDestroy = false;
             Object.Destroy(MeetingHud.Instance.gameObject);
 
-            // Gameplay must be reenabled
+
             DestroyableSingleton<HudManager>.Instance.StartCoroutine(DestroyableSingleton<HudManager>.Instance.CoFadeFullScreen(Color.black, Color.clear, 0.2f, false));
             PlayerControl.LocalPlayer.SetKillTimer(GameManager.Instance.LogicOptions.GetKillCooldown());
             ShipStatus.Instance.EmergencyCooldown = GameManager.Instance.LogicOptions.GetEmergencyCooldown();
@@ -35,7 +35,7 @@ public static class GameActions
             ControllerManager.Instance.CloseAndResetAll();
 
         }
-        else if (ExileController.Instance) // Ends exile cutscene if it's playing
+        else if (ExileController.Instance)
         {
             ExileController.Instance.ReEnableGameplay();
             ExileController.Instance.WrapUp();
@@ -66,7 +66,7 @@ public static class GameActions
 
         if (Utils.isHost)
         {
-            // Same as PlayerControl.ReportDeadBody but without additional checks
+
             MeetingRoomManager.Instance.AssignSelf(PlayerControl.LocalPlayer, null);
             DestroyableSingleton<HudManager>.Instance.OpenMeetingRoom(PlayerControl.LocalPlayer);
             PlayerControl.LocalPlayer.RpcStartMeeting(null);
@@ -110,24 +110,28 @@ public static class GameActions
     {
         if (!CheatToggles.sabotageMap) return;
 
+        CheatToggles.sabotageMap = false;
+        if (!OwnedActionContext.GameplayReady || Utils.isMeeting || !Utils.isNormalGame) return;
+
+
+        MenuUI.CloseMenu();
+
         DestroyableSingleton<HudManager>.Instance.ToggleMapVisible(new MapOptions
         {
             Mode = MapOptions.Modes.Sabotage
         });
-
-        CheatToggles.sabotageMap = false;
     }
 
     public static void HandleEngineerCheats(EngineerRole engineerRole)
     {
         if (CheatToggles.endlessVentTime)
         {
-            // Makes vent time incredibly long (float.MaxValue) so that it never ends
+
             engineerRole.inVentTimeRemaining = float.MaxValue;
         }
         else if (engineerRole.inVentTimeRemaining > engineerRole.GetCooldown())
         {
-            // Vent time is reset to normal value after the cheat is disabled
+
             engineerRole.inVentTimeRemaining = engineerRole.GetCooldown();
         }
 
@@ -147,12 +151,12 @@ public static class GameActions
     {
         if (CheatToggles.endlessSsDuration)
         {
-            // Makes shapeshift duration so incredibly long (float.MaxValue) so that it never ends
+
             shapeshifterRole.durationSecondsRemaining = float.MaxValue;
         }
         else if (shapeshifterRole.durationSecondsRemaining > GameManager.Instance.LogicOptions.GetRoleFloat(FloatOptionNames.ShapeshifterDuration))
         {
-            // Shapeshift duration is reset to normal value after the cheat is disabled
+
             shapeshifterRole.durationSecondsRemaining = GameManager.Instance.LogicOptions.GetRoleFloat(FloatOptionNames.ShapeshifterDuration);
 
         }
@@ -167,12 +171,12 @@ public static class GameActions
 
         if (CheatToggles.endlessBattery)
         {
-            // Makes vitals battery so incredibly long (float.MaxValue) so that it never ends
+
             scientistRole.currentCharge = float.MaxValue;
         }
         else if (scientistRole.currentCharge > scientistRole.RoleCooldownValue)
         {
-            // Battery charge is reset to normal value after the cheat is disabled
+
             scientistRole.currentCharge = scientistRole.RoleCooldownValue;
         }
     }
@@ -195,24 +199,24 @@ public static class GameActions
 
         if (CheatToggles.endlessTracking)
         {
-            // Makes vitals battery so incredibly long (float.MaxValue) so that it never ends
+
             trackerRole.durationSecondsRemaining = float.MaxValue;
         }
         else if (trackerRole.durationSecondsRemaining > GameManager.Instance.LogicOptions.GetRoleFloat(FloatOptionNames.TrackerDuration))
         {
-            // Battery charge is reset to normal value after the cheat is disabled
+
             trackerRole.durationSecondsRemaining = GameManager.Instance.LogicOptions.GetRoleFloat(FloatOptionNames.TrackerDuration);
         }
     }
 
     public static void UseVentCheat(HudManager hudManager)
     {
-        // try-catch to prevent errors when role is null
+
         try
         {
 
-			// Engineers & Impostors don't need this cheat so it is disabled for them
-			// Ghost venting causes issues so it is also disabled
+
+
 
 			if (!PlayerControl.LocalPlayer.Data.Role.CanVent && !PlayerControl.LocalPlayer.Data.IsDead)
             {
@@ -260,7 +264,7 @@ public static class GameActions
         }
         else
         {
-            // Kill all players by sending a successful MurderPlayer RPC call
+
             foreach (var player in PlayerControl.AllPlayerControls)
             {
                 if (!OwnedActionContext.HostRoundAction || !OwnedActionContext.ValidTarget(player)) continue;
@@ -283,7 +287,7 @@ public static class GameActions
         }
         else
         {
-            // Kill all players by sending a successful MurderPlayer RPC call
+
             foreach (var player in PlayerControl.AllPlayerControls)
             {
                 if (OwnedActionContext.HostRoundAction && OwnedActionContext.ValidTarget(player) &&
@@ -309,7 +313,7 @@ public static class GameActions
         }
         else
         {
-            // Kill all players by sending a successful MurderPlayer RPC call
+
             foreach (var player in PlayerControl.AllPlayerControls)
             {
                 if (OwnedActionContext.HostRoundAction && OwnedActionContext.ValidTarget(player) &&
@@ -332,9 +336,9 @@ public static class GameActions
             var player = ProtectUI.playersToProtect[i];
             if (!OwnedActionContext.ValidTarget(player) || !player.cosmetics)
             { ProtectUI.playersToProtect.RemoveAt(i); continue; }
-            if (player.protectedByGuardianId == -1) // -1 means no protection is currently active
+            if (player.protectedByGuardianId == -1)
             {
-                //PlayerControl.LocalPlayer.TurnOnProtection(true, PlayerControl.LocalPlayer.cosmetics.ColorId, PlayerControl.LocalPlayer.PlayerId);
+
                 PlayerControl.LocalPlayer.RpcProtectPlayer(player, PlayerControl.LocalPlayer.cosmetics.ColorId);
             }
         }
@@ -346,7 +350,7 @@ public static class GameActions
         if (PlayerControl.LocalPlayer?.NetTransform == null || Camera.main == null) return;
         if (!CheatToggles.teleportCursor) return;
 
-        // Teleport player to cursor's in-world position on right-click
+
         if (Input.GetMouseButtonDown(1))
         {
             PlayerControl.LocalPlayer.NetTransform.RpcSnapTo(Camera.main.ScreenToWorldPoint(Input.mousePosition));
@@ -401,7 +405,7 @@ public static class GameActions
         bool sentHeld = false;
         if (heldReady && CheatToggles.animPet && local.cosmetics != null && local.cosmetics.CurrentPet != null)
         {
-            // Don't move LocalPlayer, just send the RPC so others see the petting animation
+
             RpcPetMessage rpcMessage = new(PlayerControl.LocalPlayer.MyPhysics.NetId,
                 PlayerControl.LocalPlayer.cosmetics.CurrentPet.PettingPlayerPosition,
                 PlayerControl.LocalPlayer.cosmetics.CurrentPet.transform.position);
@@ -455,13 +459,13 @@ public static class GameActions
         {
             if (CheatToggles.animCamsInUse && !_isCamsAnimActive)
             {
-                // ShipStatus.Instance.UpdateSystem(SystemTypes.Security, PlayerControl.LocalPlayer, (byte)(CheatToggles.animCamsInUse ? 1 : 0));
+
                 ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Security, 1);
                 _isCamsAnimActive = true;
             }
             else if (!CheatToggles.animCamsInUse && _isCamsAnimActive)
             {
-                // Turn off cams if the cheat was used before and is now disabled
+
                 ShipStatus.Instance.RpcUpdateSystem(SystemTypes.Security, 0);
                 _isCamsAnimActive = false;
             }
@@ -481,8 +485,8 @@ public static class GameActions
         CheatToggles.animMedScan = false;
         CheatToggles.animCamsInUse = false;
 
-        // This ensures cams and scan animations don't remain marked as active if the player
-        // disconnects while the toggles are on (as this may cause unusual RPCs in lobbies)
+
+
 
         _isCamsAnimActive = false;
         _isScanAnimActive = false;

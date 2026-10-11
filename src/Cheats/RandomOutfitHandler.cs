@@ -101,7 +101,7 @@ public static class RandomOutfitHandler
                 savedSelection = selection;
             }
 
-            // An explicit click performs one normal selection batch, never a timer or a retry burst.
+
             _nextActionAt = now + CooldownSeconds;
             try
             {
@@ -125,7 +125,7 @@ public static class RandomOutfitHandler
             {
                 try
                 {
-                    // Each native method owns its ordinary cosmetic sequence and network message.
+
                     local.RpcSetHat(selection.Hat);
                     local.RpcSetSkin(selection.Skin);
                     local.RpcSetVisor(selection.Visor);
@@ -187,8 +187,8 @@ public static class RandomOutfitHandler
 
     private static List<string> Catalog<T>(Il2CppReferenceArray<T> items, HatManager manager) where T : CosmeticData
     {
-        // Empty is the game's valid default ID for every no-outfit slot.
-        // Keep it usable even when that slot has no purchased catalog items.
+
+
         var result = new List<string> { string.Empty };
         if (items == null) return result;
         var seen = new HashSet<string>(StringComparer.Ordinal) { string.Empty };
@@ -199,8 +199,8 @@ public static class RandomOutfitHandler
             var id = item.ProductId;
             if (string.IsNullOrWhiteSpace(id) ||
                 id == NetworkedPlayerInfo.PlayerOutfit.MISSING_COSMETIC_ID || !seen.Add(id)) continue;
-            // GetUnlocked uses the game's normal Free/GetPurchase catalog predicate.
-            // Free Cosmetics can expand it; this does not purchase or grant an item.
+
+
             if (manager.CheckLongModeValidCosmetic(id, false)) result.Add(id);
         }
         return result;

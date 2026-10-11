@@ -1,7 +1,11 @@
 # Outfit picker checks
 
-Run `dotnet run --project tests/OutfitPicker.Tests/OutfitPicker.Tests.csproj -c Release`.
+Run from the repository root with the .NET 10 SDK:
 
-The suite compiles the real outfit selection handler against small native-contract substitutes. It checks six categories, localized-name and ID search, stable ordering, deduplication, catalog invalidation, selected versus equipped state, per-slot preservation, occupied lobby colors, save-failure rollback, profile changes, round and transition guards, click cooldowns, restore and session looks, and cached preview fallbacks.
+```powershell
+dotnet run --project tests/OutfitPicker.Tests/OutfitPicker.Tests.csproj -c Release
+```
 
-Requests are recorded without acceptance or outfit changes. These checks establish selection behavior and request boundaries, not multiplayer acceptance. GUI layout and native rendering still need an actual game check; cosmetic previews use assets already loaded by the game.
+Links the outfit selection handler with game stubs. Checks cover six categories, name/ID search, ordering, deduplication, catalog changes, selected/equipped state, slot preservation, occupied colors, save rollback, profiles, round guards, cooldowns, restore and preview fallbacks.
+
+Requests are recorded locally. Native rendering, menu layout and multiplayer acceptance require separate game testing.

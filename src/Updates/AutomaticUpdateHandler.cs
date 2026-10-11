@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace HAU.Updates;
 
-/// <summary>Values captured on Unity's main thread before starting managed background work.</summary>
+
 internal sealed record UpdateStartupSnapshot(string GameDirectory, string GameVersion, string CurrentVersion, int GameProcessId);
 internal sealed record UpdateHelperIdentity(int ProcessId, long StartTimeUtcTicks);
 internal enum AutomaticUpdateOutcome { Disabled, AlreadyChecked, UpToDate, UnsupportedGameVersion, ManualUpdateRequired, Prepared, AlreadyPending, Skipped }
@@ -30,7 +30,7 @@ internal static class AutomaticUpdateHandler
     {
         if (Interlocked.Exchange(ref _started, 1) != 0) return;
         if (!enabled) { Volatile.Write(ref _initialStatus, "Automatic updates are disabled."); log(_initialStatus); return; }
-        // Everything below is managed .NET work; no Unity properties or objects are accessed here.
+
         _ = Task.Run(async () =>
         {
             try
@@ -71,7 +71,7 @@ internal static class AutomaticUpdateHandler
     }
 }
 
-/// <summary>Bounded, signed update checking with injectable network and process boundaries.</summary>
+
 internal sealed class AutomaticUpdateService
 {
     private const int MaximumCacheSlots = 8;
@@ -152,7 +152,7 @@ internal sealed class AutomaticUpdateService
             ct.ThrowIfCancellationRequested();
             CheckAncestors(setupPath);
             CheckAncestors(manifestPath);
-            // Deny writes/deletes while rechecking and launching the exact authenticated files.
+
             using var setupHandle = new FileStream(setupPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var manifestHandle = new FileStream(manifestPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (!await MatchesAssetAsync(setupHandle, manifest.SetupExe, ct).ConfigureAwait(false))
@@ -396,7 +396,7 @@ internal sealed class AutomaticUpdateService
             var target = resolved.FullName;
             if (target.StartsWith(@"\\?\", StringComparison.Ordinal) && target.Length >= 7 && target[5] == ':') target = target[4..];
             target = Path.TrimEndingDirectorySeparator(Path.GetFullPath(target));
-            // A test may constrain the target root; production also supports Xbox's custom install locations.
+
             if (xboxGamesRoot != null && !string.Equals(target, Path.GetFullPath(Path.Combine(xboxGamesRoot, "Among Us", "Content")), StringComparison.OrdinalIgnoreCase))
                 throw new IOException("The Among Us Xbox package does not point to its editable game folder.");
             CheckAncestors(target);
@@ -418,7 +418,7 @@ internal sealed class AutomaticUpdateService
 
     private static bool HasAutomaticInstallationMarkers(string game)
     {
-        // This is an availability check only. The helper verifies the full native and publisher identity.
+
         var xbox = Path.Combine(game, "MicrosoftGame.config");
         var appx = Path.Combine(game, "AppxManifest.xml");
         CheckAncestors(xbox);

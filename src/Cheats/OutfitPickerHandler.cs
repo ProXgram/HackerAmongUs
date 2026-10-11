@@ -21,8 +21,8 @@ public sealed class OutfitCatalogItem
     { Category = category; Id = id; Name = name; Data = data; }
 }
 
-// Selections use the same unlocked catalogs and cosmetic requests as the game's
-// inventory. This picker neither purchases cosmetics nor retries rejected RPCs.
+
+
 public static class OutfitPickerHandler
 {
     private const double CooldownSeconds = 2;
@@ -239,8 +239,8 @@ public static class OutfitPickerHandler
         return result;
     }
 
-    // Read only assets which the native inventory already has in memory. Opening
-    // this window never starts an addressable load or owns a native asset handle.
+
+
     public static Sprite CachedSprite(OutfitCatalogItem item)
     {
         if (item?.Data == null) return null;
@@ -289,8 +289,8 @@ public static class OutfitPickerHandler
             var found = false;
             foreach (var item in GetCatalog(category)) if (Equivalent(category, item.Id, snapshot.Id(category))) { found = true; break; }
             if (!found) return false;
-            // Cached lists keep drawing cheap. Recheck the current native mode
-            // at the explicit click so an item cannot outlive its validity.
+
+
             var id = NormalizeEmpty(category, snapshot.Id(category));
             if (category != OutfitCategory.Color && id.Length > 0 &&
                 !manager.CheckLongModeValidCosmetic(id, false)) return false;

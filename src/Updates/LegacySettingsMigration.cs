@@ -12,7 +12,7 @@ public sealed record SettingsMigrationFile(string SourcePath, string Destination
     byte[] Bytes, byte[]? PreviousDestinationBytes = null);
 public sealed record SettingsMigrationResult(bool ConfigImported, bool ProfileImported, IReadOnlyList<string> ImportedPaths);
 
-/// <summary>Imports saved settings from earlier editions while leaving their originals intact.</summary>
+
 public static class LegacySettingsMigration
 {
     private const int MaximumSettingsBytes = 2 * 1024 * 1024;
@@ -27,11 +27,11 @@ public static class LegacySettingsMigration
             "$1[HAU$2]$3$4", RegexOptions.CultureInvariant);
     }
 
-    /// <summary>Creates an absent-only import plan. Installers commit these bytes with their file transaction.</summary>
+
     public static IReadOnlyList<SettingsMigrationFile> PlanForInstall(string configRoot)
         => Plan(NormalizeConfigRoot(configRoot), false);
 
-    /// <summary>Call before the first Config.Bind, then reload Config if ConfigImported is true.</summary>
+
     public static SettingsMigrationResult ImportForStartup(string configRoot, string profilePath)
         => ImportForStartup(configRoot, profilePath, null);
 

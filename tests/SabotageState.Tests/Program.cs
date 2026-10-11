@@ -6,7 +6,7 @@ void Check(bool value,string message="Check failed"){if(!value)throw new Excepti
 ShipStatus Setup(byte map=0)
 {
     SabotageTools.ResetSession(); Utils.Map=map; Utils.isHost=false; Utils.isFreePlay=false; Utils.isMeeting=false; Utils.isNormalGame=true;
-    OwnedActionContext.Ready=true; LocalImpostorHandler.Blocks=false; SceneManager.Handle++;
+    OwnedActionContext.Ready=true; SceneManager.Handle++;
     AmongUsClient.Instance=new(); PlayerControl.LocalPlayer=new(); PlayerControl.LocalPlayer.Data.Role.IsImpostor=true;
     var ship=new ShipStatus(); ShipStatus.Instance=ship;
     ship.Systems[map==2?SystemTypes.Laboratory:SystemTypes.Reactor]=new ReactorSystemType();
@@ -46,12 +46,53 @@ Test("An explicit repair keeps native reactor amount16",()=>
 {var s=Setup();Active(s,true);SabotageTools.SyncForMenu();CheatToggles.reactorSab=false;SabotageTools.Process(s);Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Reactor,(byte)16)}));});
 Test("Genuine guest Impostor ghosts may request sabotage",()=>
 {var s=Setup();PlayerControl.LocalPlayer.Data.IsDead=true;SabotageTools.Process(s);CheatToggles.reactorSab=true;SabotageTools.Process(s);Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Reactor,(byte)128)}));});
-Test("Local-only Impostor previews cannot request sabotage, even after death",()=>
-{foreach(var dead in new[]{false,true}){var s=Setup();LocalImpostorHandler.Blocks=true;PlayerControl.LocalPlayer.Data.IsDead=dead;SabotageTools.Process(s);CheatToggles.reactorSab=true;SabotageTools.Process(s);Check(s.Requests.Count==0&&!CheatToggles.reactorSab);}});
-Test("Crew cannot start sabotage but may send a normal living repair request",()=>
-{var s=Setup();PlayerControl.LocalPlayer.Data.Role.IsImpostor=false;SabotageTools.Process(s);CheatToggles.reactorSab=true;SabotageTools.Process(s);Check(s.Requests.Count==0);Active(s,true);SabotageTools.Process(s);CheatToggles.reactorSab=false;SabotageTools.Process(s);Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Reactor,(byte)16)}));});
+Test("Guest crew and local presentation roles send one explicit request without changing their role",()=>
+{
+    foreach(var presentationIsImpostor in new[]{false,true})foreach(var dead in new[]{false,true})
+    {
+        var s=Setup();var local=PlayerControl.LocalPlayer;var role=local.Data.Role;
+        role.IsImpostor=presentationIsImpostor;local.Data.IsDead=dead;
+        var pointer=role.Pointer;SabotageTools.SyncForMenu();CheatToggles.reactorSab=true;SabotageTools.Process(s);
+        Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Reactor,(byte)128)}));
+        Check(ReferenceEquals(local.Data.Role,role)&&role.Pointer==pointer&&role.IsImpostor==presentationIsImpostor&&local.Data.IsDead==dead,"A request must not alter role or life state.");
+        for(var tick=0;tick<4;tick++){SabotageTools.SyncForMenu();SabotageTools.Process(s);}
+        Check(s.Requests.Count==1&&!CheatToggles.reactorSab,"A denied/unconfirmed request must be consumed once and mirror actual state.");
+        Check(SabotageTools.StatusText.Contains("request sent")&&SabotageTools.StatusText.Contains("host may reject"));
+        Check(!SabotageTools.StatusText.Contains("accepted",StringComparison.OrdinalIgnoreCase)&&!SabotageTools.StatusText.Contains("success",StringComparison.OrdinalIgnoreCase));
+    }
+});
+Test("Living crew may send explicit start and repair requests",()=>
+{var s=Setup();PlayerControl.LocalPlayer.Data.Role.IsImpostor=false;SabotageTools.Process(s);CheatToggles.reactorSab=true;SabotageTools.Process(s);Active(s,true);SabotageTools.Process(s);CheatToggles.reactorSab=false;SabotageTools.Process(s);Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Reactor,(byte)128),(SystemTypes.Reactor,(byte)16)}));Check(SabotageTools.StatusText.StartsWith("Repair request sent.")&&SabotageTools.StatusText.Contains("host may reject"));});
 Test("Dead guests cannot issue repair requests",()=>
-{var s=Setup();Active(s,true);PlayerControl.LocalPlayer.Data.IsDead=true;SabotageTools.Process(s);CheatToggles.reactorSab=false;SabotageTools.Process(s);Check(s.Requests.Count==0&&CheatToggles.reactorSab);});
+{var s=Setup();Active(s,true);PlayerControl.LocalPlayer.Data.IsDead=true;SabotageTools.Process(s);CheatToggles.reactorSab=false;SabotageTools.Process(s);Check(s.Requests.Count==0&&CheatToggles.reactorSab);Check(SabotageTools.StatusText.Contains("unavailable while dead"));});
+Test("Host and Freeplay crew starts preserve the explicit native request path",()=>
+{
+    foreach(var practice in new[]{false,true})
+    {
+        var s=Setup();Utils.isFreePlay=practice;Utils.isHost=!practice;var role=PlayerControl.LocalPlayer.Data.Role;role.IsImpostor=false;
+        SabotageTools.SyncForMenu();CheatToggles.reactorSab=true;SabotageTools.Process(s);SabotageTools.Process(s);
+        Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Reactor,(byte)128)}));Check(!role.IsImpostor);
+        Check(SabotageTools.StatusText=="Sabotage request sent.","Local authority still reports sending, not acceptance.");
+    }
+});
+Test("Inactive meeting disconnected missing and unowned contexts cannot send fresh requests",()=>
+{
+    foreach(var change in new Action[]{()=>OwnedActionContext.Ready=false,()=>Utils.isMeeting=true,()=>Utils.isNormalGame=false,()=>PlayerControl.LocalPlayer.AmOwner=false,()=>PlayerControl.LocalPlayer.Data.Disconnected=true,()=>AmongUsClient.Instance=null,()=>ShipStatus.Instance=null})
+    {
+        var s=Setup();SabotageTools.Process(s);change();SabotageTools.Process(s);CheatToggles.reactorSab=true;SabotageTools.Process(s);
+        Check(s.Requests.Count==0&&!CheatToggles.reactorSab);Check(SabotageTools.StatusText.Contains("active Normal round"));
+    }
+});
+Test("A native state acknowledgement during request delivery is mirrored without replay",()=>
+{
+    var s=Setup();var reactor=(ReactorSystemType)s.Systems[SystemTypes.Reactor];
+    s.OnRequest=(system,amount)=>{if(system==SystemTypes.Reactor)reactor.IsActive=amount==128;};
+    SabotageTools.SyncForMenu();CheatToggles.reactorSab=true;SabotageTools.Process(s);Check(CheatToggles.reactorSab&&reactor.IsActive);
+    for(var tick=0;tick<4;tick++){SabotageTools.SyncForMenu();SabotageTools.Process(s);}Check(s.Requests.Count==1);
+    CheatToggles.reactorSab=false;SabotageTools.Process(s);Check(!CheatToggles.reactorSab&&!reactor.IsActive);
+    SabotageTools.Process(s);Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Reactor,(byte)128),(SystemTypes.Reactor,(byte)16)}));
+    Check(!SabotageTools.StatusText.Contains("accepted",StringComparison.OrdinalIgnoreCase),"Observed system state must not be presented as a host acceptance guarantee.");
+});
 Test("Host authority changes discard old unfixable-light edges",()=>
 {var s=Setup();Utils.isHost=true;SabotageTools.Process(s);CheatToggles.unfixableLights=true;Utils.isHost=false;SabotageTools.Process(s);Check(s.Requests.Count==0&&!CheatToggles.unfixableLights);Utils.isHost=true;SabotageTools.Process(s);Check(s.Requests.Count==0);});
 Test("Explicit host unfixable-light edges retain amount69 without an extra light action",()=>

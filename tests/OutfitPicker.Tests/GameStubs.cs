@@ -1,5 +1,5 @@
-// Native-contract substitutes only. Requests are recorded, never accepted or
-// applied, so these checks do not simulate a multiplayer validation result.
+
+
 public class NativeObject
 {
     private static int _next;

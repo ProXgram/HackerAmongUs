@@ -8,11 +8,11 @@ namespace HAU;
 [HarmonyPatch(typeof(ChatController), nameof(ChatController.AddChat))]
 public static class ChatController_AddChat
 {
-	// Prefix patch of ChatController.AddChat to receive ghost messages if CheatSettings.seeGhosts is enabled even if LocalPlayer is alive
-	// Basically does what the original method did with the required modifications
+
+
 	public static bool Prefix(PlayerControl sourcePlayer, string chatText, bool censor, ChatController __instance)
     {
-		// Simply run original method if seeGhosts is disabled or LocalPlayer already dead
+
         if (!CheatToggles.seeGhosts || PlayerControl.LocalPlayer.Data.IsDead) return true;
 
         if (!sourcePlayer || !PlayerControl.LocalPlayer) return true;
@@ -20,7 +20,7 @@ public static class ChatController_AddChat
 		NetworkedPlayerInfo data = PlayerControl.LocalPlayer.Data;
 		NetworkedPlayerInfo data2 = sourcePlayer.Data;
 
-		if (data2 == null || data == null) return true; // Remove isDead check for LocalPlayer
+		if (data2 == null || data == null) return true;
 
 		ChatBubble pooledBubble = __instance.GetPooledBubble();
 
@@ -63,24 +63,24 @@ public static class ChatController_AddChat
 			__instance.chatBubblePool.Reclaim(pooledBubble);
 		}
 
-        return false; // Skips the original method completly
+        return false;
     }
 }
 
 [HarmonyPatch(typeof(ChatController), nameof(ChatController.Update))]
 public static class ChatController_Update
 {
-    // Postfix patch of ChatController.Update to unlock longer message length
+
     public static void Postfix(ChatController __instance)
     {
-        //__instance.freeChatField.textArea.allowAllCharacters = CheatToggles.chatJailbreak; // Not really used by the game's code, but I include it anyway
-        //__instance.freeChatField.textArea.AllowSymbols = true; // Allow sending certain symbols
-        //__instance.freeChatField.textArea.AllowEmail = CheatToggles.chatJailbreak; // Allow sending email addresses when chatJailbreak is enabled
-        //__instance.freeChatField.textArea.AllowPaste = CheatToggles.chatJailbreak; // Allow pasting from clipboard in chat when chatJailbreak is enabled
+
+
+
+
 
         if (CheatToggles.longerMessages)
 		{
-			// Increasing the maximum length by 20 characters still avoids anticheat kicks
+
             __instance.freeChatField.textArea.characterLimit = 120;
         }
 		else
@@ -93,14 +93,14 @@ public static class ChatController_Update
 [HarmonyPatch(typeof(ChatController), nameof(ChatController.SendChat))]
 public static class ChatController_SendChat
 {
-    // Postfix patch of ChatController.SendChat to unlock lower chat rate limits
+
     public static void Postfix(ChatController __instance)
     {
         if (!CheatToggles.lowerRateLimits) return;
 
 		if (__instance.timeSinceLastMessage == 0f)
 		{
-			// Decreasing rate limit by 1 sec max still avoids anticheat kicks
+
 			__instance.timeSinceLastMessage += 1f;
 		}
     }
@@ -109,15 +109,15 @@ public static class ChatController_SendChat
 [HarmonyPatch(typeof(ChatController), nameof(ChatController.SendFreeChat))]
 public static class ChatController_SendFreeChat
 {
-    // Prefix patch of ChatController.SendFreeChat to allow sending URLs without being censored
+
     public static bool Prefix(ChatController __instance)
     {
-		// Only works if CheatSettings.bypassUrlBlock is enabled
+
         if (!CheatToggles.bypassUrlBlock) return true;
 
         string text = __instance.freeChatField.Text;
 
-        // Replace periods in URLs and email addresses with commas to avoid censorship
+
         string modifiedText = CensorUrlsAndEmails(text);
 
         ChatController.Logger.Debug("SendFreeChat () :: Sending message: '" + modifiedText + "'", null);
@@ -128,11 +128,11 @@ public static class ChatController_SendFreeChat
 
     private static string CensorUrlsAndEmails(string text)
     {
-        // Regular expression pattern to match URLs and email addresses
+
         string pattern = @"(http[s]?://)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(/[\w-./?%&=]*)?|([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)";
         Regex regex = new Regex(pattern);
 
-        // Censor periods in each match
+
         return regex.Replace(text, match =>
         {
             var censored = match.Value;

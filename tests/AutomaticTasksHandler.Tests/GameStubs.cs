@@ -1,5 +1,5 @@
-// The HUD getter models the native singleton's side effect: asking for Instance
-// can create gameplay UI. No installed game, Unity, or network code is invoked.
+
+
 public class UnityObjectStub
 {
     public bool Destroyed;
@@ -91,7 +91,7 @@ namespace UnityEngine
 
 namespace HAU
 {
-    public enum MovementMode { Off, AiTasks }
+    public enum MovementMode { Off, TaskWalker }
     public static class MovementAutomation { public static MovementMode Mode; }
     public static class Utils
     {

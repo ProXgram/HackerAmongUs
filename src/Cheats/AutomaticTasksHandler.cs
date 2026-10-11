@@ -31,9 +31,9 @@ public static class AutomaticTasksHandler
 
     public static void Tick()
     {
-        if (MovementAutomation.Mode == MovementMode.AiTasks)
+        if (MovementAutomation.Mode == MovementMode.TaskWalker)
         {
-            _status = "AI Tasks is walking to your tasks.";
+            _status = "Task Walker is walking to your tasks.";
             return;
         }
         if (_enabledLastTick != CheatToggles.automaticTasks) Reset();
@@ -59,8 +59,8 @@ public static class AutomaticTasksHandler
                 return;
             }
 
-            // Instance creates this gameplay singleton when absent. A saved
-            // enabled toggle must not instantiate it on the main menu or lobby.
+
+
             var hud = HudManager.Instance;
             if (!hud)
             {
@@ -93,7 +93,7 @@ public static class AutomaticTasksHandler
             {
                 if (!task) continue;
                 var normal = task.TryCast<NormalPlayerTask>();
-                if (!normal) continue; // Exclude role text and other special tasks.
+                if (!normal) continue;
                 var assigned = local.Data.FindTaskById(task.Id);
                 var owner = task.Owner;
                 var pointer = task.Pointer.ToInt64();
@@ -115,8 +115,8 @@ public static class AutomaticTasksHandler
             }
 
             var selected = tasks[next.InstanceId];
-            // Native task stepping updates local task progress and emits the
-            // normal completion RPC at the final step. Never send a second RPC.
+
+
             for (var step = 0; step < next.RemainingSteps && !selected.IsComplete; step++)
             {
                 var previousStep = selected.taskStep;
@@ -136,7 +136,7 @@ public static class AutomaticTasksHandler
         {
             if (!_failed)
                 HAUPlugin.Log.LogError("Automatic Tasks: paused after task completion failed: " + error);
-            _failed = true; // One failure pauses completion instead of retrying every frame.
+            _failed = true;
         }
     }
 }

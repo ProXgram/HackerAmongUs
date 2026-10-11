@@ -9,20 +9,20 @@ public static class InformationTools
     {
         if (CheatToggles.noShadows)
         {
-            // Change the Z axis position of spore clouds as to make players appear above them
+
 
             mushroom.sporeMask.transform.position = new Vector3(mushroom.sporeMask.transform.position.x, mushroom.sporeMask.transform.position.y, -1);
             return;
         }
 
-        // Normal Z axis position: 5f
+
         mushroom.sporeMask.transform.position = new Vector3(mushroom.sporeMask.transform.position.x, mushroom.sporeMask.transform.position.y, 5f);
     }
 
     public static bool IsFullbrightActive()
     {
-        // Fullbright is automatically activated when being a ghost, zooming out, spectating other players, or "freecamming"
-        // This is done to avoid issues with shadows
+
+
 
         return CheatToggles.noShadows || (PlayerControl.LocalPlayer?.Data && PlayerControl.LocalPlayer.Data.IsDead) || Camera.main.orthographicSize > 3f || Camera.main.gameObject.GetComponent<FollowerCamera>().Target != PlayerControl.LocalPlayer;
     }
@@ -31,33 +31,33 @@ public static class InformationTools
     {
         if (CheatToggles.zoomOut)
         {
-            // A wheel event used to scroll HAU must not also change the game camera.
-            // Keep the disabled branch below active so switching zoom off still resets it.
+
+
             if (MenuUI.isGUIActive) return;
-            // Suspend zoomOut whenever a UI screen requires scrolling
+
             if (hudManager.Chat.IsOpenOrOpening || MatchInfoGuide.Instance.IsActive || PlayerCustomizationMenu.Instance ||
             (Utils.isLobby && (FriendsListUI.Instance.IsOpen || GameStartManager.Instance.LobbyInfoPane.LobbyViewSettingsPane.gameObject.active || GameStartManager.Instance.RulesEditPanel))) return;
 
             _resolutionChangeNeeded = true;
 
-            if (Input.GetAxis("Mouse ScrollWheel") < 0f ) // Zoom out
+            if (Input.GetAxis("Mouse ScrollWheel") < 0f )
             {
 
-                // Both the main camera and the UI camera need to be adjusted
+
 
                 Camera.main.orthographicSize++;
                 hudManager.UICamera.orthographicSize++;
 
-                // Utils.AdjustResolution() seems to be needed to properly sync the game's UI
-                // after a change in orthographicSize
+
+
 
                 Utils.AdjustResolution();
 
             }
             else if (Input.GetAxis("Mouse ScrollWheel") > 0f )
             {
-                // Zoom in
-                if (!(Camera.main.orthographicSize > 3f)) return; // Never go below the default orthographicSize: 3f
+
+                if (!(Camera.main.orthographicSize > 3f)) return;
 
                 Camera.main.orthographicSize--;
                 hudManager.UICamera.orthographicSize--;
@@ -67,11 +67,11 @@ public static class InformationTools
         }
         else
         {
-            // orthographicSize is reset to default value: 3f
+
             Camera.main.orthographicSize = 3f;
             hudManager.UICamera.orthographicSize = 3f;
 
-            // Utils.AdjustResolution() is invoked one last time to prevent issues with UI
+
             if (_resolutionChangeNeeded)
             {
                 Utils.AdjustResolution();
@@ -86,15 +86,15 @@ public static class InformationTools
         {
             foreach (var playerState in meetingHud.playerStates)
             {
-                // Fetch the NetworkedPlayerInfo of each playerState
+
                 var data = GameData.Instance.GetPlayerById(playerState.PlayerId);
 
                 if (data.IsNull() || data.Disconnected || data.Outfits[PlayerOutfitType.Default].IsNull()) continue;
 
-                // Update the player's nametag appropriately
+
                 playerState.NameText.text = Utils.GetNameTag(data, data.DefaultOutfit.PlayerName);
 
-                // Move and resize the nametag to prevent it overlapping with colorblind text
+
                 if (CheatToggles.seeRoles && CheatToggles.seePlayerInfo)
                 {
                     playerState.NameText.transform.localPosition = new Vector3(0.33f, 0.08f, 0f);
@@ -107,7 +107,7 @@ public static class InformationTools
                 }
                 else
                 {
-                    // Reset the position and scale of the nametag to default values (they're kinda weird but whatever)
+
                     playerState.NameText.transform.localPosition = new Vector3(0.3384f, 0.0311f, -0.1f);
                     playerState.NameText.transform.localScale = new Vector3(0.9f, 1f, 1f);
                 }
@@ -120,7 +120,7 @@ public static class InformationTools
         try
         {
             playerPhysics.myPlayer.cosmetics.SetName(Utils.GetNameTag(playerPhysics.myPlayer.Data, playerPhysics.myPlayer.CurrentOutfit.PlayerName));
-            // Move the nameText up to prevent it overlapping with colorblind text
+
             if (CheatToggles.seeRoles && CheatToggles.seePlayerInfo)
             {
                 playerPhysics.myPlayer.cosmetics.nameText.transform.localPosition = new Vector3(0f, 0.186f, 0f);
@@ -140,10 +140,10 @@ public static class InformationTools
     {
         try
         {
-            // Update the player's nametag appropriately
+
             chatBubble.NameText.text = Utils.GetNameTag(chatBubble.playerInfo, chatBubble.NameText.text, true);
 
-            // Adjust the chatBubble's size to the new nametag to prevent issues
+
             chatBubble.NameText.ForceMeshUpdate(true, true);
             chatBubble.Background.size = new Vector2(5.52f, 0.2f + chatBubble.NameText.GetNotDumbRenderedHeight() + chatBubble.TextArea.GetNotDumbRenderedHeight());
             chatBubble.MaskArea.size = chatBubble.Background.size - new Vector2(0f, 0.03f);

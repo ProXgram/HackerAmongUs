@@ -261,8 +261,8 @@ public class OutfitPickerUI : MonoBehaviour
         OutfitCategory.Pet => "Pets", OutfitCategory.Nameplate => "Nameplates", _ => "Body color"
     };
 
-    // The shipped game strips IMGUI's text-editor internals. Poll the supported
-    // keyboard path once per Update, rather than calling native GUI.TextField.
+
+
     private void TickSearchInput()
     {
         if (!_editingSearch || _lastSearchInputFrame == Time.frameCount) return;
@@ -386,9 +386,9 @@ public class OutfitPickerUI : MonoBehaviour
                 {
                     var texture = sprite.texture;
                     var source = sprite.textureRect;
-                    // The game's coordinate-texture renderer is stripped. A
-                    // native style can draw a whole image; atlas subregions use
-                    // a placeholder instead of showing the wrong atlas image.
+
+
+
                     if (texture.width > 0 && texture.height > 0 && source.width > 0 && source.height > 0 &&
                         Mathf.Approximately(source.x, 0) && Mathf.Approximately(source.y, 0) &&
                         Mathf.Approximately(source.width, texture.width) && Mathf.Approximately(source.height, texture.height))
@@ -406,8 +406,8 @@ public class OutfitPickerUI : MonoBehaviour
         finally { GUI.color = previousColor; }
         if (!drawn)
         {
-            // A preview failure must not abort its row or the surrounding
-            // GUILayout groups. Even the small fallback is contained here.
+
+
             try { GUI.Label(rect, item.Id.Length == 0 ? "∅" : "—", GUIStylePreset.Hint); }
             catch (Exception) { }
         }
@@ -419,8 +419,8 @@ public class OutfitPickerUI : MonoBehaviour
         _thumbnailStyle.hover.background = texture;
         _thumbnailStyle.active.background = texture;
         _thumbnailStyle.focused.background = texture;
-        // This overload exists natively in the shipped game. GUI.DrawTexture
-        // and its coordinate overloads reach unsupported unstripped helpers.
+
+
         GUI.Box(rect, GUIContent.none, _thumbnailStyle);
     }
 }

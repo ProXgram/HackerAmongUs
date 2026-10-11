@@ -9,7 +9,7 @@ public sealed record AutoUpdateRequest(string GameDirectory, int GamePid, string
     string? ExpectedGameVersion = null, string? ExpectedModVersion = null);
 public sealed record AutoUpdateResult(bool Installed, string ModVersion, string BackupDirectory);
 
-/// <summary>Only observes game processes. Updates never terminate or restart a game.</summary>
+
 public interface IAutoUpdateProcessMonitor
 {
     Task WaitForGameExitAsync(int pid, string gameDirectory, CancellationToken ct);
@@ -85,7 +85,7 @@ public sealed class AutoUpdateService
         while (processes.IsAnyGameRunning()) await pause(ct);
         ct.ThrowIfCancellationRequested();
 
-        // The game or mod can change while the helper waits. Verify them again before downloading.
+
         gameVersion = InstallerService.GetGameVersion(game);
         currentVersion = InstallerService.GetInstalledModVersion(game).ToString();
         if (!manifest.SupportsGameVersion(gameVersion))
@@ -125,7 +125,7 @@ internal sealed class GameProcessMonitor : IAutoUpdateProcessMonitor
     {
         Process game;
         try { game = Process.GetProcessById(pid); }
-        catch (ArgumentException) { return; } // The requested game already closed.
+        catch (ArgumentException) { return; }
         using (game)
         {
             if (game.HasExited) return;
@@ -151,8 +151,8 @@ internal sealed class GameProcessMonitor : IAutoUpdateProcessMonitor
                 !package.Parent.FullName.Equals(Path.GetFullPath(windowsAppsRoot), StringComparison.OrdinalIgnoreCase) ||
                 package.Name != "Innersloth.AmongUs_2026.9.293.0_x64__fw5x688tam7rm" ||
                 (package.Attributes & FileAttributes.ReparsePoint) == 0) return false;
-            // Xbox exposes a WindowsApps package alias. Resolve only that known publisher package;
-            // the target still has to equal the separately validated writable game folder.
+
+
             var target = package.ResolveLinkTarget(true);
             return target is DirectoryInfo && Path.TrimEndingDirectorySeparator(target.FullName)
                 .Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(gameDirectory)), StringComparison.OrdinalIgnoreCase);

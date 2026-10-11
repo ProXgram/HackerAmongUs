@@ -3,8 +3,8 @@ using AmongUs.GameOptions;
 
 namespace HAU;
 
-// This changes only the local game's role presentation. The host retains its
-// original role assignment and can reject actions requested by this client.
+
+
 public static class LocalImpostorHandler
 {
     private static bool _roundReady;
@@ -18,15 +18,14 @@ public static class LocalImpostorHandler
     private static bool _diedThisRound;
     private static bool _failed;
     private static bool _blockedKillReported;
-    private static bool _localCrewSabotagePreview;
     private const string LocalRoleStatus = "Local-only Impostor; kills disabled.";
     private static string _lastResult = "Local only: armed for the next round.";
 
     private static bool IsNormalMode => GameOptionsManager.Instance != null &&
         GameOptionsManager.Instance.CurrentGameOptions != null && Utils.isNormalGame;
 
-    // Ownership of our local change, not a claim about the host's current role.
-    // Do not use the toggle here: a failed restoration can leave our role applied.
+
+
     public static bool BlocksKillRequests(PlayerControl actor)
     {
         if (!_roundReady || !_changedLocally || !Utils.isClient ||
@@ -51,18 +50,6 @@ public static class LocalImpostorHandler
             ConsoleUI.Log(message);
         }
         return true;
-    }
-
-    // Death replaces the presentation role and clears the living kill guard.
-    // Keep the separate provenance record: a local crew preview still cannot
-    // authorize sabotage, while genuinely assigned Impostor ghosts remain valid.
-    public static bool BlocksSabotageRequests(PlayerControl actor)
-    {
-        if (!_roundReady || !_localCrewSabotagePreview || !Utils.isClient ||
-            !Utils.isInGame || Utils.isHost || Utils.isFreePlay) return false;
-        var local = PlayerControl.LocalPlayer;
-        return actor && local && actor.Pointer == local.Pointer &&
-            _playerPointer == local.Pointer && local.Data != null && !local.Data.Disconnected;
     }
 
     public static string StatusText
@@ -95,7 +82,7 @@ public static class LocalImpostorHandler
         _roundReady = true;
     }
 
-    // Do not restore here: the next round's native role assignment owns roles.
+
     public static void Reset()
     {
         _roundReady = false;
@@ -114,8 +101,8 @@ public static class LocalImpostorHandler
         var local = PlayerControl.LocalPlayer;
         if (!local || local.Data == null || local.Data.Disconnected) return;
 
-        // A guest can become host when the previous host leaves. Undo only our
-        // living local change before handing authority back to the host path.
+
+
         if (Utils.isHost)
         {
             if (_enabledLastTick != CheatToggles.alwaysImpostor)
@@ -147,8 +134,8 @@ public static class LocalImpostorHandler
             _diedThisRound = false;
         }
 
-        // Remember death even if another setting later changes the alive flag.
-        // Never set a living role, or restore a saved one, after this point.
+
+
         if (local.Data.IsDead || _diedThisRound)
         {
             _diedThisRound = true;
@@ -175,8 +162,8 @@ public static class LocalImpostorHandler
         if (_attempted) return;
         _attempted = true;
 
-        // A prior failed restoration can leave our own local role applied.
-        // Keep its original snapshot so a later disable can still restore it.
+
+
         if (_changedLocally && IsOurAppliedRole(local))
         {
             _lastResult = LocalRoleStatus;
@@ -187,8 +174,8 @@ public static class LocalImpostorHandler
         _originalRole = null;
         _appliedRolePointer = IntPtr.Zero;
 
-        // Retain the host's assigned Impostor, Shapeshifter, Phantom, Viper,
-        // or any future special impostor role instead of replacing it.
+
+
         if (local.Data.Role.TeamType == RoleTeamTypes.Impostor)
         {
             _lastResult = "Host-assigned " + local.Data.RoleType + "; role unchanged.";
@@ -205,7 +192,6 @@ public static class LocalImpostorHandler
 
             _appliedRolePointer = local.Data.Role.Pointer;
             _changedLocally = true;
-            _localCrewSabotagePreview = true;
             _blockedKillReported = false;
             _lastResult = LocalRoleStatus;
             HAUPlugin.Log.LogInfo("Always Impostor: applied local-only role; host assignment is unchanged.");
@@ -216,7 +202,7 @@ public static class LocalImpostorHandler
             _lastResult = "Local-only assignment failed; toggle off/on to retry.";
             HAUPlugin.Log.LogError("Always Impostor: local-only assignment failed: " + error);
 
-            // Keep enough information to undo a partial native assignment.
+
             try
             {
                 if (local && local.Data != null && local.Data.Role &&
@@ -224,7 +210,6 @@ public static class LocalImpostorHandler
                 {
                     _appliedRolePointer = local.Data.Role.Pointer;
                     _changedLocally = true;
-                    _localCrewSabotagePreview = true;
                 }
             }
             catch { }
@@ -240,7 +225,7 @@ public static class LocalImpostorHandler
         if (!_changedLocally || !_originalRole.HasValue || _restoreAttempted) return;
         _restoreAttempted = true;
 
-        // Preserve any role assigned later by the host or another menu setting.
+
         if (!IsOurAppliedRole(local))
         {
             _changedLocally = false;
@@ -258,7 +243,6 @@ public static class LocalImpostorHandler
             _changedLocally = false;
             _originalRole = null;
             _appliedRolePointer = IntPtr.Zero;
-            _localCrewSabotagePreview = false;
             _lastResult = "Local-only mode disabled; original local role restored.";
             HAUPlugin.Log.LogInfo("Always Impostor: restored the original local role.");
         }
@@ -276,7 +260,7 @@ public static class LocalImpostorHandler
         CheatToggles.setFakeRole = false;
         if (PlayerPickMenu.playerpickMenu != null)
         {
-            // Closing is animated; any late click must be harmless.
+
             PlayerPickMenu.customAction = (Action)(() => { });
             PlayerPickMenu.playerpickMenu.Close();
         }
@@ -291,6 +275,5 @@ public static class LocalImpostorHandler
         _restoreAttempted = false;
         _failed = false;
         _blockedKillReported = false;
-        _localCrewSabotagePreview = false;
     }
 }

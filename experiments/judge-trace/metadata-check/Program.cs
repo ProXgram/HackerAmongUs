@@ -76,7 +76,7 @@ var memberReferences = plugin.MemberReferences.Select(handle =>
 var references = memberReferences.Select(x => x.Owner + "." + x.Name).Order().ToArray();
 var forbidden = new HashSet<string> { "TryOverrule", "CmdQueueOverruleVotes", "ClearOverrule", "ConsumeOverruleVotesUsage", "VotingComplete", "StartRpc", "StartRpcImmediately", "FinishRpc", "FinishRpcImmediately", "SetValue", "Write", "WriteByte", "WriteBytes", "Copy", "Poke", "Send", "SendMessage" };
 var prohibited = memberReferences.Where(x =>
-    // Updating the diagnostic Dictionary is allowed; no game setter is.
+
     (x.Name.StartsWith("set_", StringComparison.Ordinal) && !(x.Name == "set_Item" && x.Owner.StartsWith("Dictionary`2<", StringComparison.Ordinal))) ||
     x.Name.StartsWith("Rpc", StringComparison.Ordinal) || forbidden.Contains(x.Name)).ToArray();
 Check(prohibited.Length == 0, "no compiled gameplay setters, direct Judge actions, transport writes or reflection writes: " + string.Join(",", prohibited.Select(x => x.Owner + "." + x.Name)));

@@ -5,8 +5,8 @@ using AmongUs.GameOptions;
 
 namespace HAU;
 
-// Separate manual experiment. The normal release excludes this entire class.
-// A local role/body is never evidence that another client accepted the action.
+
+
 public static class GuestRoundTest
 {
 #if JUDGE_ROLE_EXPERIMENT
@@ -83,8 +83,8 @@ public static class GuestRoundTest
         }
     }
 
-    // Called only by the root's join/new-round/end lifecycle integrations.
-    // Cancel/rebind and GUI toggles never reset per-round attempt flags.
+
+
     public static void Reset()
     {
         _bound = false;
@@ -103,7 +103,7 @@ public static class GuestRoundTest
         _killStatus = "Kill test: not attempted this round.";
     }
 
-    // Observation only: no RPCs, role writes or automatic test actions.
+
     public static void Refresh()
     {
         try
@@ -189,7 +189,7 @@ public static class GuestRoundTest
                 _status = reason;
                 return;
             }
-            _roleAttempted = true; // A thrown call also consumes this round's attempt.
+            _roleAttempted = true;
             _roleStatus = "Role request: ATTEMPTED; remote acceptance unverified.";
             local.RpcSetRole(RequestedRole, true);
             _roleStatus = "Role request: SENT; remote acceptance unverified.";
@@ -222,7 +222,7 @@ public static class GuestRoundTest
                 _killStatus = "Kill test: BLOCKED; local-only role, no call sent.";
                 return;
             }
-            _killAttempted = true; // No retries, even when the typed call throws.
+            _killAttempted = true;
             _killStatus = "Kill test: ATTEMPTED; remote acceptance unverified.";
             local.RpcMurderPlayer(target, true);
             _killStatus = "Kill test: SENT; remote acceptance unverified.";
@@ -243,7 +243,7 @@ public static class GuestRoundTest
     {
         _bound = false;
         _status = reason;
-        // Keep _roleAttempted and _killAttempted until a genuine lifecycle Reset.
+
     }
 
     private static bool TryGetGuestRound(out PlayerControl local, out ShipStatus ship,

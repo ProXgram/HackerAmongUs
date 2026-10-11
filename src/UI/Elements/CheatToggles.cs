@@ -8,14 +8,14 @@ namespace HAU;
 
 public struct CheatToggles
 {
-    // Movement
+
     public static bool sprint = true;
     public static bool noClip;
     public static bool teleportPlayer;
     public static bool teleportCursor;
     public static bool invertControls;
 
-    // Roles
+
     public static bool multiRole;
     public static bool alwaysImpostor;
     public static bool setFakeRole;
@@ -43,7 +43,7 @@ public struct CheatToggles
     public static bool noVanishAnim;
     public static bool noShapeshiftAnim;
 
-    // ESP
+
     public static bool noShadows;
     public static bool seeGhosts;
     public static bool seeRoles;
@@ -53,18 +53,18 @@ public struct CheatToggles
     public static bool revealVotes;
     public static bool seeLobbyInfo;
 
-    // Camera
+
     public static bool spectate;
     public static bool zoomOut;
     public static bool freecam;
 
-    // Minimap
+
     public static bool mapCrew;
     public static bool mapImps;
     public static bool mapGhosts;
     public static bool colorBasedMap;
 
-    // Tracers
+
     public static bool tracersImps;
     public static bool tracersCrew;
     public static bool tracersGhosts;
@@ -72,7 +72,7 @@ public struct CheatToggles
     public static bool colorBasedTracers;
     public static bool distanceBasedTracers;
 
-    // Chat
+
     public static bool enableChat;
     public static bool unlockCharacters;
     public static bool bypassUrlBlock;
@@ -80,7 +80,7 @@ public struct CheatToggles
     public static bool unlockClipboard;
     public static bool lowerRateLimits;
 
-    // Ship
+
     public static bool ghostVoting;
     public static bool closeMeeting;
     public static bool autoOpenDoorsOnUse;
@@ -89,7 +89,7 @@ public struct CheatToggles
     public static bool reportBody;
     public static bool autoReportBodies;
 
-    // Sabotage
+
     public static bool commsSab;
     public static bool elecSab;
     public static bool reactorSab;
@@ -103,12 +103,12 @@ public struct CheatToggles
     public static bool spamCloseAllDoors;
     public static bool sabotageMap;
 
-    // Vents
+
     public static bool unlockVents;
     public static bool walkInVents;
     public static bool kickVents;
 
-    // Animations
+
     public static bool animShields;
     public static bool animAsteroids;
     public static bool animEmptyGarbage;
@@ -117,7 +117,7 @@ public struct CheatToggles
     public static bool animPet;
     public static bool moonWalk;
 
-    // Overload
+
     public static bool showOverload;
     public static bool showOverloadSettings;
     public static bool olAutoStart;
@@ -140,7 +140,7 @@ public struct CheatToggles
     public static bool overloadImps;
     public static bool overloadReset;
 
-    // Console
+
     public static bool showConsole;
     public static bool logDeaths;
     public static bool logShapeshifts;
@@ -148,7 +148,7 @@ public struct CheatToggles
     public static bool logTasks;
     public static bool logGameState;
 
-    // Host-Only
+
     public static bool voteImmune;
     public static bool forceRole;
     public static RoleTypes? forcedRole;
@@ -165,31 +165,31 @@ public struct CheatToggles
     public static bool killAllCrew;
     public static bool killAllImps;
 
-    // Passive
+
     public static bool unlockFeatures;
     public static bool freeCosmetics;
     public static bool avoidPenalties;
     public static bool copyLobbyCodeOnDisconnect;
     public static bool spoofAprilFoolsDate;
 
-    // Modes
+
     public static bool rgbMode;
     public static bool stealthMode;
     public static bool panicMode;
 
-    // Config
+
     public static bool reloadConfig;
     public static bool openConfig;
     public static bool loadProfile;
     public static bool saveProfile;
 
-    // Keybind Map: Toggle Name -> KeyCode (KeyCode.None == No Key)
+
     public static readonly Dictionary<string, KeyCode> Keybinds = new();
 
-    // Map for Reflection Access: Toggle Name -> FieldInfo
+
     public static readonly Dictionary<string, FieldInfo> ToggleFields = new();
 
-    // Populate reflection map once at startup and initialize Keybinds with KeyCode.None
+
     static CheatToggles()
     {
         var fields = typeof(CheatToggles).GetFields(BindingFlags.Static | BindingFlags.Public);
@@ -221,7 +221,7 @@ public struct CheatToggles
         return !setFakeRole && !setFakeAlive && !forceRole && !ejectPlayer && !reportBody && !telekillPlayer && !killPlayer && !spectate && !teleportPlayer;
     }
 
-    // Disables all cheat toggles by setting all to false using the cached ToggleFields
+
     public static void DisableAll()
     {
         foreach (var field in ToggleFields.Values)
@@ -230,8 +230,8 @@ public struct CheatToggles
         }
     }
 
-    // Saves controls and their keybinds to HAUProfile.txt
-    // Format per line: ToggleName = True/False = KeyCode.KEY
+
+
     public static void SaveTogglesToProfile()
     {
         using var writer = new StreamWriter(HAUPlugin.ProfilePath);
@@ -247,19 +247,19 @@ public struct CheatToggles
 
         foreach (var field in ToggleFields.Values)
         {
-            Keybinds.TryGetValue(field.Name, out var key);  // If no key is set then write KeyCode.None
+            Keybinds.TryGetValue(field.Name, out var key);
             var enabled = !ControlPolicy.HasRestorableState(field.Name)
                 ? false : field.GetValue(null);
             writer.WriteLine($"{field.Name} = {enabled} = KeyCode.{key}");
         }
     }
 
-    // Loads controls and their keybinds from HAUProfile.txt if the file is present
-    // Format per line: ToggleName = True/False = KeyCode.KEY
+
+
     public static void LoadTogglesFromProfile()
     {
-        // Task completion requires a fresh manual activation, even when an old
-        // profile was saved with this toggle on. Its shortcut still loads.
+
+
         automaticTasks = false;
         AutomaticTasksHandler.Reset();
         bool hostOrPractice = Utils.isHost || Utils.isFreePlay;
@@ -271,28 +271,28 @@ public struct CheatToggles
 
         while (reader.ReadLine() is { } line)
         {
-            // Skips empty lines
+
             if (string.IsNullOrWhiteSpace(line)) continue;
 
-            // Skips lines that are commented out
+
             line = line.Trim();
             if (line.StartsWith("#")) continue;
 
-            // Extracts the three relevant config values for each remaining line
+
             var parts = line.Split('=', 3);
             if (parts.Length < 2) continue;
 
-            // Gets the cheat's FieldInfo from its name
+
             var name = parts[0].Trim();
             if (!ToggleFields.TryGetValue(name, out var field)) continue;
 
-            // Loads whether the cheat is enabled or disabled by default
+
             if (ControlPolicy.CanRestoreEnabled(name, hostOrPractice) && bool.TryParse(parts[1].Trim(), out var boolVal))
             {
                 field.SetValue(null, boolVal);
             }
 
-            // Loads the keybind associated with each cheat
+
             KeyCode key = KeyCode.None;
             if (parts.Length >= 3)
             {

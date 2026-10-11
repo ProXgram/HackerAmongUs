@@ -517,8 +517,8 @@ static void NativeRenewalPreserved()
     InfiniteJudgeHandler.RefillForMeeting(role);
     role.ConsumeOverruleVotesUsage();
     JudgeRole_ConsumeOverruleVotesUsage_InfiniteJudge.Postfix(role);
-    // Native code can refund a losing Judge's consumed charge. It must not
-    // be mistaken for an outstanding charge granted by this feature.
+
+
     role.HasAnOverruleUse = true;
     CheatToggles.infiniteJudge = false;
     InfiniteJudgeHandler.Tick();

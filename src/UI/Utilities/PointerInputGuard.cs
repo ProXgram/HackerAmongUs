@@ -11,9 +11,9 @@ public static class PointerInputGuard
         var current = Event.current;
         PointerInputDiagnostics.TraceClose(source ?? "mod window", window);
         if (current == null || current.button != 0) return;
-        // AU19's native GUILayout.Button consumes both type and rawType. Claim
-        // that Used event only when the left release is independently observed;
-        // keyboard/programmatic activation must not create a pointer guard.
+
+
+
         bool mouseRelease = current.rawType == EventType.MouseUp ||
             (current.type == EventType.Used && current.rawType == EventType.Used && Input.GetMouseButtonUp(0));
         if (!mouseRelease) return;

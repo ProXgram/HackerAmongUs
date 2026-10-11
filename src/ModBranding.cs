@@ -7,10 +7,10 @@ public static class ModBranding
     public const string Creator = "Rifegul";
 
 #if JUDGE_ROLE_EXPERIMENT
-    public const string Version = "1.0.1-judge-test";
+    public const string Version = "1.0.2-judge-test";
 #elif GUEST_KILL_EXPERIMENT
-    public const string Version = "1.0.1-guest-test";
+    public const string Version = "1.0.2-guest-test";
 #else
-    public const string Version = "1.0.1";
+    public const string Version = "1.0.2";
 #endif
 }

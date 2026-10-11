@@ -1,4 +1,3 @@
-"""Prepare hash-pinned build references for HAU; never reads or changes a game install."""
 from __future__ import annotations
 
 import argparse
@@ -79,7 +78,7 @@ def download_asset(key: str) -> Path:
 
 
 def extract_archive(source: Path, target: Path) -> None:
-    """Extract only regular bounded members into a newly created private directory."""
+
     with zipfile.ZipFile(source) as archive:
         names: set[str] = set()
         expanded = 0
@@ -127,7 +126,7 @@ def reuse_output() -> bool:
 
 def prepare(quiet: bool = False) -> Path:
     CACHE.mkdir(parents=True, exist_ok=True)
-    # A lock prevents two simultaneous builds from replacing one another's references.
+
     lock_path = CACHE / "prepare.lock"
     try:
         lock_fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -136,7 +135,7 @@ def prepare(quiet: bool = False) -> Path:
     try:
         with os.fdopen(lock_fd, "w") as lock:
             lock.write(str(os.getpid()))
-        # Validate all retained official inputs even when generated assemblies are cached.
+
         assets = {key: download_asset(key) for key in ASSETS}
         if reuse_output():
             if not quiet:
@@ -180,7 +179,7 @@ def prepare(quiet: bool = False) -> Path:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description='Prepare hash-pinned build references for HAU; never reads or changes a game install.')
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
     try:

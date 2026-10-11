@@ -15,7 +15,7 @@ public class HostOnlyTab : ITab
             : Utils.isHost ? "You are hosting. These settings affect the shared game."
             : "Host controls unlock when you host a lobby or enter Freeplay.");
 
-        // A ghost must opt into its local controls; only a supporting host counts votes.
+
         if (_page == 0 || _page == 1)
         {
             UIHelpers.BeginSection("Ghost Voting", "The host and each voting ghost need this mod enabled.");

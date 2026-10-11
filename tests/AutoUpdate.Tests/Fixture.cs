@@ -49,7 +49,7 @@ sealed class Fixture : IDisposable
         {
             File.WriteAllText(SteamManifest, "\"AppState\" { \"appid\" \"945360\" \"name\" \"Among Us\" \"installdir\" \"Among Us\" \"buildid\" \"123\" }");
             Write("steam_api64.dll", "Steam native API marker");
-            // Fixture contains a bounded PlayerSettings object, not just a version string elsewhere in the file.
+
             File.WriteAllBytes(Path.Combine(Game, "Among Us_Data", "globalgamemanagers"), UnitySettingsBytes("2026.9.29"));
         }
         else
@@ -96,7 +96,7 @@ sealed class Fixture : IDisposable
     public void Dispose()
     {
         Client.Dispose();
-        // Remove fixture junctions before their targets; never traverse an alias during cleanup.
+
         void RemoveLinks(string directory)
         {
             foreach (var child in Directory.EnumerateDirectories(directory))

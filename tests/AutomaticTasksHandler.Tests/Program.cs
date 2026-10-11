@@ -3,7 +3,7 @@ using HAU;
 var cases = new (string Name, Action Arrange)[]
 {
     ("Toggle off", () => CheatToggles.automaticTasks = false),
-    ("AI walking mode owns task completion", () => MovementAutomation.Mode = MovementMode.AiTasks),
+    ("Task Walker walking mode owns task completion", () => MovementAutomation.Mode = MovementMode.TaskWalker),
     ("Main menu with auto-loading enabled", () => { Utils.isClient = false; Utils.isInGame = false; PlayerControl.LocalPlayer = null; ShipStatus.Instance = null; }),
     ("Lobby without an active round", () => Utils.isInGame = false),
     ("Missing local player", () => PlayerControl.LocalPlayer = null),

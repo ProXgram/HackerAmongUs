@@ -1,13 +1,3 @@
-"""Build and verify the complete manual Windows PC package from pinned inputs.
-
-Run from any folder: python scripts/package-manual.py
-Use --platform steam for the current 64-bit Steam game package.
-Supply --plugin-sha and --dll-sha from the finished HAU plugin package report.
-The optional --draft mode creates an explicitly unfinished preview while
-redistribution notices and corresponding-source assets are being collected.
-Existing plugin/source/setup releases and the installed game are never changed.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -191,7 +181,7 @@ def legal_assets(draft: bool, loader: dict[str, bytes], legal_root: Path, loader
 
 
 def check_release_text(name: str, data: bytes) -> None:
-    # Encoded markers keep build-environment names out of published source text.
+
     markers = [bytes.fromhex(v) for v in ("63686174677074", "636f646578", "6f70656e6169")]
     lower = data.lower()
     for marker in markers:
@@ -204,11 +194,11 @@ def check_release_text(name: str, data: bytes) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description='Build and verify the complete manual Windows PC package from pinned inputs.')
     parser.add_argument("--draft", action="store_true", help="Build an explicitly unfinished preview.")
     parser.add_argument("--platform", choices=("windows", "steam"), default="windows",
                         help="Choose the existing Windows stores package or the current 64-bit Steam package.")
-    parser.add_argument("--version", type=numeric_version, default="1.0.1", help="Finished HAU release version.")
+    parser.add_argument("--version", type=numeric_version, default="1.0.2", help="Finished HAU release version.")
     parser.add_argument("--loader-build", choices=("755", "788"), help="Audited loader build; 1.0 uses 755, newer HAU uses 788.")
     parser.add_argument("--replace", action="store_true", help="Replace an unpublished local package after reviewing a rebuild. Published 1.0 is immutable.")
     parser.add_argument("--plugin-sha", type=sha256_argument, required=True, help="Verified HAU plugin ZIP SHA256.")
@@ -248,7 +238,7 @@ def main() -> None:
     if args.draft:
         files["DRAFT.txt"] = b"UNFINISHED PREVIEW. Redistribution notices are not yet approved. Do not distribute.\r\n"
 
-    # Official third-party files remain byte-for-byte unchanged, including notices.
+
     for name in (DLL_PATH, "LICENSE", "CREDITS.md", "INSTALL.txt"):
         check_release_text(name, files[name])
     require([n for n in files if n.lower().startswith("bepinex/plugins/") and n.lower().endswith(".dll")] == [DLL_PATH],
@@ -290,7 +280,7 @@ def main() -> None:
             for name, data in loader.items():
                 require((extraction / name).read_bytes() == data, "An extracted official loader file changed.")
         require(staging_zip.stat().st_size < 100 * 1024 * 1024, "The archive exceeds the repository download limit.")
-        # Only this script's newly generated manual output is replaced.
+
         output.write_bytes(staging_zip.read_bytes())
 
     report = {

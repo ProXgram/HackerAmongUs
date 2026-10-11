@@ -21,7 +21,7 @@ public static class ColorCycleHandler
 
     public static void Start(ColorCycleMode mode)
     {
-        Stop(); // A switch must restore a previous visual preview first.
+        Stop();
         if (mode == ColorCycleMode.Off) return;
         var now = Time.realtimeSinceStartupAsDouble;
         if (!double.IsFinite(now))
@@ -99,8 +99,8 @@ public static class ColorCycleHandler
 
             if (Mode == ColorCycleMode.LobbyCycle)
             {
-                // CmdCheckColor is the ordinary host-mediated lobby request.
-                // Never request a mid-round color or send a restore request.
+
+
                 if (!IsJoinedLobby() || local.Data.IsDead || !Application.isFocused ||
                     local.CurrentOutfitType != PlayerOutfitType.Default)
                 {
@@ -123,7 +123,7 @@ public static class ColorCycleHandler
             }
 
             if (now < _nextChangeAt) return;
-            if (!ScheduleNext(now)) return; // One step; never replay missed ticks.
+            if (!ScheduleNext(now)) return;
             var count = PaletteCount();
             if (count == 0)
             {
@@ -133,7 +133,7 @@ public static class ColorCycleHandler
             }
             var color = ((_nextColor % count) + count) % count;
             _nextColor = (color + 1) % count;
-            // Visuals only: no outfit/data/saved customization writes and no RPC.
+
             _cosmetics.SetColor(color);
             _previewApplied = true;
             StatusText = "Rainbow: local visual preview active";
@@ -173,8 +173,8 @@ public static class ColorCycleHandler
             var color = (((_nextColor + offset) % count) + count) % count;
             if (color == actualColor || occupied.Contains(color)) continue;
             _nextColor = (color + 1) % count;
-            // Native host arbitration remains responsible for accepting the
-            // request and handling a simultaneous request from another player.
+
+
             local.CmdCheckColor((byte)color);
             StatusText = "Lobby colors: requested an available color";
             return;

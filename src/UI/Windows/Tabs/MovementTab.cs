@@ -51,8 +51,8 @@ public class MovementTab : ITab
                 (Mathf.Approximately(speed, defaultSpeed) ? " / default" : ""));
             float changed = GUILayout.HorizontalSlider(speed, 0f, 20f);
             if (Mathf.Abs(changed - defaultSpeed) < 0.05f) changed = defaultSpeed;
-            // The slider edits magnitude. Inversion is a direction, so opening
-            // this page must never clamp a negative physics speed to zero.
+
+
             float direction = CheatToggles.invertControls ? -1f : 1f;
             if (ghost) physics.GhostSpeed = changed * direction;
             else physics.Speed = changed * direction;
@@ -65,7 +65,7 @@ public class MovementTab : ITab
         else UIHelpers.Hint("Join a lobby or open Freeplay to adjust your current walking speed.");
         CheatToggles.noClip = GUILayout.Toggle(CheatToggles.noClip, " Noclip");
         CheatToggles.invertControls = GUILayout.Toggle(CheatToggles.invertControls, " Invert Controls");
-        UIHelpers.Hint("Noclip lets you move through walls. AI Tasks, Follow, Orbit and Lag Mode still use ground collision checks.");
+        UIHelpers.Hint("Noclip lets you move through walls. Task Walker, Follow, Orbit and Lag Mode still use ground collision checks.");
         UIHelpers.EndSection();
     }
 

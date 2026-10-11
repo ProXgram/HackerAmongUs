@@ -45,7 +45,7 @@ public static class AlwaysImpostorHandler
         _lastHostedResult = "Armed for the next hosted round.";
     }
 
-    // Practice assignment is separate from the guest's local-only presentation.
+
     public static void TickFreeplay()
     {
         if (!CheatToggles.alwaysImpostor || !Utils.isFreePlay)
@@ -57,8 +57,8 @@ public static class AlwaysImpostorHandler
         }
 
         var local = PlayerControl.LocalPlayer;
-        // Freeplay has a loaded ship and player but does not use the online
-        // client's Started state. Wait for the practice scene instead.
+
+
         if (!IsNormalMode || !ShipStatus.Instance || !local || local.Data == null ||
             local.Data.IsDead || local.Data.Disconnected || !local.Data.Role)
             return;
@@ -82,8 +82,8 @@ public static class AlwaysImpostorHandler
         }
     }
 
-    // Run once at the normal round's intro, after all original roles exist.
-    // Swap the exact roles so special-role and impostor counts stay unchanged.
+
+
     public static void AssignHostedRole()
     {
         var local = PlayerControl.LocalPlayer;
@@ -146,8 +146,8 @@ public static class AlwaysImpostorHandler
     private static void ApplyNetworkRole(PlayerControl player, RoleTypes role)
     {
         player.RpcSetRole(role, true);
-        // The RPC's local role setter can be a coroutine. Ensure the host's intro
-        // sees the new role immediately; the RPC keeps the other clients in sync.
+
+
         if (!player.Data.Role || player.Data.RoleType != role)
             RoleManager.Instance.SetRole(player, role);
     }

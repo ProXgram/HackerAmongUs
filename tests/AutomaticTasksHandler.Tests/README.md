@@ -1,17 +1,11 @@
-# Automatic Tasks HUD lifecycle regression
+# Automatic Tasks HUD checks
+
+Run from the repository root with the .NET 10 SDK:
 
 ```powershell
 dotnet run --project tests/AutomaticTasksHandler.Tests/AutomaticTasksHandler.Tests.csproj -c Release
 ```
 
-The harness links the actual task handler and scheduler. Its HUD singleton
-counts reads and creates a stub HUD when first requested, modeling the side
-effect responsible for the startup regression. Tests assert that disabled,
-main-menu/lobby, unavailable, unowned/disconnected, and non-Normal contexts
-never request that singleton. Eligible Normal and Freeplay contexts reach it,
-while intro, meeting, and exile states pause task handling. Returning to the
-main menu must stop further HUD creation.
+Links the task handler and scheduler. A stub HUD singleton records acquisition and creates a HUD on its first read. Checks cover avoiding HUD acquisition while disabled or in invalid contexts, handling eligible Normal/Freeplay contexts, pausing during intro/meeting/exile and stopping acquisition after a return to the main menu.
 
-The harness does not launch the installed game, execute Unity/IL2CPP, patch
-Harmony at runtime, complete tasks, or send network traffic. It verifies
-handler control flow and HUD acquisition ordering only.
+This suite checks control flow and HUD acquisition order. It does not run Unity, complete native tasks or send network requests.

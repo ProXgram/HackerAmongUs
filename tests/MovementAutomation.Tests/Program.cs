@@ -99,18 +99,18 @@ Run("destroyed captured physics is not dereferenced during cleanup", () =>
     var old = own.MyPhysics; int writes = old.SpeedWrites, movement = old.MovementWrites; old.Destroyed = true;
     MovementAutomation.Stop(); Require(old.SpeedWrites == writes && old.MovementWrites == movement, "cleanup accessed destroyed native physics");
 });
-Run("negative speed retains exact restoration and AI movement travels toward goal", () =>
+Run("negative speed retains exact restoration and Task Walker movement travels toward goal", () =>
 {
-    var own = Setup(-1.75f); MovementAutomation.Start(MovementMode.AiTasks); Tick();
+    var own = Setup(-1.75f); MovementAutomation.Start(MovementMode.TaskWalker); Tick();
     Require(own.MyPhysics.PhysicalVelocity.x > 0, "signed speed reversed autonomous navigation");
     MovementAutomation.Stop(); Exact(own.MyPhysics.PeekSpeed, -1.75f, "negative speed changed on stop");
 });
-Run("AI movement input is normalized even if a helper returns a large vector", () =>
+Run("Task Walker movement input is normalized even if a helper returns a large vector", () =>
 {
     var own = Setup(); NavigationRouter.ForcedDirection = new Vector2(50, 20);
-    MovementAutomation.Start(MovementMode.AiTasks); Tick();
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick();
     Require(own.MyPhysics.LastInput.sqrMagnitude <= 1.00001f, "large route direction reached native movement");
-    Require(own.MyPhysics.SpeedWrites == 0, "AI mode unexpectedly boosted speed");
+    Require(own.MyPhysics.SpeedWrites == 0, "Task Walker mode unexpectedly boosted speed");
 });
 Run("shipless lobby permits own movement and pause restores speed", () =>
 {
@@ -174,39 +174,39 @@ Run("blocked yo-yo destination stops without sending a snap", () =>
     NavigationRouter.FloorClear = false; Tick(1);
     Require(own.NetTransform.Snaps.Count == 0 && !MovementAutomation.Active, "blocked destination emitted a snap");
 });
-Run("AI arrives only inside its radius and delegates native-step gating", () =>
+Run("Task Walker arrives only inside its radius and delegates native-step gating", () =>
 {
-    var own = Setup(); CheatToggles.automaticTasks = true; MovementAutomation.Start(MovementMode.AiTasks);
-    Require(!CheatToggles.automaticTasks, "AI start retained instant automatic tasks");
-    AiTasksHandler.Goal = new Vector2(2, 0); AiTasksHandler.ArrivalDistance = 0.12f; Tick();
-    Require(AiTasksHandler.Arrivals == 0 && AiTasksHandler.NativeSteps == 0, "distant goal completed a task");
-    own.transform.position = new Vector2(1.87f, 0); Tick(0.2); Require(AiTasksHandler.Arrivals == 0, "outside radius invoked arrival");
-    own.transform.position = new Vector2(1.9f, 0); AiTasksHandler.NativeActionAllowed = false; Tick(0.4);
-    Require(AiTasksHandler.Arrivals == 1 && AiTasksHandler.NativeSteps == 0, "controller bypassed helper native gate");
+    var own = Setup(); CheatToggles.automaticTasks = true; MovementAutomation.Start(MovementMode.TaskWalker);
+    Require(!CheatToggles.automaticTasks, "Task Walker start retained instant automatic tasks");
+    TaskWalkerHandler.Goal = new Vector2(2, 0); TaskWalkerHandler.ArrivalDistance = 0.12f; Tick();
+    Require(TaskWalkerHandler.Arrivals == 0 && TaskWalkerHandler.NativeSteps == 0, "distant goal completed a task");
+    own.transform.position = new Vector2(1.87f, 0); Tick(0.2); Require(TaskWalkerHandler.Arrivals == 0, "outside radius invoked arrival");
+    own.transform.position = new Vector2(1.9f, 0); TaskWalkerHandler.NativeActionAllowed = false; Tick(0.4);
+    Require(TaskWalkerHandler.Arrivals == 1 && TaskWalkerHandler.NativeSteps == 0, "controller bypassed helper native gate");
     Near(own.MyPhysics.PhysicalVelocity, Vector2.zero, "arrival retained movement");
-    AiTasksHandler.NativeActionAllowed = true; Tick(1);
-    Require(AiTasksHandler.NativeSteps == 1, "eligible arrival did not reach helper");
+    TaskWalkerHandler.NativeActionAllowed = true; Tick(1);
+    Require(TaskWalkerHandler.NativeSteps == 1, "eligible arrival did not reach helper");
 });
-Run("AI timer waiting keeps mode but finished helper stops it", () =>
+Run("Task Walker timer waiting keeps mode but finished helper stops it", () =>
 {
-    var own = Setup(); MovementAutomation.Start(MovementMode.AiTasks); Tick();
-    AiTasksHandler.Available = false; Tick(0.2);
-    Require(MovementAutomation.Active && MovementAutomation.Mode == MovementMode.AiTasks, "wait was treated as completion");
-    Near(own.MyPhysics.PhysicalVelocity, Vector2.zero, "waiting AI kept walking");
-    AiTasksHandler.IsFinished = true; Tick(0.4);
-    Require(!MovementAutomation.Active && MovementAutomation.StatusText == "AI finished", "finished AI did not stop with final status");
+    var own = Setup(); MovementAutomation.Start(MovementMode.TaskWalker); Tick();
+    TaskWalkerHandler.Available = false; Tick(0.2);
+    Require(MovementAutomation.Active && MovementAutomation.Mode == MovementMode.TaskWalker, "wait was treated as completion");
+    Near(own.MyPhysics.PhysicalVelocity, Vector2.zero, "waiting Task Walker kept walking");
+    TaskWalkerHandler.IsFinished = true; Tick(0.4);
+    Require(!MovementAutomation.Active && MovementAutomation.StatusText == "Task Walker finished", "finished Task Walker did not stop with final status");
 });
-Run("AI no-route retry is bounded then skips current task without stopping all tasks", () =>
+Run("Task Walker no-route retry is bounded then skips current task without stopping all tasks", () =>
 {
-    Setup(); MovementAutomation.Start(MovementMode.AiTasks); NavigationRouter.Blocked = true; Tick(0);
+    Setup(); MovementAutomation.Start(MovementMode.TaskWalker); NavigationRouter.Blocked = true; Tick(0);
     for (int i = 1; i <= 9; i++) Tick(i * 0.5);
-    Require(AiTasksHandler.Skips == 0 && MovementAutomation.Active, "task skipped before retry deadline");
-    Tick(5.0); Require(AiTasksHandler.Skips == 1 && MovementAutomation.Active, "deadline did not skip current task while retaining AI");
-    Tick(5.1); Require(AiTasksHandler.Skips == 1, "same blocked step was immediately skipped again");
+    Require(TaskWalkerHandler.Skips == 0 && MovementAutomation.Active, "task skipped before retry deadline");
+    Tick(5.0); Require(TaskWalkerHandler.Skips == 1 && MovementAutomation.Active, "deadline did not skip current task while retaining Task Walker");
+    Tick(5.1); Require(TaskWalkerHandler.Skips == 1, "same blocked step was immediately skipped again");
     NavigationRouter.Blocked = false; Tick(5.5);
-    Require(PlayerControl.LocalPlayer.MyPhysics.LastInput.sqrMagnitude > 0, "AI did not resume after blocked step");
+    Require(PlayerControl.LocalPlayer.MyPhysics.LastInput.sqrMagnitude > 0, "Task Walker did not resume after blocked step");
 });
-Run("non-AI blocked route stops after bounded retry without any snap", () =>
+Run("non-Task Walker blocked route stops after bounded retry without any snap", () =>
 {
     var own = Setup(); AddPlayer(7).transform.position = new Vector2(5, 0);
     NavigationRouter.Blocked = true; MovementAutomation.Start(MovementMode.ShadowFollow);
@@ -250,94 +250,94 @@ Run("shadow follow filters received target heading without compounding or telepo
 });
 Run("pause invalidates route cache before future movement", () =>
 {
-    Setup(); MovementAutomation.Start(MovementMode.AiTasks); Tick(); int before = NavigationRouter.Resets;
+    Setup(); MovementAutomation.Start(MovementMode.TaskWalker); Tick(); int before = NavigationRouter.Resets;
     MovementAutomation.Pause(); Require(NavigationRouter.Resets > before, "pause retained a cached route");
 });
-Run("AI armed in a shipless lobby disables instant tasks and waits without walking", () =>
+Run("Task Walker armed in a shipless lobby disables instant tasks and waits without walking", () =>
 {
     var own = Setup(); Utils.isInGame = false; Utils.isLobby = true; ShipStatus.Instance = null;
-    CheatToggles.automaticTasks = true; MovementAutomation.Start(MovementMode.AiTasks);
+    CheatToggles.automaticTasks = true; MovementAutomation.Start(MovementMode.TaskWalker);
     for (int frame = 0; frame < 5; frame++) Tick(frame);
-    Require(MovementAutomation.Active && MovementAutomation.Mode == MovementMode.AiTasks, "lobby disarmed AI");
-    Require(!CheatToggles.automaticTasks, "armed AI retained instant tasks");
-    Require(NavigationRouter.Calls == 0 && AiTasksHandler.NativeSteps == 0, "lobby navigated or advanced a task");
+    Require(MovementAutomation.Active && MovementAutomation.Mode == MovementMode.TaskWalker, "lobby disarmed Task Walker");
+    Require(!CheatToggles.automaticTasks, "armed Task Walker retained instant tasks");
+    Require(NavigationRouter.Calls == 0 && TaskWalkerHandler.NativeSteps == 0, "lobby navigated or advanced a task");
     Near(own.MyPhysics.PhysicalVelocity, Vector2.zero, "lobby waiting retained motion");
 });
-Run("armed AI survives started-without-ship then resolves tasks after the ship appears", () =>
+Run("armed Task Walker survives started-without-ship then resolves tasks after the ship appears", () =>
 {
     var own = Setup(); Utils.isInGame = false; Utils.isLobby = true; ShipStatus.Instance = null;
-    MovementAutomation.Start(MovementMode.AiTasks); Tick(0);
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick(0);
     Utils.isLobby = false; Utils.isInGame = true; Tick(1);
-    Require(MovementAutomation.Active && MovementAutomation.Mode == MovementMode.AiTasks, "transitional shipless round canceled armed AI");
-    Require(AiTasksHandler.NativeSteps == 0 && NavigationRouter.Calls == 0, "missing ship allowed task action or navigation");
+    Require(MovementAutomation.Active && MovementAutomation.Mode == MovementMode.TaskWalker, "transitional shipless round canceled armed Task Walker");
+    Require(TaskWalkerHandler.NativeSteps == 0 && NavigationRouter.Calls == 0, "missing ship allowed task action or navigation");
     ShipStatus.Instance = new(); Tick(2);
-    Require(MovementAutomation.Active && MovementAutomation.Mode == MovementMode.AiTasks && !CheatToggles.automaticTasks,
-        "ship handoff lost AI or enabled instant tasks");
-    Require(NavigationRouter.Calls > 0 && own.MyPhysics.LastInput.sqrMagnitude > 0, "AI did not resolve a destination after ship appeared");
-    own.transform.position = AiTasksHandler.Goal; Tick(3);
-    Require(AiTasksHandler.Arrivals == 1 && AiTasksHandler.NativeSteps == 1, "new round destination did not reach delegated task helper");
+    Require(MovementAutomation.Active && MovementAutomation.Mode == MovementMode.TaskWalker && !CheatToggles.automaticTasks,
+        "ship handoff lost Task Walker or enabled instant tasks");
+    Require(NavigationRouter.Calls > 0 && own.MyPhysics.LastInput.sqrMagnitude > 0, "Task Walker did not resolve a destination after ship appeared");
+    own.transform.position = TaskWalkerHandler.Goal; Tick(3);
+    Require(TaskWalkerHandler.Arrivals == 1 && TaskWalkerHandler.NativeSteps == 1, "new round destination did not reach delegated task helper");
 });
-Run("game-joined style reset cancels armed AI before a different lobby", () =>
+Run("game-joined style reset cancels armed Task Walker before a different lobby", () =>
 {
     Setup(); Utils.isInGame = false; Utils.isLobby = true; ShipStatus.Instance = null;
-    SaveTwoSpots(); MovementAutomation.Start(MovementMode.AiTasks); Tick(); MovementAutomation.Reset();
+    SaveTwoSpots(); MovementAutomation.Start(MovementMode.TaskWalker); Tick(); MovementAutomation.Reset();
     var replacement = new PlayerControl(0, true); PlayerControl.LocalPlayer = replacement; PlayerControl.AllPlayerControls = [replacement];
     Tick(1);
-    Require(!MovementAutomation.Active && MovementAutomation.Mode == MovementMode.Off, "new lobby inherited armed AI");
+    Require(!MovementAutomation.Active && MovementAutomation.Mode == MovementMode.Off, "new lobby inherited armed Task Walker");
     Require(!MovementAutomation.HasPointA && !MovementAutomation.HasPointB, "new lobby inherited saved spots");
-    Require(AiTasksHandler.NativeSteps == 0 && replacement.MyPhysics.MovementWrites == 0, "reset mode acted on new lobby player");
+    Require(TaskWalkerHandler.NativeSteps == 0 && replacement.MyPhysics.MovementWrites == 0, "reset mode acted on new lobby player");
 });
 
-Run("AI steering reduces excessive speed without changing the user's base speed", () =>
+Run("Task Walker steering reduces excessive speed without changing the user's base speed", () =>
 {
-    var own = Setup(20f); MovementAutomation.Start(MovementMode.AiTasks); Tick();
-    Require(own.MyPhysics.PhysicalVelocity.magnitude <= 2.5001f, "AI walked too fast to stop at route corners");
-    Require(own.MyPhysics.SpeedWrites == 0, "AI edited selected base speed");
+    var own = Setup(20f); MovementAutomation.Start(MovementMode.TaskWalker); Tick();
+    Require(own.MyPhysics.PhysicalVelocity.magnitude <= 2.5001f, "Task Walker walked too fast to stop at route corners");
+    Require(own.MyPhysics.SpeedWrites == 0, "Task Walker edited selected base speed");
 });
-Run("AI speed braking includes the game's speed multiplier", () =>
+Run("Task Walker speed braking includes the game's speed multiplier", () =>
 {
     var own = Setup(20f); own.MyPhysics.SpeedFactor = 3f;
-    MovementAutomation.Start(MovementMode.AiTasks); Tick();
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick();
     Require(own.MyPhysics.PhysicalVelocity.magnitude <= 2.5001f, "room speed multiplier bypassed braking");
     Require(own.MyPhysics.SpeedWrites == 0, "braking edited the base speed");
 });
-Run("AI detects commanded movement with no actual progress and walks clear", () =>
+Run("Task Walker detects commanded movement with no actual progress and walks clear", () =>
 {
     var own = Setup(); NavigationRouter.RecoveryDirection = Vector2.down; NavigationRouter.FloorClear = false;
-    MovementAutomation.Start(MovementMode.AiTasks); Tick(); Tick(1.01);
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick(); Tick(1.01);
     Require(NavigationRouter.RecoveryCalls == 1 && own.MyPhysics.PhysicalVelocity.y < 0,
         "nonzero steering into an item was mistaken for progress");
     Require(own.NetTransform.Snaps.Count == 0 && own.MyPhysics.SpeedWrites == 0, "recovery snapped or changed speed");
 });
 Run("persistent no-progress tries another task approach before skipping", () =>
 {
-    Setup(); NavigationRouter.RecoveryDirection = Vector2.down; AiTasksHandler.HasAlternate = true;
-    MovementAutomation.Start(MovementMode.AiTasks); Tick();
+    Setup(); NavigationRouter.RecoveryDirection = Vector2.down; TaskWalkerHandler.HasAlternate = true;
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick();
     for (int second = 1; second <= 5; second++) Tick(second * 1.01);
-    Require(AiTasksHandler.AlternateRequests == 1 && AiTasksHandler.Skips == 0,
+    Require(TaskWalkerHandler.AlternateRequests == 1 && TaskWalkerHandler.Skips == 0,
         "blocked point skipped a task that had another approach");
 });
 Run("persistent no-progress skips an unreachable step after recovery retries", () =>
 {
     var own = Setup(); NavigationRouter.RecoveryDirection = Vector2.down;
-    MovementAutomation.Start(MovementMode.AiTasks); Tick();
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick();
     for (int second = 1; second <= 5; second++) Tick(second * 1.01);
-    Require(AiTasksHandler.Skips == 1 && AiTasksHandler.NativeSteps == 0 && own.NetTransform.Snaps.Count == 0,
+    Require(TaskWalkerHandler.Skips == 1 && TaskWalkerHandler.NativeSteps == 0 && own.NetTransform.Snaps.Count == 0,
         "walker stayed forever or completed a task without reaching it");
 });
 Run("real physical progress does not trigger obstacle recovery", () =>
 {
-    var own = Setup(); MovementAutomation.Start(MovementMode.AiTasks); Tick();
+    var own = Setup(); MovementAutomation.Start(MovementMode.TaskWalker); Tick();
     for (int second = 1; second <= 6; second++)
     {
         own.transform.position = new Vector2(second * 0.1f, 0); Tick(second * 1.01);
     }
-    Require(NavigationRouter.RecoveryCalls == 0 && AiTasksHandler.Skips == 0, "moving player was treated as stuck");
+    Require(NavigationRouter.RecoveryCalls == 0 && TaskWalkerHandler.Skips == 0, "moving player was treated as stuck");
 });
 Run("walking away and back from the same obstruction cannot reset the recovery budget", () =>
 {
     var own = Setup(); NavigationRouter.RecoveryDirection = Vector2.down;
-    MovementAutomation.Start(MovementMode.AiTasks); Tick();
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick();
     double at = 0;
     for (int attempt = 1; attempt <= 5; attempt++)
     {
@@ -346,21 +346,21 @@ Run("walking away and back from the same obstruction cannot reset the recovery b
         own.transform.position = new Vector2(0, -0.2f); Tick(at + 0.05);
         own.transform.position = Vector2.zero; Tick(at + 0.1); at += 0.1;
     }
-    Require(AiTasksHandler.Skips == 1, "same blocked point recovered forever after tiny displacements");
+    Require(TaskWalkerHandler.Skips == 1, "same blocked point recovered forever after tiny displacements");
 });
-Run("meeting pause time does not count toward an AI no-route timeout", () =>
+Run("meeting pause time does not count toward an Task Walker no-route timeout", () =>
 {
-    Setup(); NavigationRouter.Blocked = true; MovementAutomation.Start(MovementMode.AiTasks); Tick(0);
+    Setup(); NavigationRouter.Blocked = true; MovementAutomation.Start(MovementMode.TaskWalker); Tick(0);
     Utils.isMeeting = true; Tick(10); Utils.isMeeting = false; Tick(11);
-    Require(AiTasksHandler.Skips == 0 && AiTasksHandler.AlternateRequests == 0,
+    Require(TaskWalkerHandler.Skips == 0 && TaskWalkerHandler.AlternateRequests == 0,
         "time spent in a meeting blacklisted a task");
-    Tick(17); Require(AiTasksHandler.Skips == 1, "active no-route timeout no longer terminates retries");
+    Tick(17); Require(TaskWalkerHandler.Skips == 1, "active no-route timeout no longer terminates retries");
 });
-foreach (var mode in new[] { MovementMode.AiTasks, MovementMode.ShadowFollow, MovementMode.TurboOrbit })
+foreach (var mode in new[] { MovementMode.TaskWalker, MovementMode.ShadowFollow, MovementMode.TurboOrbit })
     Run(mode + " restores noclip-disabled body before ground navigation while preserving preference", () =>
     {
         var own = Setup(); own.Collider.enabled = false; CheatToggles.noClip = true;
-        AiTasksHandler.RequireGroundBody = true;
+        TaskWalkerHandler.RequireGroundBody = true;
         AddPlayer(7).transform.position = new Vector2(5, 0);
         MovementAutomation.Start(mode); Tick();
         Require(MovementAutomation.NeedsGroundCollision && own.Collider.enabled,
@@ -376,7 +376,7 @@ Run("foreign and paused callbacks cannot enable a disabled collider", () =>
 {
     var own = Setup(); own.Collider.enabled = false;
     var other = AddPlayer(7); other.Collider.enabled = false;
-    MovementAutomation.Start(MovementMode.AiTasks);
+    MovementAutomation.Start(MovementMode.TaskWalker);
     MovementAutomation.FixedTick(other.MyPhysics);
     Require(!own.Collider.enabled && !other.Collider.enabled, "foreign callback changed a collision body");
     MenuUI.isGUIActive = true; Tick();
@@ -385,7 +385,7 @@ Run("foreign and paused callbacks cannot enable a disabled collider", () =>
 Run("recovery recalculates each frame and returns to routing immediately on clear floor", () =>
 {
     var own = Setup(20); NavigationRouter.FloorClear = false; NavigationRouter.RecoveryDirection = Vector2.down;
-    MovementAutomation.Start(MovementMode.AiTasks); Tick(); Tick(1.01);
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick(); Tick(1.01);
     Require(NavigationRouter.RecoveryCalls == 1 && own.MyPhysics.PhysicalVelocity.y < 0, "first contact recovery was missing");
     var routeCalls = NavigationRouter.Calls;
     NavigationRouter.RecoveryDirection = new Vector2(0, 1); Tick(1.03);
@@ -403,7 +403,7 @@ Run("recovery recalculates each frame and returns to routing immediately on clea
 Run("a newly blocked recovery stops the previous direction instead of continuing it", () =>
 {
     var own = Setup(); NavigationRouter.FloorClear = false; NavigationRouter.RecoveryDirection = Vector2.down;
-    MovementAutomation.Start(MovementMode.AiTasks); Tick(); Tick(1.01);
+    MovementAutomation.Start(MovementMode.TaskWalker); Tick(); Tick(1.01);
     Require(own.MyPhysics.PhysicalVelocity.y < 0, "fixture did not start contact recovery");
     NavigationRouter.RecoveryDirection = Vector2.zero; Tick(1.03);
     Require(NavigationRouter.RecoveryCalls == 2, "new contact geometry was not queried");
@@ -412,10 +412,10 @@ Run("a newly blocked recovery stops the previous direction instead of continuing
 });
 foreach (float step in new[] { 0.02f, 0.1f, 0.25f })
     foreach (float speed in new[] { 20f, -20f })
-        Run($"AI physical step stays bounded at timestep {step} and signed speed {speed}", () =>
+        Run($"Task Walker physical step stays bounded at timestep {step} and signed speed {speed}", () =>
         {
             var own = Setup(speed); own.MyPhysics.SpeedFactor = 3; Time.fixedDeltaTime = step;
-            MovementAutomation.Start(MovementMode.AiTasks); Tick();
+            MovementAutomation.Start(MovementMode.TaskWalker); Tick();
             Require(own.MyPhysics.PhysicalVelocity.magnitude * step <= 0.060001f,
                 "one native walking step exceeded the checked recovery increment");
             Require(own.MyPhysics.PhysicalVelocity.x > 0 && own.MyPhysics.PhysicalVelocity.magnitude <= 2.5001f,
@@ -424,10 +424,10 @@ foreach (float step in new[] { 0.02f, 0.1f, 0.25f })
                 "step cap edited the selected speed or sent a snap");
         });
 foreach (float step in new[] { 0f, -0.02f, float.NaN, float.PositiveInfinity })
-    Run("invalid AI timestep " + step + " stops without moving", () =>
+    Run("invalid Task Walker timestep " + step + " stops without moving", () =>
     {
         var own = Setup(); Time.fixedDeltaTime = step;
-        MovementAutomation.Start(MovementMode.AiTasks); Tick();
+        MovementAutomation.Start(MovementMode.TaskWalker); Tick();
         Require(!MovementAutomation.Active && own.MyPhysics.PhysicalVelocity.sqrMagnitude == 0,
             "unavailable timestep reached a walking action");
         Require(own.MyPhysics.SpeedWrites == 0 && own.NetTransform.Snaps.Count == 0,
@@ -790,8 +790,8 @@ foreach (var mode in new[] { MovementMode.ShadowFollow, MovementMode.TurboOrbit 
                 for (int frame = 0; frame < 1500; frame++)
                 {
                     float at = frame * Time.fixedDeltaTime;
-                    // Receiving a distant actor does not depend on a renderer or
-                    // local scene visibility. The target moves throughout chase.
+
+
                     target.transform.position = new Vector2(initialLead + 1.75f * at, 3f * MathF.Sin(at * 0.15f));
                     Tick(at);
                     if (frame == 0)
@@ -1005,8 +1005,8 @@ foreach (var mode in new[] { MovementMode.ShadowFollow, MovementMode.TurboOrbit 
     Run(mode + " walks toward an alternate floor endpoint after the first completed route is unreachable", () =>
     {
         var own = Setup(); var target = AddPlayer(7); target.transform.position = new Vector2(20, 0);
-        // All nearby endpoints stand clear, but a long direct segment is not a
-        // usable approach. Short physical walking steps remain independently safe.
+
+
         NavigationRouter.TravelPredicate = (from, to) => Vector2.Distance(from, to) <= 0.25f;
         Vector2? first = null;
         NavigationRouter.MovingGoalUnreachable = goal =>
@@ -1546,11 +1546,11 @@ PlayerControl Setup(float speed = 1.75f)
     NavigationRouter.IsRecovering = false;
     NavigationRouter.Calls = NavigationRouter.Resets = NavigationRouter.MovingCalls = 0;
     NavigationRouter.RecoveryCalls = 0; NavigationRouter.RecoveryDirection = Vector2.zero;
-    AiTasksHandler.Available = true; AiTasksHandler.IsFinished = false; AiTasksHandler.NativeActionAllowed = true;
-    AiTasksHandler.Goal = new Vector2(8, 0); AiTasksHandler.ArrivalDistance = 0.12f;
-    AiTasksHandler.Resets = AiTasksHandler.Arrivals = AiTasksHandler.NativeSteps = AiTasksHandler.Skips = 0;
-    AiTasksHandler.AlternateRequests = 0; AiTasksHandler.HasAlternate = false;
-    AiTasksHandler.RequireGroundBody = false;
+    TaskWalkerHandler.Available = true; TaskWalkerHandler.IsFinished = false; TaskWalkerHandler.NativeActionAllowed = true;
+    TaskWalkerHandler.Goal = new Vector2(8, 0); TaskWalkerHandler.ArrivalDistance = 0.12f;
+    TaskWalkerHandler.Resets = TaskWalkerHandler.Arrivals = TaskWalkerHandler.NativeSteps = TaskWalkerHandler.Skips = 0;
+    TaskWalkerHandler.AlternateRequests = 0; TaskWalkerHandler.HasAlternate = false;
+    TaskWalkerHandler.RequireGroundBody = false;
     CheatToggles.automaticTasks = false; CheatToggles.noClip = false;
     return own;
 }
@@ -1580,8 +1580,8 @@ void BeginLag(Vector2? input = null)
 }
 void NativeLagTick(double at)
 {
-    // Native FixedUpdate supplies the ordinary velocity before the linked
-    // postfix. Lag is required to leave this velocity unchanged while walking.
+
+
     var local = PlayerControl.LocalPlayer;
     var input = HudManager.Existing.joystick?.DeltaL ?? Vector2.zero;
     bool valid = float.IsFinite(input.x) && float.IsFinite(input.y) && float.IsFinite(input.sqrMagnitude);
@@ -1596,8 +1596,8 @@ void WalkLag(int frames, bool integrate = true)
         NativeLagTick(Time.realtimeSinceStartupAsDouble + 0.02d);
         var own = PlayerControl.LocalPlayer;
         var step = own.MyPhysics.PhysicalVelocity * Time.fixedDeltaTime;
-        // Integrate real ordinary movement between corrections. The fixture
-        // applies its synthetic geometry without recording a mod sweep.
+
+
         if (integrate && (NavigationRouter.TravelPredicate == null ||
             NavigationRouter.TravelPredicate(own.GetTruePosition(), own.GetTruePosition() + step)))
             own.transform.position = (Vector2)own.transform.position + step;
@@ -1631,8 +1631,8 @@ void FixtureWall(float minX, float minY, float maxX, float maxY)
 }
 bool FixtureSegmentClear(Vector2 from, Vector2 to, Func<Vector2, bool> clear)
 {
-    // Synthetic clearance only: endpoints and regularly sampled ground between
-    // them exercise controller selection, not native Unity sweep semantics.
+
+
     for (int sample = 0; sample <= 128; sample++)
         if (!clear(from + (to - from) * (sample / 128f))) return false;
     return true;

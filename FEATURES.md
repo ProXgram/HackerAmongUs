@@ -1,196 +1,130 @@
-# HAU feature guide
+# HAU features
 
-**Hacker Among Us 1.0.1 by Rifegul.**
-Open the menu with **Delete**. Your key can be changed in Settings.
-
-The header shows whether you are a host, guest or in Freeplay. A **button**
-performs one action; a **switch** enables a setting or shows its current state.
-**F8** stops movement automation and color cycling.
-
-## Home
-
-Home shows your sprint setup, movement status, task automation and Multi Role.
-Its shortcuts take you straight to the relevant section.
+**Hacker Among Us 1.0.2 by Rifegul.** Press **Delete** to open the menu and **F8**
+to stop movement automation and color cycling. Buttons perform one action;
+switches enable a setting or show its current state.
 
 ## Movement
 
-### Sprint & speed
+- **Sprint:** hold your chosen key for a boost up to 10×. Left Shift is the default. Releasing it restores your previous speed.
+- **Speed:** change walking speed or restore its default.
+- **Noclip:** move through walls locally.
+- **Follow / Orbit:** select a player and set the boost. Both walk a ground route; blocked paths can pause them.
+- **Zigzag Dash:** alternate directions while holding a movement key.
+- **Lag Mode:** mix walking, pauses, forward jumps and backward corrections. Walls can shorten or block jumps.
+- **Teleport:** jump to a selected player or teleport to the cursor with right-click. Teleport Yo-Yo alternates saved spots A and B for up to 12 jumps.
 
-- **Sprint:** hold your chosen key for a temporary boost up to **10×**. Left Shift is the default key, and 10× is the default boost for a new HAU configuration.
-- **Walking speed:** adjusts your normal speed separately from sprint. Restore default walking speed resets the current living or ghost speed.
-- **Noclip:** allows local movement through walls. Automatic walking modes still use collision checks.
-- **Reverse movement keys:** reverses the movement controls.
-
-Close the menu and chat before moving. Sprint pauses in menus, meetings and
-other blocked contexts, and restores the previous speed when the key is released.
-Network acceptance and how remote players display movement remain separate
-from the local movement behavior.
-
-### Stunts
-
-| Mode | Controls and behavior |
-| --- | --- |
-| Follow player | Choose the next player, set the follow/orbit boost and start following. It walks a ground route beside that player. |
-| Orbit player | Uses the same selected player and boost to walk around them. A blocked route can pause the mode. |
-| Zigzag dash | Alternates directions while a movement key is held. Its boost is separate from follow/orbit. |
-| Lag mode | Mixes walking, pauses, forward jumps and backward corrections. Adjust correction timing and maximum jump distance. Walls shorten or block jumps. |
-
-Only one movement mode runs at a time. The selected player and route status are
-shown in the menu. Follow and orbit use at least 2× to catch distant players.
-
-### Teleport
-
-Choose a player for one teleport, enable right-click teleport to use the cursor,
-or save spots A and B for Teleport Yo-Yo. Yo-Yo uses a 1–5 second jump interval
-and stops after 12 jumps.
+Close the menu and chat before moving. Only one movement mode runs at a time.
+Remote movement display and network acceptance depend on the game.
 
 ## Player Tools
 
-**Round tools** contains emergency-meeting requests, closing the meeting on
-your own screen, automatic body reporting and opening doors when used.
-Closing your meeting screen does not end everyone else's meeting.
+**Round tools** has meeting requests, local meeting closure, Auto Report Bodies,
+door controls and sabotage switches. Closing a meeting on your screen does not
+finish it for everyone.
 
 Sabotage switches request reactor/seismic, oxygen, lights or communications
-changes. Separate buttons request Fungle mushroom/spore effects or open the
-sabotage map. Door controls open in their own window. Map, role and host checks
-still determine which requests are accepted.
+changes. Fungle has separate mushroom and spore buttons. **Open sabotage map**
+closes HAU so native icons can be clicked. These controls require an active
+Normal round or Freeplay. Guest requests do not change your assigned role, and
+the host can reject them. The status reports a request, not a confirmed result.
 
-**Chat** contains local chat access, send-delay and textbox settings, including
-extra characters, a 120-character limit, clipboard copy/cut/append-paste and
-replacing dots with commas. Changing the textbox does not guarantee that the
-server will deliver a message.
+**Chat** has local chat access, send-delay and textbox options, clipboard
+controls and extra characters. The server still validates submitted messages.
 
 ## Appearance
 
-### Outfit & name
+**Outfit studio** has color, hat, skin, visor, pet and nameplate categories.
+Search, browse ten results per page and equip or clear one slot. Save a look,
+wear it again or restore the original outfit during the same session.
+Unavailable thumbnails use a placeholder; those items remain selectable.
 
-**Outfit studio** has six categories: body color, hats, skins, visors, pets and
-nameplates. Search the available catalog, browse ten results per page, inspect
-an item and equip a single slot. Loaded whole-image textures can appear as
-thumbnails. Unavailable atlas previews show a placeholder; the item remains selectable.
+Equip before a round or in Freeplay. Random Outfit has a separate restore
+button. Cosmetic choices do not establish ownership or guarantee what other
+players see. Edit your nickname before a round and press **Apply my nickname**.
 
-You can clear a cosmetic slot, save the current look, wear that saved look or
-restore the original outfit. Saved-look and original-outfit snapshots apply to
-the current player profile during this session. Equip before a round, from the
-main menu or lobby, or in Freeplay. The game checks color and cosmetic requests.
-
-Random Outfit selects a combination and provides its own restore button.
-The extra-cosmetics switch affects the available choices; it does not establish
-ownership or guarantee what unmodded players see.
-
-The nickname editor keeps a draft until you press **Apply my nickname**. Change
-it before a round; the game validates the submitted name.
-
-### Colors and effects
-
-- **Rainbow preview:** cycles your body color on your own screen.
-- **Lobby color cycle:** requests available colors before a round and stops at round start. Shared visibility remains untested.
-- **Task effects:** shield/garbage buttons, repeated asteroid firing, scan and camera-use effects. Availability depends on the map and game checks; an effect does not complete its task.
-- **Moonwalk:** a local movement appearance effect.
+Rainbow preview cycles color locally. Lobby color cycle sends color requests
+before a round and stops at round start; shared visibility is untested. Task
+effects show supported shield, garbage, asteroid, scan and camera-use effects
+without completing tasks. Moonwalk changes movement appearance locally.
 
 ## ESP
 
-**Player ESP** groups Player Info ESP, Role ESP, Ghost ESP, Fullbright / No
-Shadows, Reveal Votes and Lobby Browser Info. Displays use data available on
-your client; lobby information appears in the online lobby browser.
+- **Player ESP:** Player Info, Roles, Ghosts, Fullbright / No Shadows, Reveal Votes and Lobby Browser Info.
+- **Camera:** wider view, mouse-wheel zoom, Freecam and Spectate.
+- **Map & tracers:** map markers and direction lines for players and bodies, with player or distance colors.
 
-**Camera** contains a wider view, free camera and selecting a player to spectate.
-Spectating pauses your player movement. Stop spectating to return to your player;
-Freecam and spectating cannot run together. Camera tools pause while the menu or
-chat is open or the game loses focus, and restore the camera when their player,
-camera or round changes. Use the mouse wheel to adjust an enabled wider view.
-
-**Map & tracers** groups map markers and direction lines for crewmates, impostors,
-ghosts and bodies. Tracers can use player colors or distance colors: red nearby,
-green farther away.
+Displays use information available on your client. Spectating pauses your
+movement. Freecam and Spectate cannot run together; camera tools pause in
+menus/chat and restore the camera when their player or round changes.
 
 ## Tasks
 
 **Automatic Tasks** completes your own assigned tasks after you enable it.
-It is off at the beginning of every round. Profiles and keybind reloads do not
-start it automatically.
+It starts off each round and cannot be enabled by loading a profile.
 
-**AI Tasks** walks to your own task consoles and advances supported task steps
-after reaching them. Press Start AI Tasks, then close the menu and chat. The
-status explains waits or route failures; unsupported timed stages remain manual.
-Starting AI Tasks turns Automatic Tasks off. F8 stops AI movement.
+**Task Walker** walks to your own consoles and advances supported task steps
+on arrival. Start it, then close the menu and chat. It turns Automatic Tasks
+off. Timed or unsupported steps may need manual input. F8 stops the walker.
 
-Task arrows point toward your tasks. The task-list window shows observed player
-tasks, but completion buttons apply only to your own tasks.
+Task arrows point toward your tasks. The task window can show observed player
+tasks, but completion buttons apply only to your own assignments.
 
 ## Abilities
 
 **Multi Role** combines vent access, selected-player tracking, Scientist Vitals,
-Detective Notes and nearby Interrogate in a draggable panel. Enable it and close
-the menu during a living player's normal round or Freeplay.
+Detective Notes and nearby Interrogate in a draggable panel. Enable it and
+close the menu during a living player's Normal round or Freeplay.
 
-The bundle preserves your assigned role. Vitals uses the native display;
-tracking uses observed player positions. Notes record confirmed deaths seen
-while enabled and their captured rooms. Interrogate uses the nearby tracked
-player's recorded location. Earlier unseen deaths do not become evidence.
-Escape or Close Detective Notes closes the notebook.
+Notes record confirmed deaths observed while enabled and their captured
+rooms. Interrogate uses recorded location data. Earlier unseen deaths are not
+reconstructed. Escape or **Close Detective Notes** closes the notebook.
 
-**Role settings** groups local Engineer timers, Scientist battery/cooldown,
-Tracker delay/range, native Detective range and Impostor ability options.
-These controls require an available ability; they do not assign a real online
-role. These native ability settings are separate from the Multi Role panel's
-timers. Vent and other network actions still depend on host validation.
+Role settings adjust available Engineer, Scientist, Tracker, Detective and
+Impostor abilities. They do not grant a real online role. Vent and other network
+requests remain subject to host validation.
 
-**Previews** changes the role interface on your own screen. The guest Impostor
-preview does not grant counted kills. Real hosted assignment belongs in Host
-Controls; Freeplay experiments belong in Practice. A host's role preview keeps
-the original crew/impostor team so it does not alter the round's team counts.
+**Previews** change your local role interface. A guest Impostor preview does
+not grant counted kills. Host previews keep the original crew/impostor team.
+Real hosted assignment is in Host Controls; experiments are in Practice.
 
-## Host Controls
+## Host Controls and Practice
 
-Most controls are disabled unless you host the lobby or use Freeplay.
+Host Controls groups lobby rules, roles, kill settings, protection, meetings,
+ejection and player actions. Most require hosting or Freeplay. Ejection and
+meeting-end actions need an active meeting; kill actions are unavailable in
+lobbies.
 
-| Subpage | Controls |
-| --- | --- |
-| Lobby rules | Your role assignment before the next round, keeping a round running, lights rules, start-game action, kill rules and protection window. |
-| Meetings | Start a meeting, finish a meeting for everyone, choose a player to eject and vote immunity. Eject/end actions require an active meeting. |
-| Player actions | Choose a player for a kill action, group kill actions and Kick From Vents / once. The vent action ejects current occupants once. Kill actions are unavailable in the lobby. |
+**Ghost Voting** needs the host and each voting ghost to enable the mod.
+Multiplayer vote counting is untested.
 
-**Ghost Voting requires both the host and each voting ghost to enable this
-mod.** A guest can enable their own ghost controls here; the host decides whether
-votes are counted. Multiplayer vote counting remains untested.
+Practice contains Freeplay role and alive/ghost controls. Judge practice
+permits one use per meeting and does not force an online Judge assignment.
 
-## Practice
+## Settings and updates
 
-Freeplay contains Impostor and Judge practice controls, role previews and
-alive/ghost previews. They do not force a real online Judge role. The current
-Judge practice handler permits one use per meeting.
+Settings contains menu keys, colors, profiles and update options. Click-through
+is off by default so HAU controls do not also click the game underneath.
+Imported preferences keep their saved value.
 
-## Settings, About and Logs
+Configuration: `BepInEx/config/HAU.cfg`.
+Profile: `BepInEx/config/HAUProfile.txt`.
+Profiles retain keys and persistent switches but do not replay action buttons,
+start task automation or restore sabotage states and Spectate targets.
+Guest profiles cannot activate host-only controls.
 
-**Settings** groups menu keys, tool-window behavior, accent colors, profiles and
-automatic updates. Advanced settings hold optional local display/convenience
-options and configuration-file actions.
-Click-through is off by default for a new configuration, so selecting HAU
-controls does not click the game's interface underneath. Imported preferences
-keep their existing values; the switch is in Advanced settings.
+Steam, Microsoft Store and Xbox App check for compatible updates at startup
+and apply them after Among Us closes. Epic Games uses manual ZIP updates.
+A game update may need a compatible HAU release first.
 
-Settings are stored in `BepInEx/config/HAU.cfg`; profiles use
-`BepInEx/config/HAUProfile.txt`. Supported old settings can be imported without
-removing their originals. Profiles retain shortcut keys and persistent switches;
-loading a profile does not replay action buttons, restart task automation or
-restore saved sabotage states or a Spectate target. Host settings cannot be activated by a
-guest's profile or shortcut. Task automation still requires manual activation.
+About shows version details. Logs records selected events from the current
+session, keeping up to 300 entries.
 
-Automatic updates check at startup and apply compatible published releases
-after Among Us closes. Steam / Microsoft Store / Xbox App support this; Epic
-Games uses the manual ZIP. A game update needs a compatible HAU build published
-first.
+## Tested
 
-**About** shows HAU's edition, game version, loaded BepInEx version and project link.
-**Logs** chooses which observed events to record and opens or clears the current
-session log. It keeps up to 300 entries and cannot recover earlier unseen events.
+HAU 1.0.2 is installed on Xbox / Microsoft Store. Reactor, oxygen, lights and
+communications activation and repair, plus native sabotage-map clicks, passed
+in Skeld Freeplay. Online play, Steam and Epic Games remain untested. Offline
+tests do not prove what other clients see or which requests a host accepts.
 
-## Verification limits
-
-Earlier editions were tested in Xbox / Microsoft Store gameplay. Steam and Epic
-Games gameplay remain untested. Offline regression checks do not prove live multiplayer
-acceptance or what other clients see. Jester and the disabled historical
-Overload experiment are not included as active HAU features.
-
-[Installation](docs/INSTALL.md) · [Edition history](FORK.md) · [License](LICENSE)
+[Install](docs/INSTALL.md) · [Release notes](FORK.md) · [License](LICENSE)

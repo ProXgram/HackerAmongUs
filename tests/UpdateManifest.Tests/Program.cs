@@ -371,7 +371,7 @@ Test("Empty and malformed Base64 is rejected", () =>
 Test("Noncanonical Base64 padding bits are rejected", () =>
 {
     JsonObject envelope = ReadEnvelope(Envelope());
-    // Both AB== and AA== decode to one zero byte, but only AA== is canonical.
+
     envelope["payload"] = "AB==";
     Reject(() => verifier.Verify(Encoding.UTF8.GetBytes(envelope.ToJsonString())), "Base64");
 });

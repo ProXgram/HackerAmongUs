@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace HAU;
 
-/// <summary>Stable profile IDs distinguish persistent switches from explicit requests.</summary>
+
 public static class ControlPolicy
 {
     private static readonly HashSet<string> Requests = new(StringComparer.Ordinal)
@@ -27,8 +27,8 @@ public static class ControlPolicy
         nameof(CheatToggles.overloadImps), nameof(CheatToggles.overloadReset)
     };
 
-    // These mirror a live round or need a fresh target. Preserve their normal
-    // on/off shortcut behavior, but never reconstruct them from a saved file.
+
+
     private static readonly HashSet<string> LiveState = new(StringComparer.Ordinal)
     {
         nameof(CheatToggles.automaticTasks), nameof(CheatToggles.spectate),

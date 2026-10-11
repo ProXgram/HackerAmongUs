@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 namespace HAU;
 
-// Execution checks live beside the actions, independently of GUI/keybind gates.
+
 internal static class OwnedActionContext
 {
     internal readonly struct Snapshot

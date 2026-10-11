@@ -7,7 +7,7 @@ public static class OverloadHandler
     public static int strength;
     private static HashSet<int> _customTargets = new();
 
-    // Compatibility entry point: the overload runner is permanently disabled.
+
     public static void Run()
     {
     }
@@ -86,8 +86,8 @@ public static class OverloadHandler
         _customTargets.Clear();
     }
 
-    // Iterates through all given players and
-    // adds all that are marked as targets and match given targetType to _customTargets
+
+
     public static void PopulateCustomTargets(PlayerControl[] players, TargetType targetType)
     {
         int playerCount = players.Length;
@@ -109,7 +109,7 @@ public static class OverloadHandler
         }
     }
 
-    // No active overload settings are available in this compatibility fork.
+
     public static (int strength, float cooldown) CalculateAdaptedValues()
     {
         return (0, 0f);

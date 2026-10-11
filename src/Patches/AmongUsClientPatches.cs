@@ -13,30 +13,31 @@ public static class AmongUsClient_Update
         AutomaticTasksHandler.Tick();
         InfiniteJudgeHandler.Tick();
 
-        // GuestMode cheats are commented out as they are broken in latest updates
 
-        // Code to treat temp accounts the same as full accounts, including access to friend codes
-        // if (!EOSManager.Instance.loginFlowFinished || !HAUPlugin.guestMode.Value) return;
-        // DataManager.Player.Account.LoginStatus = EOSManager.AccountLoginStatus.LoggedIn;
 
-        // if (!string.IsNullOrWhiteSpace(EOSManager.Instance.FriendCode)) return;
-        // var friendCode = PlayerDisplayOverrides.spoofFriendCode();
-        // var editUsername = EOSManager.Instance.editAccountUsername;
-        // editUsername.UsernameText.SetText(friendCode);
-        // editUsername.SaveUsername();
-        // EOSManager.Instance.FriendCode = friendCode;
+
+
+
+
+
+
+
+
+
+
     }
 }
 
 [HarmonyPatch(typeof(AmongUsClient), nameof(AmongUsClient.OnGameJoined))]
 public static class AmongUsClient_OnGameJoined
 {
-    // Postfix patch of AmongUsClient.OnGameJoined to store the last joined game ID string
+
     public static string lastGameIdString = "";
 
     public static void Postfix(string gameIdString)
     {
         lastGameIdString = gameIdString;
+        CheatToggles.sabotageMap = false;
         PlayerActions.ResetSession();
         GameActions.StopShipAnimCheats();
         ColorCycleHandler.Stop();
@@ -58,7 +59,8 @@ public static class AmongUsClient_CoStartGame
 {
     public static void Postfix()
     {
-        // Clear lobby/session carryover before the new round's intro starts.
+
+        CheatToggles.sabotageMap = false;
         PlayerActions.ResetSession();
         GameActions.StopShipAnimCheats();
         CheatToggles.automaticTasks = false;
@@ -73,6 +75,7 @@ public static class AmongUsClient_OnGameEnd
 {
     public static void Postfix(EndGameResult endGameResult)
     {
+        CheatToggles.sabotageMap = false;
         PlayerActions.ResetSession();
         GameActions.StopShipAnimCheats();
         ColorCycleHandler.Stop();

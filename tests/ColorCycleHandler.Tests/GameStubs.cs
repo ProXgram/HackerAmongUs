@@ -1,5 +1,5 @@
-// Closed local contracts only. CmdCheckColor records attempts and never changes
-// the assigned outfit, simulating neither a host response nor acceptance.
+
+
 public class NativeObject
 {
     private static int _next = 100;

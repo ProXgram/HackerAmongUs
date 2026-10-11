@@ -31,6 +31,7 @@ public static class SabotageTools
     private static byte contextMap;
     private static bool contextInitialized, contextReady, contextHost, contextPractice, contextDead;
     private static bool _unfixableLights;
+    public static string StatusText { get; private set; } = "Choose a switch to send a sabotage or repair request.";
 
     public static void ResetSession()
     {
@@ -38,6 +39,7 @@ public static class SabotageTools
         Reactor.Reset(); Oxygen.Reset(); Comms.Reset(); Electrical.Reset();
         CheatToggles.reactorSab = CheatToggles.oxygenSab = CheatToggles.commsSab = CheatToggles.elecSab = false;
         CheatToggles.unfixableLights = _unfixableLights = false;
+        StatusText = "Choose a switch to send a sabotage or repair request.";
     }
 
     private static bool Ready => OwnedActionContext.GameplayReady && !Utils.isMeeting && Utils.isNormalGame;
@@ -70,11 +72,23 @@ public static class SabotageTools
 
     private static bool CanRequest(bool start)
     {
-        if (!Ready) return false;
+        if (!Ready)
+        { StatusText = "Sabotage controls require an active Normal round."; return false; }
         if (Utils.isHost || Utils.isFreePlay) return true;
         var local = PlayerControl.LocalPlayer;
         if (!local || !local.Data || !local.Data.Role) return false;
-        return start ? local.Data.Role.IsImpostor && !LocalImpostorHandler.BlocksSabotageRequests(local) : !local.Data.IsDead;
+        if (!start && local.Data.IsDead)
+        { StatusText = "Repair requests are unavailable while dead."; return false; }
+
+
+        return true;
+    }
+
+    private static void SendRequest(ShipStatus ship, SystemTypes kind, byte amount, bool start)
+    {
+        ship.RpcUpdateSystem(kind, amount);
+        StatusText = (start ? "Sabotage" : "Repair") + " request sent." +
+            (Utils.isHost || Utils.isFreePlay ? "" : " The host may reject it.");
     }
 
     private static T System<T>(ShipStatus ship, SystemTypes kind) where T : Il2CppObjectBase
@@ -84,8 +98,8 @@ public static class SabotageTools
         catch (Exception ex) when (ex is InvalidCastException or NullReferenceException) { return null; }
     }
 
-    // Called before menu switches. Pending explicit input is kept until the tick;
-    // changed remote state or a new context always wins over older switch values.
+
+
     public static void SyncForMenu()
     {
         var ship = ShipStatus.Instance;
@@ -103,8 +117,8 @@ public static class SabotageTools
             if (system == null) { Reactor.Missing(ref CheatToggles.reactorSab); return; }
             if (Reactor.Observe(system.Pointer, system.IsActive, ref CheatToggles.reactorSab) && requests && CanRequest(CheatToggles.reactorSab))
             {
-                if (CheatToggles.reactorSab) ship.RpcUpdateSystem(SystemTypes.HeliSabotage, 128);
-                else { ship.RpcUpdateSystem(SystemTypes.HeliSabotage, 16 | 0); ship.RpcUpdateSystem(SystemTypes.HeliSabotage, 16 | 1); }
+                if (CheatToggles.reactorSab) SendRequest(ship, SystemTypes.HeliSabotage, 128, true);
+                else { SendRequest(ship, SystemTypes.HeliSabotage, 16 | 0, false); SendRequest(ship, SystemTypes.HeliSabotage, 16 | 1, false); }
             }
             if (requests) Reactor.Mirror(system.Pointer, system.IsActive, ref CheatToggles.reactorSab);
             return;
@@ -113,30 +127,30 @@ public static class SabotageTools
         var reactor = System<ReactorSystemType>(ship, kind);
         if (reactor == null) { Reactor.Missing(ref CheatToggles.reactorSab); return; }
         if (Reactor.Observe(reactor.Pointer, reactor.IsActive, ref CheatToggles.reactorSab) && requests && CanRequest(CheatToggles.reactorSab))
-            ship.RpcUpdateSystem(kind, CheatToggles.reactorSab ? (byte)128 : (byte)16);
+            SendRequest(ship, kind, CheatToggles.reactorSab ? (byte)128 : (byte)16, CheatToggles.reactorSab);
         if (requests) Reactor.Mirror(reactor.Pointer, reactor.IsActive, ref CheatToggles.reactorSab);
     }
 
     private static void ReadOxygen(ShipStatus ship, byte map, bool requests)
     {
-        // Polus, Airship and Fungle have no oxygen sabotage system. Mira HQ does.
+
         var oxygen = map is 2 or 4 or 5 ? null : System<LifeSuppSystemType>(ship, SystemTypes.LifeSupp);
         if (oxygen == null) { Oxygen.Missing(ref CheatToggles.oxygenSab); return; }
         if (Oxygen.Observe(oxygen.Pointer, oxygen.IsActive, ref CheatToggles.oxygenSab) && requests && CanRequest(CheatToggles.oxygenSab))
-            ship.RpcUpdateSystem(SystemTypes.LifeSupp, CheatToggles.oxygenSab ? (byte)128 : (byte)16);
+            SendRequest(ship, SystemTypes.LifeSupp, CheatToggles.oxygenSab ? (byte)128 : (byte)16, CheatToggles.oxygenSab);
         if (requests) Oxygen.Mirror(oxygen.Pointer, oxygen.IsActive, ref CheatToggles.oxygenSab);
     }
 
     private static void ReadComms(ShipStatus ship, byte map, bool requests)
     {
-        if (map is 1 or 5) // Mira HQ and Fungle use two-console communications.
+        if (map is 1 or 5)
         {
             var hq = System<HqHudSystemType>(ship, SystemTypes.Comms);
             if (hq == null) { Comms.Missing(ref CheatToggles.commsSab); return; }
             if (Comms.Observe(hq.Pointer, hq.IsActive, ref CheatToggles.commsSab) && requests && CanRequest(CheatToggles.commsSab))
             {
-                if (CheatToggles.commsSab) ship.RpcUpdateSystem(SystemTypes.Comms, 128);
-                else { ship.RpcUpdateSystem(SystemTypes.Comms, 16 | 0); ship.RpcUpdateSystem(SystemTypes.Comms, 16 | 1); }
+                if (CheatToggles.commsSab) SendRequest(ship, SystemTypes.Comms, 128, true);
+                else { SendRequest(ship, SystemTypes.Comms, 16 | 0, false); SendRequest(ship, SystemTypes.Comms, 16 | 1, false); }
             }
             if (requests) Comms.Mirror(hq.Pointer, hq.IsActive, ref CheatToggles.commsSab);
             return;
@@ -144,7 +158,7 @@ public static class SabotageTools
         var comms = System<HudOverrideSystemType>(ship, SystemTypes.Comms);
         if (comms == null) { Comms.Missing(ref CheatToggles.commsSab); return; }
         if (Comms.Observe(comms.Pointer, comms.IsActive, ref CheatToggles.commsSab) && requests && CanRequest(CheatToggles.commsSab))
-            ship.RpcUpdateSystem(SystemTypes.Comms, CheatToggles.commsSab ? (byte)128 : (byte)16);
+            SendRequest(ship, SystemTypes.Comms, CheatToggles.commsSab ? (byte)128 : (byte)16, CheatToggles.commsSab);
         if (requests) Comms.Mirror(comms.Pointer, comms.IsActive, ref CheatToggles.commsSab);
     }
 
@@ -165,7 +179,7 @@ public static class SabotageTools
                 {
                     var mask = 1 << (i & 0x1F);
                     if ((electrical.ActualSwitches & mask) != (electrical.ExpectedSwitches & mask))
-                        ship.RpcUpdateSystem(SystemTypes.Electrical, (byte)i);
+                        SendRequest(ship, SystemTypes.Electrical, (byte)i, false);
                 }
             }
             else
@@ -173,7 +187,7 @@ public static class SabotageTools
                 CheatToggles.unfixableLights = false;
                 byte amount = 4;
                 for (var i = 0; i < 5; i++) if (BoolRange.Next(0.5f)) amount |= (byte)(1 << i);
-                ship.RpcUpdateSystem(SystemTypes.Electrical, (byte)(amount | 128));
+                SendRequest(ship, SystemTypes.Electrical, (byte)(amount | 128), true);
             }
         }
         Electrical.Mirror(electrical.Pointer, electrical.IsActive && !_unfixableLights, ref CheatToggles.elecSab);
@@ -207,7 +221,7 @@ public static class SabotageTools
         CheatToggles.mushSab = false;
         if (map == 5 && CanRequest(true) && ship && ship.Systems != null &&
             ship.Systems.ContainsKey(SystemTypes.MushroomMixupSabotage))
-            ship.RpcUpdateSystem(SystemTypes.MushroomMixupSabotage, 1);
+            SendRequest(ship, SystemTypes.MushroomMixupSabotage, 1, true);
     }
 
     public static void HandleSpores(FungleShipStatus ship, byte map)

@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace HAU.Updates
 {
-    /// <summary>A release asset authenticated by the publisher's signed manifest.</summary>
+
     public sealed class UpdateAsset
     {
         public Uri Url { get; }
@@ -25,7 +25,7 @@ namespace HAU.Updates
         }
     }
 
-    /// <summary>Release information accepted only after verifying its signature and schema.</summary>
+
     public sealed class UpdateManifest
     {
         public string ModVersion { get; }
@@ -66,7 +66,7 @@ namespace HAU.Updates
         }
     }
 
-    /// <summary>Verifies the bounded JSON envelope before interpreting any release data.</summary>
+
     public sealed class UpdateManifestVerifier
     {
         public const int MaximumEnvelopeBytes = 64 * 1024;
@@ -107,7 +107,7 @@ namespace HAU.Updates
                 if (!rsa.VerifyData(payload, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
                     throw new InvalidDataException("The update manifest signature is invalid.");
 
-                // Interpret only the exact payload bytes authenticated above.
+
                 ValidateUtf8(payload);
                 using JsonDocument document = ParseDocument(payload);
                 JsonElement root = document.RootElement;
@@ -147,7 +147,7 @@ namespace HAU.Updates
                 if (!int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out values[index]))
                     throw new InvalidDataException("The version contains an invalid numeric part.");
             }
-            // Version treats missing components as -1; updates compare omitted components as zero.
+
             return new Version(values[0], values[1], values[2], values[3]);
         }
 
@@ -220,8 +220,8 @@ namespace HAU.Updates
             RequireProperties(value, "url", "sha256", "size");
             string url = GetString(value, "url");
             string expected = AssetPrefix + modVersion + "/" + filename;
-            // Comparing the original string rejects encoded separators, alternate hosts, ports,
-            // user info, fragments, queries and path normalization before URI parsing.
+
+
             if (!string.Equals(url, expected, StringComparison.Ordinal) || !Uri.TryCreate(url, UriKind.Absolute, out Uri? parsed))
                 throw new InvalidDataException("The update asset URL is not the expected release asset.");
             string sha = GetString(value, "sha256");

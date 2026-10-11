@@ -61,7 +61,7 @@ internal static class Trace
 
     public static void Error(string operation, Exception error)
     {
-        // Error messages/stacks may contain user strings, so keep only type.
+
         try { if (Enabled) _log.LogWarning("JudgeTrace event=diagnostic_error operation=" + operation + " exception_type=" + error.GetType().Name); }
         catch { }
     }
@@ -134,13 +134,13 @@ internal static class Trace
         var local = PlayerControl.LocalPlayer;
         if (!local || !local.AmOwner || local.Data == null || !local.Data.Role ||
             local.Data.Role.Role != RoleTypes.Judge)
-            return null; // Never cast a Crewmate/fake Impostor as Judge.
+            return null;
         var role = local.Data.Role.TryCast<JudgeRole>();
         if (!role || !role.Player || role.Player.Pointer != local.Pointer || !role.Player.AmOwner)
             return null;
         if (observed && observed.Pointer != role.Pointer) return null;
-        // Network snapshots follow only the role observed before this mod's
-        // intro-time role edits. Practice has no normal round-intro assignment.
+
+
         var client = AmongUsClient.Instance;
         bool practice = client && client.NetworkMode == NetworkModes.FreePlay;
         if (!practice && (_assignedRoleType != RoleTypes.Judge ||
@@ -158,7 +158,7 @@ internal static class Trace
             var client = AmongUsClient.Instance;
             var currentMeeting = meeting ? meeting : _meeting;
             var role = CurrentJudge(observed);
-            // Role-specific callbacks for another actor are excluded entirely.
+
             if (observed && !role) return;
             var line = new StringBuilder("JudgeTrace");
             line.Append(" seq=").Append(++_sequence)

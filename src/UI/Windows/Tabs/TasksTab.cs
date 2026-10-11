@@ -15,18 +15,18 @@ public class TasksTab : ITab
         UIHelpers.Hint("Off at the start of each round. Saved profiles do not start task completion.");
         UIHelpers.EndSection();
 
-        UIHelpers.BeginSection("AI Tasks", "Walks to your task consoles and completes supported steps after reaching them.");
-        bool running = MovementAutomation.Mode == MovementMode.AiTasks;
-        if (GUILayout.Button(running ? "Stop AI Tasks" : "Start AI Tasks"))
+        UIHelpers.BeginSection("Task Walker", "Walks to your task consoles and completes supported steps after reaching them.");
+        bool running = MovementAutomation.Mode == MovementMode.TaskWalker;
+        if (GUILayout.Button(running ? "Stop Task Walker" : "Start Task Walker"))
         {
             if (running) MovementAutomation.Stop();
-            else MovementAutomation.Start(MovementMode.AiTasks);
+            else MovementAutomation.Start(MovementMode.TaskWalker);
         }
-        GUILayout.Label(MovementAutomation.Mode == MovementMode.AiTasks ? AiTasksHandler.StatusText : "AI Tasks: stopped");
+        GUILayout.Label(MovementAutomation.Mode == MovementMode.TaskWalker ? TaskWalkerHandler.StatusText : "Task Walker: stopped");
         GUILayout.Label(MovementAutomation.StatusText);
         if (!string.IsNullOrEmpty(MovementAutomation.LastNavigationIssue))
             UIHelpers.Hint("Last route issue: " + MovementAutomation.LastNavigationIssue);
-        UIHelpers.Hint("Close the menu and chat to walk. Unsupported timed steps stay manual. F8 stops movement. Starting AI Tasks turns Automatic Tasks off.");
+        UIHelpers.Hint("Close the menu and chat to walk. Unsupported timed steps stay manual. F8 stops movement. Starting Task Walker turns Automatic Tasks off.");
         UIHelpers.EndSection();
 
         UIHelpers.BeginSection("Task display");

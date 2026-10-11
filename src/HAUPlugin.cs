@@ -17,7 +17,7 @@ namespace HAU;
 [BepInProcess("Among Us.exe")]
 public partial class HAUPlugin : BasePlugin
 {
-    // HAU has a separate identity; the startup migration imports prior saved settings.
+
     public const string Id = "HAU";
     public const string Name = ModBranding.Name;
     public const string Version = ModBranding.Version;
@@ -106,7 +106,7 @@ public partial class HAUPlugin : BasePlugin
         }
         automaticUpdates = Config.Bind("HAU.Updates", "AutomaticUpdates", true,
             "Check for signed mod updates when the game starts. A compatible update is applied after you close Among Us normally.");
-        // Capture Unity-owned values here; background update work receives only managed values.
+
         var gameVersion = Application.version;
         var gameDirectory = Paths.GameRootPath;
         int gameProcessId;
@@ -122,7 +122,7 @@ public partial class HAUPlugin : BasePlugin
         }
         NavigationRouter.FailureTrace = message => Log?.LogInfo("Movement route failed: " + message);
 
-        // Loads config settings
+
         menuKeybind = Config.Bind("HAU.GUI",
                                 "Keybind",
                                 "Delete",
@@ -211,17 +211,17 @@ public partial class HAUPlugin : BasePlugin
                                 "notepad.exe",
                                 "The program used to open the config file when using the Open Config toggle. Can be any executable, but using a text editor is recommended");
 
-        // GuestMode config settings are commented out as the cheats are broken in latest updates
 
-        // guestMode = Config.Bind("HAU.GuestMode",
-        //                         "GuestMode",
-        //                         false,
-        //                         "When enabled, a new guest account will generate every time you start the game, allowing you to bypass account bans and PUID detection");
 
-        // guestFriendCode = Config.Bind("HAU.GuestMode",
-        //                         "FriendName",
-        //                         "",
-        //                         "The username that will be used when setting a friend code for your guest account. IMPORTANT: Can only be used with GuestMode, needs to be ≤ 10 characters, and cannot include special characters/discriminator (#1234)");
+
+
+
+
+
+
+
+
+
 
         spoofLevel = Config.Bind("HAU.Spoofing",
                                 "Level",
@@ -243,57 +243,57 @@ public partial class HAUPlugin : BasePlugin
                                 true,
                                 "When enabled, it will stop Among Us from collecting analytics of your games and sending them to Innersloth using Unity Analytics");
 
-        // adaptMaxStrength = Config.Bind("HAU.Overload",
-        //                         "AdaptMaxStrength",
-        //                         18000,
-        //                         new ConfigDescription(
-        //                             "Maximum total number of RPCs sent during one overload cycle in AutoAdapt mode. Automatically divided between targets and reduced based on ping. IMPORTANT: Only goes from 1 to 100K RPCs",
-        //                             new AcceptableValueRange<int>(1, 100000)
-        //                         ));
 
-        // adaptMaxCooldown = Config.Bind("HAU.Overload",
-        //                         "AdaptMaxCooldown",
-        //                         1f,
-        //                         new ConfigDescription(
-        //                             "Maximum time (in seconds) for one full overload cycle to complete in AutoAdapt mode. Automatically distributed across targets (more targets = shorter delay per target). IMPORTANT: Only goes from 0s to 10s",
-        //                             new AcceptableValueRange<float>(0f, 10f)
-        //                         ));
 
-        // attackLogDelay = Config.Bind("HAU.Overload",
-        //                         "AttackLogDelay",
-        //                         2f,
-        //                         "Minimum time (in seconds) between attack logs in normal (non-verbose) mode");
 
-        // defaultStrength = Config.Bind("HAU.Overload",
-        //                         "DefaultStrength",
-        //                         18000,
-        //                         new ConfigDescription(
-        //                             "Default number of malformed RPCs sent to each target during an overload cycle. Overridden if AutoAdapt mode is enabled. IMPORTANT: Only goes from 1 to 100K RPCs",
-        //                             new AcceptableValueRange<int>(1, 100000)
-        //                         ));
 
-        // defaultCooldown = Config.Bind("HAU.Overload",
-        //                         "DefaultCooldown",
-        //                         1f,
-        //                         new ConfigDescription(
-        //                             "Default cooldown (in seconds) between each target during an overload cycle. Overridden if AutoAdapt mode is enabled. IMPORTANT: Only goes from 0s to 10s",
-        //                             new AcceptableValueRange<float>(0f, 10f)
-        //                         ));
 
-        // killSwitchLvl = Config.Bind("HAU.Overload",
-        //                         "DefaultKillSwitchLevel",
-        //                         1,
-        //                         new ConfigDescription(
-        //                             "Default level used by kill switch. Each level adds 500 ms to the max allowed ping before overload stops. Helps avoid lagging / disconnects. IMPORTANT: Only goes from level 1 (500 ms) to 6 (3000 ms)",
-        //                             new AcceptableValueRange<int>(1, 6)
-        //                         ));
 
-        // Enabled by default
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         CheatToggles.unlockFeatures = true;
         CheatToggles.freeCosmetics = true;
         CheatToggles.avoidPenalties = true;
 
-        // Enabled by default
+
         CheatToggles.olAutoAdapt = true;
         CheatToggles.olKillSwitch = true;
         CheatToggles.olAutoStop = true;
@@ -306,7 +306,7 @@ public partial class HAUPlugin : BasePlugin
         Harmony.PatchAll();
         PassiveUiElement_Patches.ReportRegistration(Id, message => Log.LogInfo(message));
 
-        // UI
+
         menuUI = AddComponent<MenuUI>();
         consoleUI = AddComponent<ConsoleUI>();
         doorsUI = AddComponent<DoorsUI>();
@@ -314,13 +314,13 @@ public partial class HAUPlugin : BasePlugin
         protectUI = AddComponent<ProtectUI>();
         multiRoleUI = AddComponent<MultiRoleUI>();
         outfitPickerUI = AddComponent<OutfitPickerUI>();
-        // overloadUI = AddComponent<OverloadUI>();
-        // rolesUI = AddComponent<RolesUI>();
 
-        // Components
+
+
+
         keybindListener = AddComponent<KeybindListener>();
 
-        // Disables Telemetry (haven't fully tested if it works, but according to Unity docs it should)
+
         if (noTelemetry.Value)
         {
             Analytics.enabled = false;
@@ -328,13 +328,13 @@ public partial class HAUPlugin : BasePlugin
             PerformanceReporting.enabled = false;
         }
 
-        // Create profile file if it is missing
+
         if (!File.Exists(ProfilePath))
         {
             CheatToggles.SaveTogglesToProfile();
         }
 
-        // Auto load profile on start if needed
+
         if (autoLoadProfile.Value)
         {
             CheatToggles.LoadTogglesFromProfile();
@@ -346,7 +346,7 @@ public partial class HAUPlugin : BasePlugin
         {
             if (scene.name == "MainMenu" && !(inStealthMode || isPanicked))
             {
-                // Warns about unsupported AU versions
+
                 if (!supportedAU.Contains(Application.version))
                 {
                     Utils.ShowPopup($"\nThis version of {ModBranding.Name} and this version of Among Us are incompatible\n\nInstall the right version to avoid problems");

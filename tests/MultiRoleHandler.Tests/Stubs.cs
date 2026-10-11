@@ -541,7 +541,7 @@ namespace HAU
     public static class CheatToggles { public static bool multiRole; }
     public static class Utils
     {
-        // isHost deliberately exists but stays false in every guest fixture.
+
         public static bool isHost, isInGame, isFreePlay, isNormalGame, isMeeting, isExiling;
         public static PlainShipRoom CurrentRoom;
         public static Func<UnityEngine.Vector2, PlainShipRoom> RoomResolver;

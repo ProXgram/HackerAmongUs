@@ -18,7 +18,7 @@ public class MenuUI : MonoBehaviour
     public static string ActiveTabName => HAUPlugin.menuUI &&
         HAUPlugin.menuUI._selectedTab >= 0 && HAUPlugin.menuUI._selectedTab < HAUPlugin.menuUI._tabs.Count
         ? HAUPlugin.menuUI._tabs[HAUPlugin.menuUI._selectedTab].name : "";
-    public static float hue; // For RGB mode
+    public static float hue;
     public static float ContentWidth => Mathf.Max(80f, windowRect.width - 200f);
     public static string ContextText => Utils.isFreePlay ? "FREEPLAY"
         : Utils.isHost ? "HOST" : Utils.isLobby || Utils.isInGame ? "GUEST" : "MAIN MENU";
@@ -65,7 +65,7 @@ public class MenuUI : MonoBehaviour
         _tabs.Add(new GuestRoundTestTab());
 #endif
 
-        // Instantiate 2D area of MenuUI
+
         windowRect = new(
             Screen.width / 2f - windowWidth / 2f,
             Screen.height / 2f - windowHeight / 2f,
@@ -85,13 +85,13 @@ public class MenuUI : MonoBehaviour
         MultiRoleHandler.Tick();
         if (Input.GetKeyDown(Utils.StringToKeycode(HAUPlugin.menuKeybind.Value)))
         {
-            // Enable or disable GUI with DELETE key
+
             if (isGUIActive) CloseMenu();
             else isGUIActive = true;
 
             if (HAUPlugin.menuOpenOnMouse.Value)
             {
-                // Teleport the window to the mouse for immediate use
+
                 Vector2 mousePosition = Input.mousePosition;
                 windowRect.position = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
             }
@@ -105,8 +105,8 @@ public class MenuUI : MonoBehaviour
 
         if (CheatToggles.rgbMode)
         {
-            hue += Time.deltaTime * 0.3f; // Adjust speed of color change, higher multiplier = faster
-            if (hue > 1f) hue -= 1f; // Loop hue back to 0 when it exceeds 1
+            hue += Time.deltaTime * 0.3f;
+            if (hue > 1f) hue -= 1f;
         }
 
         if (CheatToggles.stealthMode != HAUPlugin.inStealthMode)
@@ -140,7 +140,7 @@ public class MenuUI : MonoBehaviour
 
         if (CheatToggles.saveProfile)
         {
-            CheatToggles.saveProfile = false; // Disable first to avoid saving it to profile
+            CheatToggles.saveProfile = false;
             CheatToggles.SaveTogglesToProfile();
         }
 
@@ -150,7 +150,7 @@ public class MenuUI : MonoBehaviour
             CheatToggles.loadProfile = false;
         }
 
-        // Some cheats only work if the LocalPlayer exists, so they are turned off if it does not
+
         if(!Utils.isPlayer)
         {
             CheatToggles.setFakeRole = false;
@@ -171,7 +171,7 @@ public class MenuUI : MonoBehaviour
             }
         }
 
-        // Some cheats only work if the ship exists, so they are turned off if it does not
+
         if(!Utils.isShip)
         {
             CheatToggles.sabotageMap = false;
@@ -216,7 +216,7 @@ public class MenuUI : MonoBehaviour
             CheatToggles.kickVents = false;
         }
 
-        // Some cheats only work if in a meeting, so they are turned off if it does not
+
         if (!Utils.isMeeting)
         {
             CheatToggles.skipMeeting = false;
@@ -229,7 +229,7 @@ public class MenuUI : MonoBehaviour
         if (!isGUIActive || HAUPlugin.isPanicked || OutfitPickerUI.IsOpen) return;
         UIHelpers.RefreshTheme();
 
-        // Theme changes are scoped to this window; the game's own GUI keeps its skin.
+
         var button = GUI.skin.button;
         var toggle = GUI.skin.toggle;
         var label = GUI.skin.label;
