@@ -19,7 +19,7 @@ permissions, requests administrator access, or replaces a newer HAU version.
 Finish and test the HAU build first:
 
 ```powershell
-python scripts/package-hau.py --version 1.0 --dll <FINISHED-HAU.dll>
+python scripts/package-hau.py --version 1.0.1 --dll <FINISHED-HAU.dll>
 ```
 
 The report gives the plugin ZIP and DLL SHA256 values. Pin the ZIP hash in
@@ -33,11 +33,13 @@ The output is `HAUSetup.exe`. Package each manual variant with the verified
 hashes; add `--platform steam` for the Steam ZIP:
 
 ```powershell
-python scripts/package-manual.py --version 1.0 --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
+python scripts/package-manual.py --version 1.0.1 --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
 ```
 
-The manual packages contain the unchanged official BepInEx 755 x64 loader,
-its audited licenses and corresponding source. They contain no game files.
+The 1.0.1 manual packages contain the unchanged official BepInEx Unity IL2CPP
+788 x64 loader, its audited licenses and corresponding source. The installer
+can upgrade the exact verified 755 inventory with persistent backups and
+rollback. Unknown or mixed loader files stop the upgrade. They contain no game files.
 Manual upgrades must remove legacy menu DLLs and duplicate HAU copies before
 launching. First launch imports saved settings without deleting originals.
 
@@ -58,13 +60,15 @@ update prevents the old plugin from loading, run the latest installer.
    `docs/screenshots/hau-installer.png`, `hau-home.png` and
    `hau-outfit-picker.png`.
 2. Put `HAUSetup.exe` in `downloads/setup/`. Sign the new manifest using
-   `scripts/sign-update-manifest.py --version 1.0 --private-key
-   <KEY-OUTSIDE-THE-REPOSITORY> --game-version 2026.9.29`.
+   `scripts/sign-update-manifest.py --version 1.0.1 --private-key
+   <KEY-OUTSIDE-THE-REPOSITORY> --game-version 2026.9.29 --stage`.
 3. Verify the signature, then run
-   `scripts/package-setup.py --release 1.0` to create the final matching source.
-4. Publish tag `hau-v1.0` in [HackerAmongUs](https://github.com/ProXgram/HackerAmongUs)
-   with `HAU-1.0-Plugin.zip`, `HAUSetup.exe`, both manual ZIPs and the source ZIP
+   `scripts/package-setup.py --release 1.0.1` to create the final matching source.
+4. Publish tag `hau-v1.0.1` in [HackerAmongUs](https://github.com/ProXgram/HackerAmongUs)
+   with `HAU-1.0.1-Plugin.zip`, `HAUSetup.exe`, both manual ZIPs and the source ZIP
    before activating the signed manifest on `main`.
+5. Verify every public asset's bytes, then copy the staged
+   `updates/hau/1.0.1.json` to `updates/hau/latest.json` and publish the feed.
 
 Historical MalumMenu Enhanced releases and `updates/latest.json` stay intact.
 The HAU product channel permits its version reset to 1.0; true HAU downgrades
@@ -74,7 +78,9 @@ remain blocked.
 
 Our source retains [GPL-3.0](../LICENSE) and the original mod credits.
 Required runtime notices are embedded under **Credits & licenses**; their
-source files remain unchanged in `HAU.Setup/Legal` and `ManualLegal`.
+source files remain unchanged in `HAU.Setup/Legal` and `ManualLegal`. The 788
+manual inventory is versioned separately in `ManualLegal788`, including
+Il2CppInterop 1.5.3 under LGPL-3.0. Earlier releases and notices stay intact.
 
 Maintainer checks are in `tests/Setup.Core.Tests`, `tests/AutoUpdate.Tests`,
 `tests/AutomaticUpdate.Tests` and `tests/UpdateManifest.Tests`. The Core test

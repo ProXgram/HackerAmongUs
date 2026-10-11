@@ -198,7 +198,7 @@ public partial class HAUPlugin : BasePlugin
 
         menuAllowClickThrough = Config.Bind("HAU.GUI",
                                 "AllowClicksThrough",
-                                true,
+                                false,
                                 $"When enabled, clicks pass through the {ModBranding.Name} GUI, letting you interact with Among Us GUI elements behind it");
 
         autoLoadProfile = Config.Bind("HAU.Profile",
@@ -304,6 +304,7 @@ public partial class HAUPlugin : BasePlugin
         CheatToggles.olLogDisconnect = true;
 
         Harmony.PatchAll();
+        PassiveUiElement_Patches.ReportRegistration(Id, message => Log.LogInfo(message));
 
         // UI
         menuUI = AddComponent<MenuUI>();

@@ -30,6 +30,12 @@ public class MenuUI : MonoBehaviour
         NicknameEntry.StopEditing();
     }
 
+    public static void CloseMenuFromPointer()
+    {
+        PointerInputGuard.ConsumeGuiClose("Menu.Close", windowRect);
+        CloseMenu();
+    }
+
     public static void OpenTab(string name)
     {
         var menu = HAUPlugin.menuUI;
@@ -303,7 +309,7 @@ public class MenuUI : MonoBehaviour
         GUILayout.BeginHorizontal();
         bool compact = windowRect.width < 540f;
         if (GUILayout.Button("Close / " + HAUPlugin.menuKeybind.Value, GUILayout.Width(compact ? 100f : 145f)))
-            CloseMenu();
+            CloseMenuFromPointer();
         if (GUILayout.Button(compact ? "Stop / F8" : "Stop movement / F8", GUILayout.Width(compact ? 100f : 175f)))
         {
             MovementAutomation.Stop();

@@ -23,7 +23,72 @@ var tests = new (string Name, Action Run)[]
     ("Failed restore and reenable keep one log for the same assignment", FailedRestoreDoesNotResetLog),
     ("Actual kill-button and outbound-RPC prefixes block local-only actions", ActualPrefixesBlock),
     ("Actual prefixes preserve normal host-assigned and foreign actions", ActualPrefixesAllow),
+    ("Local crew preview cannot authorize sabotage before or after death", SabotageLocalPreviewBlocked),
+    ("Genuine assigned Impostor and ghosts retain sabotage authority", SabotageAssignedImpostorsAllowed),
+    ("Sabotage provenance is scoped to actor round and authority", SabotageProvenanceScope),
+    ("Successful original role restoration removes sabotage preview ownership", SabotageRestoreClearsOwnership),
+    ("Disabled toggle failed restore and ghost conversion keep sabotage provenance", SabotageFailedRestoreDeath),
 };
+
+static void SabotageLocalPreviewBlocked()
+{
+    var player = SetUp();
+    Require(LocalImpostorHandler.BlocksSabotageRequests(player), "Living local-only preview claimed sabotage authority.");
+    player.Data.IsDead = true;
+    RoleManager.Instance.SetRole(player, RoleTypes.CrewmateGhost);
+    LocalImpostorHandler.Tick();
+    Require(LocalImpostorHandler.BlocksSabotageRequests(player), "Death erased local-only sabotage provenance.");
+    Require(!LocalImpostorHandler.BlocksKillRequests(player), "Sabotage guard altered the existing dead-player kill behavior.");
+}
+static void SabotageAssignedImpostorsAllowed()
+{
+    foreach (var type in new[] { RoleTypes.Impostor, RoleTypes.Shapeshifter, RoleTypes.Phantom, RoleTypes.Viper, RoleTypes.ImpostorGhost })
+    {
+        var player = SetUp(type);
+        Require(!LocalImpostorHandler.BlocksSabotageRequests(player), "A genuine assigned Impostor role was blocked.");
+        player.Data.IsDead = true;
+        RoleManager.Instance.SetRole(player, RoleTypes.ImpostorGhost);
+        LocalImpostorHandler.Tick();
+        Require(!LocalImpostorHandler.BlocksSabotageRequests(player), "A genuinely assigned Impostor ghost was blocked.");
+    }
+}
+static void SabotageProvenanceScope()
+{
+    var player = SetUp();
+    Require(!LocalImpostorHandler.BlocksSabotageRequests(NewPlayer(RoleTypes.Impostor)), "Another actor was blocked.");
+    Utils.isHost = true;
+    Require(!LocalImpostorHandler.BlocksSabotageRequests(player), "Host authority was blocked.");
+    Utils.isHost = false; Utils.isFreePlay = true;
+    Require(!LocalImpostorHandler.BlocksSabotageRequests(player), "Freeplay was blocked.");
+    Utils.isFreePlay = false; PlayerControl.LocalPlayer = NewPlayer(RoleTypes.Impostor);
+    Require(!LocalImpostorHandler.BlocksSabotageRequests(PlayerControl.LocalPlayer), "A replacement actor inherited provenance.");
+    PlayerControl.LocalPlayer = player;
+    LocalImpostorHandler.OnRoundIntro();
+    Require(!LocalImpostorHandler.BlocksSabotageRequests(player), "A new round inherited preview provenance before assignment.");
+}
+static void SabotageRestoreClearsOwnership()
+{
+    var player = SetUp();
+    CheatToggles.alwaysImpostor = false;
+    LocalImpostorHandler.Tick();
+    Require(!LocalImpostorHandler.BlocksSabotageRequests(player), "Successful Crew restoration retained preview ownership.");
+}
+static void SabotageFailedRestoreDeath()
+{
+    foreach (var ghost in new[] { RoleTypes.CrewmateGhost, RoleTypes.ImpostorGhost })
+    {
+        var player = SetUp();
+        RoleManager.Instance.ThrowBeforeRole = RoleTypes.Crewmate;
+        CheatToggles.alwaysImpostor = false;
+        LocalImpostorHandler.Tick();
+        Require(LocalImpostorHandler.BlocksSabotageRequests(player), "Disabled toggle or failed restore erased provenance.");
+        player.Data.IsDead = true;
+        RoleManager.Instance.SetRole(player, ghost);
+        Require(LocalImpostorHandler.BlocksSabotageRequests(player), "Death before the next handler tick erased provenance.");
+        LocalImpostorHandler.Tick();
+        Require(LocalImpostorHandler.BlocksSabotageRequests(player), "Ghost conversion erased preview provenance.");
+    }
+}
 
 var failures = 0;
 foreach (var test in tests)

@@ -1,0 +1,20 @@
+{
+  "component": "BepInEx",
+  "version": "6.0.0-be.788",
+  "license": "LGPL-2.1-only",
+  "repository": "https://github.com/BepInEx/BepInEx",
+  "source_ref": "5b766a3b7f6c164d4798924a93f3acf4db769d06",
+  "noticePath": "BepInEx/LICENSE",
+  "noticeSha256": "F2CECA48AF033D8ADF337A8F9453E633CFAD10A1F8C9FEC2E5AE55A2D8FFE952",
+  "sourceArchive": {
+    "component": "BepInEx",
+    "commit": "5b766a3b7f6c164d4798924a93f3acf4db769d06",
+    "path": "Sources/BepInEx-5b766a3b7f6c164d4798924a93f3acf4db769d06-Source.zip",
+    "url": "https://github.com/BepInEx/BepInEx/archive/5b766a3b7f6c164d4798924a93f3acf4db769d06.zip",
+    "sha256": "CCEA1256EF0552F51BE640BF5E38F45667D3F95D609EA95CE386338A952993D0",
+    "bytes": 1207906,
+    "licenseEntries": [
+      "BepInEx-5b766a3b7f6c164d4798924a93f3acf4db769d06/LICENSE"
+    ]
+  }
+}

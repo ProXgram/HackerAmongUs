@@ -1,10 +1,10 @@
 # HAU feature guide
 
-**Hacker Among Us 1.0 by Rifegul.**
+**Hacker Among Us 1.0.1 by Rifegul.**
 Open the menu with **Delete**. Your key can be changed in Settings.
 
 The header shows whether you are a host, guest or in Freeplay. A **button**
-performs one action; a **switch** stays enabled until you turn it off.
+performs one action; a **switch** enables a setting or shows its current state.
 **F8** stops movement automation and color cycling.
 
 ## Home
@@ -56,8 +56,9 @@ sabotage map. Door controls open in their own window. Map, role and host checks
 still determine which requests are accepted.
 
 **Chat** contains local chat access, send-delay and textbox settings, including
-extra characters, longer text, clipboard paste and links. Changing the textbox
-does not guarantee that the server will deliver a message.
+extra characters, a 120-character limit, clipboard copy/cut/append-paste and
+replacing dots with commas. Changing the textbox does not guarantee that the
+server will deliver a message.
 
 ## Appearance
 
@@ -65,8 +66,8 @@ does not guarantee that the server will deliver a message.
 
 **Outfit studio** has six categories: body color, hats, skins, visors, pets and
 nameplates. Search the available catalog, browse ten results per page, inspect
-an item and equip a single slot. A thumbnail appears when the game has already
-loaded that item's image.
+an item and equip a single slot. Loaded whole-image textures can appear as
+thumbnails. Unavailable atlas previews show a placeholder; the item remains selectable.
 
 You can clear a cosmetic slot, save the current look, wear that saved look or
 restore the original outfit. Saved-look and original-outfit snapshots apply to
@@ -87,17 +88,21 @@ it before a round; the game validates the submitted name.
 - **Task effects:** shield/garbage buttons, repeated asteroid firing, scan and camera-use effects. Availability depends on the map and game checks; an effect does not complete its task.
 - **Moonwalk:** a local movement appearance effect.
 
-## Information
+## ESP
 
-**Player info** groups player/role labels, ghost visibility, vision shadows,
-vote details and lobby information. Displays use data available on your client.
+**Player ESP** groups Player Info ESP, Role ESP, Ghost ESP, Fullbright / No
+Shadows, Reveal Votes and Lobby Browser Info. Displays use data available on
+your client; lobby information appears in the online lobby browser.
 
 **Camera** contains a wider view, free camera and selecting a player to spectate.
 Spectating pauses your player movement. Stop spectating to return to your player;
-free camera and spectating cannot run together.
+Freecam and spectating cannot run together. Camera tools pause while the menu or
+chat is open or the game loses focus, and restore the camera when their player,
+camera or round changes. Use the mouse wheel to adjust an enabled wider view.
 
-**Map & lines** groups map markers and direction lines for crewmates, impostors,
-ghosts and bodies, with player-color and distance options.
+**Map & tracers** groups map markers and direction lines for crewmates, impostors,
+ghosts and bodies. Tracers can use player colors or distance colors: red nearby,
+green farther away.
 
 ## Tasks
 
@@ -128,11 +133,13 @@ Escape or Close Detective Notes closes the notebook.
 **Role settings** groups local Engineer timers, Scientist battery/cooldown,
 Tracker delay/range, native Detective range and Impostor ability options.
 These controls require an available ability; they do not assign a real online
-role. Vent and other network actions still depend on host validation.
+role. These native ability settings are separate from the Multi Role panel's
+timers. Vent and other network actions still depend on host validation.
 
 **Previews** changes the role interface on your own screen. The guest Impostor
 preview does not grant counted kills. Real hosted assignment belongs in Host
-Controls; Freeplay experiments belong in Practice.
+Controls; Freeplay experiments belong in Practice. A host's role preview keeps
+the original crew/impostor team so it does not alter the round's team counts.
 
 ## Host Controls
 
@@ -142,7 +149,7 @@ Most controls are disabled unless you host the lobby or use Freeplay.
 | --- | --- |
 | Lobby rules | Your role assignment before the next round, keeping a round running, lights rules, start-game action, kill rules and protection window. |
 | Meetings | Start a meeting, finish a meeting for everyone, choose a player to eject and vote immunity. Eject/end actions require an active meeting. |
-| Player actions | Choose a player for a kill action, group kill actions and keeping players out of vents. Kill actions are unavailable in the lobby. |
+| Player actions | Choose a player for a kill action, group kill actions and Kick From Vents / once. The vent action ejects current occupants once. Kill actions are unavailable in the lobby. |
 
 **Ghost Voting requires both the host and each voting ghost to enable this
 mod.** A guest can enable their own ghost controls here; the host decides whether
@@ -159,24 +166,30 @@ Judge practice handler permits one use per meeting.
 **Settings** groups menu keys, tool-window behavior, accent colors, profiles and
 automatic updates. Advanced settings hold optional local display/convenience
 options and configuration-file actions.
+Click-through is off by default for a new configuration, so selecting HAU
+controls does not click the game's interface underneath. Imported preferences
+keep their existing values; the switch is in Advanced settings.
 
 Settings are stored in `BepInEx/config/HAU.cfg`; profiles use
 `BepInEx/config/HAUProfile.txt`. Supported old settings can be imported without
-removing their originals. Task automation still requires manual activation.
+removing their originals. Profiles retain shortcut keys and persistent switches;
+loading a profile does not replay action buttons, restart task automation or
+restore saved sabotage states or a Spectate target. Host settings cannot be activated by a
+guest's profile or shortcut. Task automation still requires manual activation.
 
 Automatic updates check at startup and apply compatible published releases
 after Among Us closes. Steam / Microsoft Store / Xbox App support this; Epic
 Games uses the manual ZIP. A game update needs a compatible HAU build published
 first.
 
-**About** shows HAU's edition, game version and project link.
+**About** shows HAU's edition, game version, loaded BepInEx version and project link.
 **Logs** chooses which observed events to record and opens or clears the current
 session log. It keeps up to 300 entries and cannot recover earlier unseen events.
 
 ## Verification limits
 
-Xbox / Microsoft Store gameplay has been tested. Steam and Epic Games gameplay
-remain untested. Offline regression checks do not prove live multiplayer
+Earlier editions were tested in Xbox / Microsoft Store gameplay. Steam and Epic
+Games gameplay remain untested. Offline regression checks do not prove live multiplayer
 acceptance or what other clients see. Jester and the disabled historical
 Overload experiment are not included as active HAU features.
 

@@ -4,6 +4,7 @@ Requires Python and the cryptography package. Build the plugin ZIP and setup
 program first, then supply --version, --private-key and optional repeated
 --game-version values. Store the private key outside this repository; it is
 never included in the manifest. --dry-run verifies and signs without writing.
+--stage writes a versioned envelope without activating the live update feed.
 """
 
 from __future__ import annotations
@@ -98,6 +99,7 @@ def main() -> None:
     parser.add_argument("--private-key", required=True, type=Path, help="Publisher RSA PEM private key stored outside this repository.")
     parser.add_argument("--game-version", action="append", type=numeric_version, help="Supported Among Us version; repeat for multiple versions.")
     parser.add_argument("--dry-run", action="store_true", help="Verify and sign without replacing updates/hau/latest.json.")
+    parser.add_argument("--stage", action="store_true", help="Write a new versioned envelope; activate latest.json only after its release assets are public.")
     args = parser.parse_args()
     games = args.game_version or ["2026.9.29"]
     require(1 <= len(games) <= 16 and len(set(games)) == len(games), "Supply one to sixteen distinct supported game versions.")
@@ -121,11 +123,12 @@ def main() -> None:
     }
     data = (json.dumps(envelope, ensure_ascii=True, separators=(",", ":"), sort_keys=True) + "\n").encode("utf-8")
     require(0 < len(data) <= MAX_ENVELOPE_BYTES, "The manifest envelope exceeds its byte limit.")
-    output = ROOT / "updates/hau/latest.json"
+    output = ROOT / "updates/hau" / (f"{args.version}.json" if args.stage else "latest.json")
     if not args.dry_run:
         output.parent.mkdir(parents=True, exist_ok=True)
         require(not output.parent.is_symlink() and ROOT in output.parent.resolve().parents and not output.is_symlink(),
                 "The manifest output must be inside the repository and must not be linked.")
+        require(not args.stage or not output.exists(), "The staged version already exists; preserve published version envelopes.")
         temporary_path = None
         try:
             with tempfile.NamedTemporaryFile(prefix=".latest-", suffix=".tmp", dir=output.parent, delete=False) as temporary:

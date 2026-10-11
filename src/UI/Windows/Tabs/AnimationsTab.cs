@@ -17,7 +17,8 @@ public class AnimationsTab : ITab
         UIHelpers.Hint("Effects do not complete the matching task. Camera effects are unavailable on Mira HQ and Fungle.");
         UIHelpers.EndSection();
         UIHelpers.BeginSection("Movement appearance", "A local visual effect on your own screen.");
-        CheatToggles.moonWalk = GUILayout.Toggle(CheatToggles.moonWalk, " Moonwalk");
+        CheatToggles.moonWalk = GUILayout.Toggle(CheatToggles.moonWalk, " Moonwalk / freeze walk animation");
+        UIHelpers.Hint("Keeps your local walking animation still while the character moves.");
         UIHelpers.EndSection();
     }
 }

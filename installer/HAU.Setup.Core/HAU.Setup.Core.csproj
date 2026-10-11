@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>HAU.Setup.Core</AssemblyName>
-    <Version>1.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Rifegul</Authors>
     <Company>Rifegul</Company>
     <DebugType>none</DebugType>
@@ -18,5 +18,6 @@
     <Compile Include="../../src/Updates/UpdateManifest.cs" Link="Updates/UpdateManifest.cs" />
     <Compile Include="../../src/Updates/UpdateTrust.cs" Link="Updates/UpdateTrust.cs" />
     <Compile Include="../../src/Updates/LegacySettingsMigration.cs" Link="Updates/LegacySettingsMigration.cs" />
+    <EmbeddedResource Include="LoaderInventory755.json" LogicalName="LoaderInventory755.json" />
   </ItemGroup>
 </Project>

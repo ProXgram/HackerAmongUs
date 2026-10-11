@@ -5,3 +5,4 @@
 installer/MalumMenuEnhanced.Setup/Legal/*.txt -text
 installer/HAU.Setup/Legal/*.txt -text
 installer/ManualLegal/** -text
+installer/ManualLegal788/** -text

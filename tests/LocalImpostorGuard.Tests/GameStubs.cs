@@ -4,7 +4,7 @@ using AmongUs.GameOptions;
 
 namespace AmongUs.GameOptions
 {
-    public enum RoleTypes { Crewmate, Engineer, Scientist, Impostor, Shapeshifter, Phantom, Viper }
+    public enum RoleTypes { Crewmate, Engineer, Scientist, Impostor, Shapeshifter, Phantom, Viper, CrewmateGhost, ImpostorGhost }
     public enum RoleTeamTypes { Crewmate, Impostor }
     public sealed class GameOptionsManager
     {
@@ -78,7 +78,7 @@ public sealed class RoleManager
     {
         Pointer = new IntPtr(++_rolePointer),
         Role = role,
-        TeamType = role is RoleTypes.Impostor or RoleTypes.Shapeshifter or RoleTypes.Phantom or RoleTypes.Viper
+        TeamType = role is RoleTypes.Impostor or RoleTypes.ImpostorGhost or RoleTypes.Shapeshifter or RoleTypes.Phantom or RoleTypes.Viper
             ? RoleTeamTypes.Impostor : RoleTeamTypes.Crewmate
     };
 }

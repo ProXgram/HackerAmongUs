@@ -72,7 +72,7 @@ public static class UIHelpers
         if (GUILayout.Button(label))
         {
             request = true;
-            MenuUI.CloseMenu();
+            MenuUI.CloseMenuFromPointer();
         }
         GUI.enabled = original;
     }

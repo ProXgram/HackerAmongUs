@@ -1,0 +1,20 @@
+{
+  "component": "Il2CppInterop",
+  "version": "1.5.3",
+  "license": "LGPL-3.0-only",
+  "repository": "https://github.com/BepInEx/Il2CppInterop",
+  "source_ref": "dbda1cb353b0f4253345dc45136d170b9e50a5a0",
+  "noticePath": "InteropAndDetours/Il2CppInterop-LICENSE-LGPL3-and-GPL3.txt",
+  "noticeSha256": "5EECCE16E59E24DDD9D3712012517A033F2CD0459ACE22B43D5659D4624ABFF0",
+  "sourceArchive": {
+    "component": "Il2CppInterop",
+    "commit": "dbda1cb353b0f4253345dc45136d170b9e50a5a0",
+    "path": "Sources/Il2CppInterop-dbda1cb353b0f4253345dc45136d170b9e50a5a0-Source.zip",
+    "url": "https://github.com/BepInEx/Il2CppInterop/archive/dbda1cb353b0f4253345dc45136d170b9e50a5a0.zip",
+    "sha256": "96D223A475C885EF08118A3ADAEE0C2ED5D65EDD83FBEA9987E5A305F1123AC5",
+    "bytes": 944834,
+    "licenseEntries": [
+      "Il2CppInterop-dbda1cb353b0f4253345dc45136d170b9e50a5a0/LICENSE"
+    ]
+  }
+}

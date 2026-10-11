@@ -25,6 +25,7 @@ public class OutfitPickerUI : MonoBehaviour
     private IReadOnlyList<OutfitCatalogItem> _lastCatalog;
     private Vector2 _detailScroll, _catalogScroll, _categoryScroll;
     private GUIStyle _card, _chosenCard, _searchStyle;
+    private static GUIStyle _thumbnailStyle;
 
     public static void Open()
     {
@@ -38,6 +39,12 @@ public class OutfitPickerUI : MonoBehaviour
     {
         IsOpen = false;
         StopSearchEditing();
+    }
+
+    public static void CloseFromPointer()
+    {
+        PointerInputGuard.ConsumeGuiClose("OutfitPicker.Close", windowRect);
+        Close();
     }
 
     private void Update()
@@ -92,7 +99,7 @@ public class OutfitPickerUI : MonoBehaviour
             OutfitPickerHandler.RefreshCatalog(); _selection = null; _filterDirty = true;
             StopSearchEditing();
         }
-        if (GUILayout.Button("Close", GUILayout.Width(75))) Close();
+        if (GUILayout.Button("Close", GUILayout.Width(75))) CloseFromPointer();
         GUILayout.EndHorizontal();
         GUILayout.Label("Browse every available slot. Select an item to inspect it; Equip changes only that slot.", GUIStylePreset.Hint);
 
@@ -168,7 +175,7 @@ public class OutfitPickerUI : MonoBehaviour
         if (GUILayout.Button("Next", GUILayout.Width(75))) { _page++; _selection = null; StopSearchEditing(); }
         GUI.enabled = enabled;
         GUILayout.EndHorizontal();
-        GUILayout.Label("Thumbnails appear when the game has already loaded them.", GUIStylePreset.Hint);
+        GUILayout.Label("Available previews are shown. Text choices remain usable when a preview cannot be drawn.", GUIStylePreset.Hint);
         GUILayout.EndVertical();
 
         GUILayout.BeginVertical(GUIStylePreset.SectionBody, GUILayout.ExpandWidth(true), GUILayout.Height(bodyHeight));
@@ -355,34 +362,65 @@ public class OutfitPickerUI : MonoBehaviour
     private static void DrawThumbnail(OutfitCatalogItem item, Rect rect)
     {
         if (Event.current.type != EventType.Repaint) return;
-        if (item.Category == OutfitCategory.Color)
-        {
-            var color = GUI.color;
-            GUI.color = OutfitPickerHandler.BodyColor(item);
-            GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.ScaleToFit);
-            GUI.color = color;
-            return;
-        }
-        var sprite = OutfitPickerHandler.CachedSprite(item);
-        if (!sprite || !sprite.texture)
-        { GUI.Label(rect, item.Id.Length == 0 ? "∅" : "—", GUIStylePreset.Hint); return; }
+        var previousColor = GUI.color;
+        bool drawn = false;
         try
         {
-            // Plain atlas UVs cannot represent tight meshes or rotated packing.
-            // Avoid textureRect's native exception for tightly packed sprites.
-            if (sprite.packed && (sprite.packingMode == SpritePackingMode.Tight ||
-                sprite.packingRotation != SpritePackingRotation.None))
-            { GUI.Label(rect, "—", GUIStylePreset.Hint); return; }
-            var source = sprite.textureRect;
-            if (source.width <= 0 || source.height <= 0 || sprite.texture.width <= 0 || sprite.texture.height <= 0)
-            { GUI.Label(rect, "—", GUIStylePreset.Hint); return; }
-            var scale = Mathf.Min(rect.width / source.width, rect.height / source.height);
-            var target = new Rect(rect.center.x - source.width * scale / 2, rect.center.y - source.height * scale / 2,
-                source.width * scale, source.height * scale);
-            GUI.DrawTextureWithTexCoords(target, sprite.texture,
-                new Rect(source.x / sprite.texture.width, source.y / sprite.texture.height,
-                    source.width / sprite.texture.width, source.height / sprite.texture.height), true);
+            _thumbnailStyle ??= new GUIStyle(GUIStylePreset.Label)
+            {
+                border = new RectOffset(), padding = new RectOffset(), margin = new RectOffset(),
+                alignment = TextAnchor.MiddleCenter
+            };
+            if (item.Category == OutfitCategory.Color)
+            {
+                GUI.color = OutfitPickerHandler.BodyColor(item);
+                DrawThumbnailBox(rect, Texture2D.whiteTexture);
+                drawn = true;
+            }
+            else
+            {
+                var sprite = OutfitPickerHandler.CachedSprite(item);
+                if (sprite && sprite.texture &&
+                    (!sprite.packed || (sprite.packingMode != SpritePackingMode.Tight &&
+                        sprite.packingRotation == SpritePackingRotation.None)))
+                {
+                    var texture = sprite.texture;
+                    var source = sprite.textureRect;
+                    // The game's coordinate-texture renderer is stripped. A
+                    // native style can draw a whole image; atlas subregions use
+                    // a placeholder instead of showing the wrong atlas image.
+                    if (texture.width > 0 && texture.height > 0 && source.width > 0 && source.height > 0 &&
+                        Mathf.Approximately(source.x, 0) && Mathf.Approximately(source.y, 0) &&
+                        Mathf.Approximately(source.width, texture.width) && Mathf.Approximately(source.height, texture.height))
+                    {
+                        var scale = Mathf.Min(rect.width / source.width, rect.height / source.height);
+                        var target = new Rect(rect.center.x - source.width * scale / 2, rect.center.y - source.height * scale / 2,
+                            source.width * scale, source.height * scale);
+                        DrawThumbnailBox(target, texture);
+                        drawn = true;
+                    }
+                }
+            }
         }
-        catch { GUI.Label(rect, "—", GUIStylePreset.Hint); }
+        catch (Exception) { }
+        finally { GUI.color = previousColor; }
+        if (!drawn)
+        {
+            // A preview failure must not abort its row or the surrounding
+            // GUILayout groups. Even the small fallback is contained here.
+            try { GUI.Label(rect, item.Id.Length == 0 ? "∅" : "—", GUIStylePreset.Hint); }
+            catch (Exception) { }
+        }
+    }
+
+    private static void DrawThumbnailBox(Rect rect, Texture2D texture)
+    {
+        _thumbnailStyle.normal.background = texture;
+        _thumbnailStyle.hover.background = texture;
+        _thumbnailStyle.active.background = texture;
+        _thumbnailStyle.focused.background = texture;
+        // This overload exists natively in the shipped game. GUI.DrawTexture
+        // and its coordinate overloads reach unsupported unstripped helpers.
+        GUI.Box(rect, GUIContent.none, _thumbnailStyle);
     }
 }

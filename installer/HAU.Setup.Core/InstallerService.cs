@@ -23,7 +23,10 @@ public sealed record SetupCatalog(string ModVersion, DownloadArtifact Loader, Do
 }
 public enum GameArchitecture { X86, X64 }
 public sealed record InstallProgress(string Message, int Percent);
-public sealed record InstallResult(string GameDirectory, string BackupDirectory, bool LoaderInstalled);
+public sealed record InstallResult(string GameDirectory, string BackupDirectory, bool LoaderInstalled)
+{
+    public bool LoaderUpgraded { get; init; }
+}
 
 /// <summary>Installs only verified, pinned releases. No administrator access is requested.</summary>
 public sealed class InstallerService
@@ -37,13 +40,14 @@ public sealed class InstallerService
     private readonly HttpClient _http;
     private readonly Func<bool> _isGameRunning;
     private readonly Action<string>? _beforeChange;
+    private readonly IReadOnlyDictionary<string, string> _legacyLoaderFiles;
     private static readonly string[] MenuNames = ["MalumMenu.dll", "HaddadMenu.dll", "MalumMenuEnhanced.dll", "HAU.dll"];
 
     public InstallerService(SetupCatalog catalog, HttpClient? http = null)
         : this(catalog, http ?? SharedHttp, IsGameRunning, null) { }
 
     internal InstallerService(SetupCatalog catalog, HttpClient http, Func<bool> isGameRunning,
-        Action<string>? beforeChange = null)
+        Action<string>? beforeChange = null, IReadOnlyDictionary<string, string>? legacyLoaderFiles = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(http);
@@ -51,6 +55,8 @@ public sealed class InstallerService
         _http = http;
         _isGameRunning = isGameRunning;
         _beforeChange = beforeChange;
+        _legacyLoaderFiles = legacyLoaderFiles == null ? ReadLegacyLoaderInventory() :
+            new Dictionary<string, string>(legacyLoaderFiles, StringComparer.OrdinalIgnoreCase);
         ValidateArtifact(catalog.Loader);
         ValidateArtifact(catalog.Plugin);
     }
@@ -71,6 +77,7 @@ public sealed class InstallerService
             DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..8]);
         FileTransaction? transaction = null;
         var preserveRecovery = false;
+        var loaderUpgraded = false;
         try
         {
             SafePaths.CheckAncestors(stage);
@@ -107,9 +114,17 @@ public sealed class InstallerService
             RequireNoHauDowngrade(game);
             if (reuseLoader)
             {
-                if (!MatchesVerifiedLoader(game, Path.Combine(stage, "loader"), loaderFiles))
+                if (MatchesVerifiedLoader(game, Path.Combine(stage, "loader"), loaderFiles)) loaderFiles = [];
+                else if (MatchesLegacyLoader(game))
+                {
+                    loaderUpgraded = true;
+                    loaderFiles = loaderFiles.Where(relative => !MatchesFile(SafePaths.Under(game, relative),
+                        Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(SafePaths.Under(Path.Combine(stage, "loader"), relative)))))).ToList();
+                    // Custom compatible Doorstop preferences are kept even when they differ from the archive.
+                    loaderFiles.RemoveAll(relative => relative.Equals("doorstop_config.ini", StringComparison.OrdinalIgnoreCase));
+                }
+                else
                     throw new InvalidOperationException("Your existing loader does not match this setup's verified loader release. Restore the original game files or remove that loader first. Your files were not changed.");
-                loaderFiles = [];
             }
             var destinations = loaderFiles.Select(f => SafePaths.Under(game, f)).ToList();
             var plugins = Path.Combine(game, "BepInEx", "plugins");
@@ -139,7 +154,16 @@ public sealed class InstallerService
             foreach (var old in previousMenus) transaction.BackupMenu(old, Path.GetRelativePath(plugins, old));
             progress?.Report(new("Installing the verified files", 75));
             foreach (var file in loaderFiles)
+            {
+                if (loaderUpgraded)
+                {
+                    var oldFile = SafePaths.Under(game, file);
+                    if (!_legacyLoaderFiles.TryGetValue(file, out var expected) || !MatchesFile(oldFile, expected))
+                        throw new IOException("The previous loader changed during its upgrade. Installation stopped safely.");
+                    transaction.CopyBackup(oldFile, "loader/" + file);
+                }
                 transaction.Put(SafePaths.Under(Path.Combine(stage, "loader"), file), SafePaths.Under(game, file));
+            }
             transaction.Put(SafePaths.Under(Path.Combine(stage, "plugin"), PluginRelative),
                 Path.Combine(plugins, "HAU.dll"));
             for (var i = 0; i < settings.Count; i++)
@@ -153,7 +177,7 @@ public sealed class InstallerService
             RequireGameClosed();
             progress?.Report(new("Installation finished. You can open Among Us.", 100));
             transaction.Complete();
-            return new(game, Directory.Exists(backup) ? backup : "", !reuseLoader);
+            return new(game, Directory.Exists(backup) ? backup : "", !reuseLoader || loaderUpgraded) { LoaderUpgraded = loaderUpgraded };
         }
         catch (Exception installError)
         {
@@ -783,8 +807,7 @@ public sealed class InstallerService
 
     private static bool MatchesVerifiedLoader(string existing, string verified, List<string> files)
     {
-        var inventory = files.Where(f => f.StartsWith("BepInEx/core/", StringComparison.OrdinalIgnoreCase) ||
-            f.StartsWith("dotnet/", StringComparison.OrdinalIgnoreCase) || f.Equals("winhttp.dll", StringComparison.OrdinalIgnoreCase))
+        var inventory = files.Where(f => !f.Equals("doorstop_config.ini", StringComparison.OrdinalIgnoreCase))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var relative in inventory)
         {
@@ -799,6 +822,39 @@ public sealed class InstallerService
             foreach (var path in EnumerateSafeFiles(SafePaths.Under(existing, directory)))
                 if (!inventory.Contains(Path.GetRelativePath(existing, path).Replace('\\', '/'))) return false;
         return true;
+    }
+
+    private static IReadOnlyDictionary<string, string> ReadLegacyLoaderInventory()
+    {
+        using var input = typeof(InstallerService).Assembly.GetManifestResourceStream("LoaderInventory755.json")
+            ?? throw new InvalidDataException("The verified previous-loader inventory is missing.");
+        var inventory = JsonSerializer.Deserialize<Dictionary<string, string>>(input)
+            ?? throw new InvalidDataException("The verified previous-loader inventory is invalid.");
+        if (inventory.Count != 228 || inventory.Any(item => SafePaths.ZipName(item.Key) != item.Key ||
+            !AllowedLoaderPath(item.Key, false) || item.Value.Length != 64 || !item.Value.All(Uri.IsHexDigit)))
+            throw new InvalidDataException("The verified previous-loader inventory is incomplete.");
+        return new Dictionary<string, string>(inventory, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private bool MatchesLegacyLoader(string game)
+    {
+        foreach (var item in _legacyLoaderFiles)
+        {
+            if (item.Key.Equals("doorstop_config.ini", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!MatchesFile(SafePaths.Under(game, item.Key), item.Value)) return false;
+        }
+        foreach (var directory in new[] { "BepInEx/core", "dotnet" })
+            foreach (var path in EnumerateSafeFiles(SafePaths.Under(game, directory)))
+                if (!_legacyLoaderFiles.ContainsKey(Path.GetRelativePath(game, path).Replace('\\', '/'))) return false;
+        return true;
+    }
+
+    private static bool MatchesFile(string path, string expectedSha256)
+    {
+        SafePaths.CheckAncestors(path);
+        if (!File.Exists(path)) return false;
+        using var input = File.OpenRead(path);
+        return CryptographicOperations.FixedTimeEquals(SHA256.HashData(input), Convert.FromHexString(expectedSha256));
     }
 
     private static IEnumerable<string> EnumerateSafeFiles(string folder)

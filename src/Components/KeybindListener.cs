@@ -20,7 +20,7 @@ public class KeybindListener : MonoBehaviour
         SprintHandler.Tick();
         ColorCycleHandler.Tick();
         NicknameEntry.Tick();
-        if (HAUPlugin.isPanicked) return;
+        if (HAUPlugin.isPanicked || !Application.isFocused) return;
         // Typing a nickname in the menu must not trigger cheat keybinds.
         if (MenuUI.isGUIActive) return;
 
@@ -34,9 +34,10 @@ public class KeybindListener : MonoBehaviour
             if (!Input.GetKeyDown(key)) continue;
 
             if (!CheatToggles.ToggleFields.TryGetValue(name, out var field)) continue;
+            if (ControlPolicy.RequiresHostActivation(name) && !(Utils.isHost || Utils.isFreePlay)) continue;
 
             var current = (bool)field.GetValue(null);
-            field.SetValue(null, !current);
+            field.SetValue(null, ControlPolicy.IsMomentaryRequest(name) || !current);
         }
     }
 

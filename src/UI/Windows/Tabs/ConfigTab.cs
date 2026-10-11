@@ -57,7 +57,8 @@ public class ConfigTab : ITab
         if (!_advanced) return;
         UIHelpers.BeginSection("Advanced", "Optional settings for local display, clipboard convenience and configuration files.");
         CheatToggles.avoidPenalties = GUILayout.Toggle(CheatToggles.avoidPenalties, "Clear the local leave-penalty timer");
-        CheatToggles.unlockFeatures = GUILayout.Toggle(CheatToggles.unlockFeatures, "Show extra game controls");
+        CheatToggles.unlockFeatures = GUILayout.Toggle(CheatToggles.unlockFeatures, "Local Account UI Unlock");
+        UIHelpers.Hint("Changes local availability of chat, friends, custom-name and online controls. It does not authenticate your account or change server permissions.");
         CheatToggles.copyLobbyCodeOnDisconnect = GUILayout.Toggle(CheatToggles.copyLobbyCodeOnDisconnect, "Copy the lobby code when disconnected");
         CheatToggles.spoofAprilFoolsDate = GUILayout.Toggle(CheatToggles.spoofAprilFoolsDate, "Use the April Fools display date");
         HAUPlugin.menuAllowClickThrough.Value = GUILayout.Toggle(HAUPlugin.menuAllowClickThrough.Value, "Allow clicks through the menu into the game");

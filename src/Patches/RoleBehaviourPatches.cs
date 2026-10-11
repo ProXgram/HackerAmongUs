@@ -1,6 +1,4 @@
 using HarmonyLib;
-using System.Linq;
-using Sentry.Internal.Extensions;
 
 namespace HAU;
 
@@ -59,9 +57,9 @@ public static class TrackerRole_FixedUpdate
 public static class PhantomRole_IsValidTarget
 {
     // Postfix patch of PhantomRole.IsValidTarget to allow killing while invisible
-    public static void Postfix(NetworkedPlayerInfo target, ref bool __result)
+    public static void Postfix(PhantomRole __instance, NetworkedPlayerInfo target, ref bool __result)
     {
-        if (CheatToggles.killVanished)
+        if (CheatToggles.killVanished && (Utils.isHost || Utils.isFreePlay) && LocalRoleTargeting.CanOverride(__instance))
         {
             __result = Utils.IsValidTarget(target);
         }
@@ -73,9 +71,9 @@ public static class ImpostorRole_IsValidTarget
 {
     // Postfix patch of ImpostorRole.IsValidTarget to allow forbidden kill targets for killAnyone cheat
     // Allows killing ghosts (with seeGhosts), impostors, players in vents, etc...
-    public static void Postfix(NetworkedPlayerInfo target, ref bool __result)
+    public static void Postfix(ImpostorRole __instance, NetworkedPlayerInfo target, ref bool __result)
     {
-        if (CheatToggles.killAnyone)
+        if (CheatToggles.killAnyone && (Utils.isHost || Utils.isFreePlay) && LocalRoleTargeting.CanOverride(__instance))
         {
            __result = Utils.IsValidTarget(target);
         }
@@ -88,11 +86,9 @@ public static class ImpostorRole_FindClosestTarget
     // Prefix patch of ImpostorRole.FindClosestTarget to allow for infinite kill reach
     public static bool Prefix(ImpostorRole __instance, ref PlayerControl __result)
     {
-        if (!CheatToggles.killReach) return true;
+        if (!CheatToggles.killReach || !LocalRoleTargeting.CanOverride(__instance)) return true;
 
-        __result = Utils.GetPlayersSortedByDistance().FirstOrDefault(player =>
-            !player.IsNull() && player.Data != null && __instance.IsValidTarget(player.Data) &&
-            player.Collider && player.Collider.enabled);
+        __result = LocalRoleTargeting.FindClosest(__instance);
 
         return false;
     }
@@ -104,11 +100,9 @@ public static class DetectiveRole_FindClosestTarget
     // Prefix patch of DetectiveRole.FindClosestTarget to allow for infinite interrogate reach
     public static bool Prefix(DetectiveRole __instance, ref PlayerControl __result)
     {
-        if (!CheatToggles.interrogateReach) return true;
+        if (!CheatToggles.interrogateReach || !LocalRoleTargeting.CanOverride(__instance)) return true;
 
-        var playerList = Utils.GetPlayersSortedByDistance().Where(player => !player.IsNull() && __instance.IsValidTarget(player.Data) && player.Collider.enabled).ToList();
-
-        __result = playerList[0];
+        __result = LocalRoleTargeting.FindClosest(__instance);
 
         return false;
     }
@@ -120,12 +114,42 @@ public static class TrackerRole_FindClosestTarget
     // Prefix patch of TrackerRole.FindClosestTarget to allow for infinite track reach
     public static bool Prefix(TrackerRole __instance, ref PlayerControl __result)
     {
-        if (!CheatToggles.trackReach) return true;
+        if (!CheatToggles.trackReach || !LocalRoleTargeting.CanOverride(__instance)) return true;
 
-        var playerList = Utils.GetPlayersSortedByDistance().Where(player => !player.IsNull() && __instance.IsValidTarget(player.Data) && player.Collider.enabled).ToList();
-
-        __result = playerList[0];
+        __result = LocalRoleTargeting.FindClosest(__instance);
 
         return false;
+    }
+}
+
+// Range overrides only change target selection for the current owning role.
+// Native role validation still determines eligibility; an empty snapshot is a
+// valid "no target" result, never an unchecked index into a candidate list.
+internal static class LocalRoleTargeting
+{
+    internal static bool CanOverride(RoleBehaviour role)
+    {
+        var local = PlayerControl.LocalPlayer;
+        return role && local && local.AmOwner && local.Data && local.Data.Role &&
+            !local.Data.IsDead && !local.Data.Role.IsDead && !local.Data.Disconnected &&
+            local.Data.Role.Pointer == role.Pointer && role.Player && role.Player.AmOwner &&
+            role.Player.Pointer == local.Pointer && local.Collider && GameData.Instance &&
+            (Utils.isInGame || Utils.isFreePlay) && !Utils.isMeeting && !Utils.isExiling;
+    }
+
+    internal static PlayerControl FindClosest(RoleBehaviour role)
+    {
+        var local = PlayerControl.LocalPlayer;
+        var players = Utils.GetPlayersSortedByDistance();
+        if (players == null) return null;
+        foreach (var player in players)
+        {
+            if (!player || player.Pointer == local.Pointer || !player.Data ||
+                player.Data.Disconnected || !player.Data.Role || !player.Data.Object ||
+                player.Data.Object.Pointer != player.Pointer || !player.Collider || !player.Collider.enabled)
+                continue;
+            if (role.IsValidTarget(player.Data)) return player;
+        }
+        return null;
     }
 }

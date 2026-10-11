@@ -241,13 +241,15 @@ public struct CheatToggles
         writer.WriteLine("# - List of supported keycodes: https://docs.unity3d.com/Packages/com.unity.tiny@0.16/api/Unity.Tiny.Input.KeyCode.html");
         writer.WriteLine("# - Setting a keybind is optional. Use KeyCode.None to not set a keybind");
         writer.WriteLine("# - Multiple toggles may have the same key, but multiple keys per toggle are NOT supported");
-        writer.WriteLine("# - Keybinds are only applied after loading this profile by pressing 'Load from Profile' in the Config menu");
+        writer.WriteLine("# - Use Settings > Load tool profile to apply saved switches and keybinds.");
+        writer.WriteLine("# - Actions and Automatic Tasks stay off until you activate them yourself.");
         writer.WriteLine();
 
         foreach (var field in ToggleFields.Values)
         {
             Keybinds.TryGetValue(field.Name, out var key);  // If no key is set then write KeyCode.None
-            var enabled = field.Name == nameof(automaticTasks) ? false : field.GetValue(null);
+            var enabled = !ControlPolicy.HasRestorableState(field.Name)
+                ? false : field.GetValue(null);
             writer.WriteLine($"{field.Name} = {enabled} = KeyCode.{key}");
         }
     }
@@ -260,6 +262,9 @@ public struct CheatToggles
         // profile was saved with this toggle on. Its shortcut still loads.
         automaticTasks = false;
         AutomaticTasksHandler.Reset();
+        bool hostOrPractice = Utils.isHost || Utils.isFreePlay;
+        foreach (var entry in ToggleFields)
+            if (ControlPolicy.ShouldClearForProfileLoad(entry.Key, hostOrPractice)) entry.Value.SetValue(null, false);
         if (!File.Exists(HAUPlugin.ProfilePath)) return;
 
         using var reader = new StreamReader(HAUPlugin.ProfilePath);
@@ -282,7 +287,7 @@ public struct CheatToggles
             if (!ToggleFields.TryGetValue(name, out var field)) continue;
 
             // Loads whether the cheat is enabled or disabled by default
-            if (name != nameof(automaticTasks) && bool.TryParse(parts[1].Trim(), out var boolVal))
+            if (ControlPolicy.CanRestoreEnabled(name, hostOrPractice) && bool.TryParse(parts[1].Trim(), out var boolVal))
             {
                 field.SetValue(null, boolVal);
             }

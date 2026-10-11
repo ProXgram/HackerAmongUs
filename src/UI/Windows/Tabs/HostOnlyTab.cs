@@ -40,17 +40,20 @@ public class HostOnlyTab : ITab
     private static void DrawRules()
     {
         UIHelpers.BeginSection("My role assignment", "Set your own role before the round starts.");
-        RolePreviewControls.DrawAlwaysImpostor(" Assign me Impostor / host or Freeplay");
+        RolePreviewControls.DrawAlwaysImpostor(" Always Impostor / host or Freeplay");
+        UIHelpers.Hint("When hosting, applies at the next round start. Freeplay uses its local practice role.");
         UIHelpers.EndSection();
         UIHelpers.BeginSection("Round rules");
-        CheatToggles.noGameEnd = GUILayout.Toggle(CheatToggles.noGameEnd, " Keep the round running after win conditions");
-        CheatToggles.unfixableLights = GUILayout.Toggle(CheatToggles.unfixableLights, " Make lights unfixable until disabled");
-        UIHelpers.Action("Start the lobby now", ref CheatToggles.forceStartGame, Utils.isLobby);
+        CheatToggles.noGameEnd = GUILayout.Toggle(CheatToggles.noGameEnd, " No Game End");
+        CheatToggles.unfixableLights = GUILayout.Toggle(CheatToggles.unfixableLights, " Unfixable Lights");
+        UIHelpers.Hint("No Game End suspends normal win checks. Turn Unfixable Lights off to release that lights override.");
+        UIHelpers.Action("Force Start", ref CheatToggles.forceStartGame, Utils.isLobby);
         UIHelpers.EndSection();
         UIHelpers.BeginSection("Kill rules");
-        CheatToggles.noKillCd = GUILayout.Toggle(CheatToggles.noKillCd, " Remove my kill cooldown");
-        CheatToggles.killAnyone = GUILayout.Toggle(CheatToggles.killAnyone, " Allow targeting teammates and protected players");
-        CheatToggles.killVanished = GUILayout.Toggle(CheatToggles.killVanished, " Allow kills while vanished");
+        CheatToggles.noKillCd = GUILayout.Toggle(CheatToggles.noKillCd, " No Kill Cooldown");
+        CheatToggles.killAnyone = GUILayout.Toggle(CheatToggles.killAnyone, " Kill Anyone");
+        CheatToggles.killVanished = GUILayout.Toggle(CheatToggles.killVanished, " Kill While Vanished");
+        UIHelpers.Hint("These change your hosted kill controls. Kill Anyone expands eligible targets, including teammates; Kill While Vanished affects Phantom targeting.");
         CheatToggles.showProtectMenu = GUILayout.Toggle(CheatToggles.showProtectMenu, " Open player protection window");
         UIHelpers.EndSection();
     }
@@ -58,10 +61,10 @@ public class HostOnlyTab : ITab
     private static void DrawMeetings()
     {
         UIHelpers.BeginSection("Meeting actions");
-        UIHelpers.Action("Start emergency meeting", ref CheatToggles.callMeeting, Utils.isShip && !Utils.isMeeting);
-        UIHelpers.Action("End meeting for everyone / skip", ref CheatToggles.skipMeeting, Utils.isMeeting);
-        UIHelpers.ChoosePlayer("Choose player to eject", ref CheatToggles.ejectPlayer, Utils.isMeeting);
-        CheatToggles.voteImmune = GUILayout.Toggle(CheatToggles.voteImmune, " Prevent votes from ejecting me");
+        UIHelpers.Action("Force Meeting", ref CheatToggles.callMeeting, OwnedActionContext.StartMeeting);
+        UIHelpers.Action("Skip Meeting / everyone", ref CheatToggles.skipMeeting, OwnedActionContext.HostMeetingAction);
+        UIHelpers.ChoosePlayer("Eject Player...", ref CheatToggles.ejectPlayer, OwnedActionContext.HostMeetingAction);
+        CheatToggles.voteImmune = GUILayout.Toggle(CheatToggles.voteImmune, " Vote Immune / me");
         UIHelpers.Hint("Eject and End meeting are available during a meeting.");
         UIHelpers.EndSection();
     }
@@ -69,15 +72,16 @@ public class HostOnlyTab : ITab
     private static void DrawPlayerActions()
     {
         UIHelpers.BeginSection("Choose a player", "Opens the player selection screen. Kill actions are unavailable in the lobby.");
-        UIHelpers.ChoosePlayer("Choose player to kill", ref CheatToggles.killPlayer, Utils.isShip && !Utils.isLobby);
-        UIHelpers.ChoosePlayer("Choose player to kill and return", ref CheatToggles.telekillPlayer, Utils.isShip && !Utils.isLobby);
+        UIHelpers.ChoosePlayer("Kill Player...", ref CheatToggles.killPlayer, OwnedActionContext.HostRoundAction);
+        UIHelpers.ChoosePlayer("Telekill Player...", ref CheatToggles.telekillPlayer, OwnedActionContext.HostRoundAction);
+        UIHelpers.Hint("Telekill returns you to your previous position after the selected kill action.");
         UIHelpers.EndSection();
         UIHelpers.BeginSection("Group actions");
-        UIHelpers.Action("Kill all crewmates", ref CheatToggles.killAllCrew, Utils.isShip && !Utils.isLobby);
-        UIHelpers.Action("Kill all impostors", ref CheatToggles.killAllImps, Utils.isShip && !Utils.isLobby);
-        UIHelpers.Action("Kill everyone", ref CheatToggles.killAll, Utils.isShip && !Utils.isLobby);
-        CheatToggles.kickVents = GUILayout.Toggle(CheatToggles.kickVents, " Keep players out of vents");
-        UIHelpers.Hint("Vent clearing stays active until you turn it off.");
+        UIHelpers.Action("Kill all crewmates", ref CheatToggles.killAllCrew, OwnedActionContext.HostRoundAction);
+        UIHelpers.Action("Kill all impostors", ref CheatToggles.killAllImps, OwnedActionContext.HostRoundAction);
+        UIHelpers.Action("Kill everyone", ref CheatToggles.killAll, OwnedActionContext.HostRoundAction);
+        UIHelpers.Action("Kick From Vents / once", ref CheatToggles.kickVents, OwnedActionContext.HostRoundAction);
+        UIHelpers.Hint("Kick From Vents processes all current vents once. It does not keep running.");
         UIHelpers.EndSection();
     }
 }

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/UI/Utilities/NativePointerReleaseGuard.cs" Link="NativePointerReleaseGuard.cs" />
+    <Compile Include="../../src/UI/Utilities/PointerInputGuard.cs" Link="PointerInputGuard.cs" />
+    <Compile Include="../../src/UI/Utilities/PointerInputDiagnostics.cs" Link="PointerInputDiagnostics.cs" />
+    <Compile Include="../../src/Patches/PassiveUiElementPatches.cs" Link="PassiveUiElementPatches.cs" />
+  </ItemGroup>
+</Project>

@@ -1,10 +1,10 @@
-# Hacker Among Us (HAU) 1.0
+# Hacker Among Us (HAU) 1.0.1
 
 **Rifegul's HAU edition for Among Us 19.0.0 / 2026.9.29.**
 
 HAU adopts its own visible name, DLL (`HAU.dll`), project/namespace and settings
 identity. The redesigned charcoal/cyan interface groups tools into Home,
-Movement, Player Tools, Appearance, Information, Tasks, Abilities, Host Controls,
+Movement, Player Tools, Appearance, ESP, Tasks, Abilities, Host Controls,
 Practice, Settings, About and Logs.
 
 This edition adds a detailed outfit studio with six categories, search, item
@@ -24,6 +24,16 @@ Original authors, source attribution and license notices remain in
 [CREDITS.md](CREDITS.md) and [LICENSE](LICENSE).
 
 ## Historical notes
+
+HAU 1.0.1 reviews the visible control names and behavior, adopts official
+BepInEx Unity IL2CPP x64 build 788, and adds a transactional upgrade from the
+verified build 755. Action buttons cannot replay through profiles. Camera,
+role-preview and sabotage state is tied to the current player and round; range
+targeting handles missing players safely while preserving native eligibility.
+The native outfit picker uses retained GUI drawing methods and contains
+unavailable thumbnail previews without interrupting the catalog. New settings
+disable click-through; closing a GUI by clicking cannot release that click onto
+the game's buttons underneath.
 
 Everything below documents previous editions as recorded at the time.
 Their version names, menu paths, commands and verification statements belong

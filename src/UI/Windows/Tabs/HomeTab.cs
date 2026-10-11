@@ -9,9 +9,9 @@ public class HomeTab : ITab
     public void Draw()
     {
         UIHelpers.BeginSection("Your controls, in one place",
-            "Choose a section on the left. Buttons perform an action; switches stay on until you turn them off.");
-        GUILayout.Label(Utils.isHost ? "You are hosting. Lobby rules and role assignment are in Host Controls."
-            : Utils.isFreePlay ? "Freeplay is ready. Use Practice for role experiments."
+            "Choose a section on the left. Buttons perform an action; switches enable settings or show their current state.");
+        GUILayout.Label(Utils.isFreePlay ? "Freeplay is ready. Use Practice for role experiments."
+            : Utils.isHost ? "You are hosting. Lobby rules and role assignment are in Host Controls."
             : Utils.isLobby || Utils.isInGame ? "You are a guest. Shared rules still need host support."
             : "Join a lobby or open Freeplay to use player controls.");
         UIHelpers.EndSection();
@@ -19,6 +19,7 @@ public class HomeTab : ITab
         UIHelpers.BeginSection("Quick access");
         Shortcut("Sprint, speed and movement modes", "Movement");
         Shortcut("Pick an outfit or change your nickname", "Appearance");
+        Shortcut("ESP overlays, map markers and camera", "ESP");
         Shortcut("Vent, track, Vitals and Detective Notes", "Abilities");
         Shortcut("Start your own tasks manually", "Tasks");
         UIHelpers.EndSection();

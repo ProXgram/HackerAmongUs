@@ -1,6 +1,6 @@
 # Hacker Among Us (HAU)
 
-**An Among Us mod by Rifegul. Version 1.0.**
+**An Among Us mod by Rifegul. Version 1.0.1.**
 
 A redesigned menu with clear categories, a new look and detailed controls.
 For **Among Us 19.0.0 / 2026.9.29**, on **Windows 10/11, 64-bit**.
@@ -9,15 +9,15 @@ For **Among Us 19.0.0 / 2026.9.29**, on **Windows 10/11, 64-bit**.
 
 ### Automatic installer / Steam, Microsoft Store and Xbox App
 
-**[Download HAUSetup.exe](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAUSetup.exe)**
+**[Download HAUSetup.exe](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAUSetup.exe)**
 
 Close Among Us, open the file and click **Install**. It finds your game and
 installs the mod and loader. If needed, click **Browse** and select `Among Us.exe`.
 
 ### Manual ZIP / all supported PC launchers
 
-- **[Steam ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Steam.zip)**
-- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-MicrosoftStore-EpicGames-XboxApp.zip)**
+- **[Steam ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-Steam.zip)**
+- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-MicrosoftStore-EpicGames-XboxApp.zip)**
 
 Close Among Us, extract your ZIP and copy **everything inside it** directly
 beside `Among Us.exe`. Open the game normally, wait for the first launch to
@@ -35,7 +35,7 @@ finish, then press **Delete**.
 | Movement | Sprint up to **10×**, walking speed, follow, orbit, Lag Mode and teleport controls. |
 | Player Tools | Meeting/report tools, door requests and chat settings. |
 | Appearance | Outfit studio, random outfits, nickname editing, colors and visual effects. |
-| Information | Player labels, camera controls, map markers and direction lines. |
+| ESP | Player labels, camera controls, map markers and direction lines. |
 | Tasks | Manually enabled Automatic Tasks, AI Tasks and the task list. |
 | Abilities | Multi Role, ability settings and clearly labeled local previews. |
 | Host Controls | Hosted role assignment, Ghost Voting, shared round rules, meetings and player actions. |
@@ -45,15 +45,15 @@ finish, then press **Delete**.
 | Logs | Choose events to record and open or clear the event log. |
 
 Each section groups related controls. **Buttons perform an action; switches
-stay on until disabled.** Host controls stay disabled when you are a guest.
+enable settings or show their current state.** Shared host actions stay disabled
+for guests; Ghost Voting has a local opt-in.
 
 ## Outfit studio
 
 ![HAU outfit studio](docs/screenshots/hau-outfit-picker.png)
 
-This capture shows the interface while the local game's startup issue prevents
-the cosmetic catalog from loading. Item selection and outfit changes still
-need a live lobby or Freeplay check.
+The picker shows the game's loaded catalog. Cached images appear when their
+layout supports previews; unavailable atlas previews show a placeholder.
 
 Open **Appearance → Outfit & name → Open full outfit picker**. Browse colors,
 hats, skins, visors, pets and nameplates. Search, inspect an item and equip just
@@ -83,13 +83,13 @@ If a game update breaks compatibility, a compatible mod release must be
 published first. If the mod cannot start, run the latest installer. Epic Games
 uses manual ZIP updates.
 
-Earlier editions were tested in Xbox / Microsoft Store gameplay. HAU 1.0 has
-passed build and fixture checks; its live round checks are pending while the
-local unmodified game also stays on a black startup screen. Steam and Epic
-Games gameplay remain untested.
+HAU 1.0.1 builds with official BepInEx Unity IL2CPP x64 build 788. Startup and
+Freeplay have been checked on Xbox / Microsoft Store. Automated regression
+checks cover the control, movement, task, outfit and update handlers. Steam,
+Epic Games and multiplayer behavior remain untested for this release.
 
-[Download page](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0) ·
-[Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Source.zip) ·
+[Download page](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0.1) ·
+[Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-Source.zip) ·
 [GPL-3.0 license](LICENSE) · [Attribution](CREDITS.md)
 
 This mod is not affiliated with or endorsed by Innersloth LLC. Among Us belongs

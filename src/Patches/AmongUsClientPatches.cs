@@ -37,6 +37,8 @@ public static class AmongUsClient_OnGameJoined
     public static void Postfix(string gameIdString)
     {
         lastGameIdString = gameIdString;
+        PlayerActions.ResetSession();
+        GameActions.StopShipAnimCheats();
         ColorCycleHandler.Stop();
         MovementAutomation.Reset();
         SprintHandler.Reset();
@@ -57,6 +59,8 @@ public static class AmongUsClient_CoStartGame
     public static void Postfix()
     {
         // Clear lobby/session carryover before the new round's intro starts.
+        PlayerActions.ResetSession();
+        GameActions.StopShipAnimCheats();
         CheatToggles.automaticTasks = false;
         AutomaticTasksHandler.Reset();
         if (CheatToggles.logGameState)
@@ -69,6 +73,8 @@ public static class AmongUsClient_OnGameEnd
 {
     public static void Postfix(EndGameResult endGameResult)
     {
+        PlayerActions.ResetSession();
+        GameActions.StopShipAnimCheats();
         ColorCycleHandler.Stop();
         MovementAutomation.Reset();
         SprintHandler.Reset();

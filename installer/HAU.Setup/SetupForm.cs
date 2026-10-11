@@ -26,12 +26,12 @@ internal sealed class SetupForm : Form
     private bool finished;
     private string lastError = "";
 
-    internal static readonly SetupCatalog Catalog = new("1.0",
-        new DownloadArtifact(new Uri("https://builds.bepinex.dev/projects/bepinex_be/755/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755%2B3fab71a.zip"),
-            "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F", "BepInEx loader"),
-        new DownloadArtifact(new Uri("https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Plugin.zip"),
-            "450C4A7A228FA669640BC95453639CF604FE110F2A7B82519AB7E399D6676EFF", "Hacker Among Us"))
-        { ExpectedPluginVersion = new Version(1, 0, 0, 0) };
+    internal static readonly SetupCatalog Catalog = new("1.0.1",
+        new DownloadArtifact(new Uri("https://builds.bepinex.dev/projects/bepinex_be/788/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788%2B5b766a3.zip"),
+            "F4CC496BD098A0DF4164B81E3737297707F13A47C2478DBA2F60EEFAB784817A", "BepInEx loader"),
+        new DownloadArtifact(new Uri("https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-Plugin.zip"),
+            "7B754C7024760A0ACEE2B7565868EFF6E0CBEBF01C7D4C4E8D75BC196EF562A8", "Hacker Among Us"))
+        { ExpectedPluginVersion = new Version(1, 0, 1, 0) };
 
     public SetupForm()
     {

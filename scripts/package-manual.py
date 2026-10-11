@@ -23,9 +23,11 @@ import zlib
 
 
 ROOT = Path(__file__).resolve().parents[1]
-LOADER = ROOT / "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip"
+LOADER_755 = ROOT / "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip"
+LOADER_788 = ROOT / "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788+5b766a3.zip"
 PLUGIN = ROOT / "downloads/hau-v1.0/HAU-1.0-Plugin.zip"
-LOADER_SHA = "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F"
+LOADER_755_SHA = "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F"
+LOADER_788_SHA = "F4CC496BD098A0DF4164B81E3737297707F13A47C2478DBA2F60EEFAB784817A"
 DLL_PATH = "BepInEx/plugins/HAU.dll"
 OUTPUT_NAME = "HAU-1.0-MicrosoftStore-EpicGames-XboxApp.zip"
 STEAM_OUTPUT_NAME = "HAU-1.0-Steam.zip"
@@ -147,8 +149,8 @@ def pinned_zip(path: Path, expected_hash: str) -> tuple[dict[str, bytes], set[st
     return files, directories
 
 
-def legal_assets(draft: bool, loader: dict[str, bytes]) -> tuple[dict[str, bytes], bool]:
-    manifest_path = LEGAL / "inventory.json"
+def legal_assets(draft: bool, loader: dict[str, bytes], legal_root: Path, loader_sha: str) -> tuple[dict[str, bytes], bool]:
+    manifest_path = legal_root / "inventory.json"
     if not manifest_path.is_file():
         require(draft, "Required redistribution inventory is not ready. Use --draft for an unfinished preview.")
         return {}, False
@@ -157,6 +159,8 @@ def legal_assets(draft: bool, loader: dict[str, bytes]) -> tuple[dict[str, bytes
     complete = manifest.get("complete") is True
     require(draft or complete, "Redistribution inventory is unfinished. Use --draft for a preview.")
     if complete:
+        require(manifest.get("loader_archive", {}).get("sha256") == loader_sha,
+                "The redistribution inventory does not describe the selected loader archive.")
         loader_inventory = manifest.get("loader_files")
         require(isinstance(loader_inventory, list) and len(loader_inventory) == len(loader),
                 "Redistribution inventory does not cover every loader file.")
@@ -174,14 +178,14 @@ def legal_assets(draft: bool, loader: dict[str, bytes]) -> tuple[dict[str, bytes
         relative = safe_name(entry["path"])
         require(relative.lower() not in listed and relative != "inventory.json", "Duplicate redistribution asset.")
         listed.add(relative.lower())
-        path = LEGAL.joinpath(*relative.split("/"))
+        path = legal_root.joinpath(*relative.split("/"))
         require(path.is_file() and not path.is_symlink() and
-                LEGAL.resolve() in path.resolve().parents, "A redistribution asset is missing or linked.")
+                legal_root.resolve() in path.resolve().parents, "A redistribution asset is missing or linked.")
         data = path.read_bytes()
         require(digest(data) == entry["sha256"].upper(), "A redistribution asset differs from its audited hash.")
         require(len(data) <= MAX_FILE, "A redistribution asset is too large.")
         assets["ThirdParty/" + relative] = data
-    actual = {p.relative_to(LEGAL).as_posix().lower() for p in LEGAL.rglob("*") if p.is_file()}
+    actual = {p.relative_to(legal_root).as_posix().lower() for p in legal_root.rglob("*") if p.is_file()}
     require(actual == listed | {"inventory.json"}, "Redistribution folder contains unaudited files.")
     return assets, complete
 
@@ -204,15 +208,21 @@ def main() -> None:
     parser.add_argument("--draft", action="store_true", help="Build an explicitly unfinished preview.")
     parser.add_argument("--platform", choices=("windows", "steam"), default="windows",
                         help="Choose the existing Windows stores package or the current 64-bit Steam package.")
-    parser.add_argument("--version", type=numeric_version, default="1.0", help="Finished HAU release version.")
+    parser.add_argument("--version", type=numeric_version, default="1.0.1", help="Finished HAU release version.")
+    parser.add_argument("--loader-build", choices=("755", "788"), help="Audited loader build; 1.0 uses 755, newer HAU uses 788.")
+    parser.add_argument("--replace", action="store_true", help="Replace an unpublished local package after reviewing a rebuild. Published 1.0 is immutable.")
     parser.add_argument("--plugin-sha", type=sha256_argument, required=True, help="Verified HAU plugin ZIP SHA256.")
     parser.add_argument("--dll-sha", type=sha256_argument, required=True, help="Verified HAU DLL SHA256.")
     args = parser.parse_args()
     steam = args.platform == "steam"
     plugin_path = ROOT / f"downloads/hau-v{args.version}/HAU-{args.version}-Plugin.zip"
     plugin_sha, dll_sha = args.plugin_sha, args.dll_sha
+    loader_build = args.loader_build or ("755" if args.version == "1.0" else "788")
+    loader_path = LOADER_755 if loader_build == "755" else LOADER_788
+    loader_sha = LOADER_755_SHA if loader_build == "755" else LOADER_788_SHA
+    legal_root = ROOT / ("installer/ManualLegal" if loader_build == "755" else "installer/ManualLegal788")
     output_name = (STEAM_OUTPUT_NAME if steam else OUTPUT_NAME).replace("-1.0-", f"-{args.version}-")
-    loader, directories = pinned_zip(LOADER, LOADER_SHA)
+    loader, directories = pinned_zip(loader_path, loader_sha)
     plugin, _ = pinned_zip(plugin_path, plugin_sha)
     require(len(loader) == 228, "The loader file count differs from the verified release.")
     required_loader = {"winhttp.dll", "doorstop_config.ini", ".doorstop_version",
@@ -232,7 +242,7 @@ def main() -> None:
     install = install.replace("Hacker Among Us 1.0 by Rifegul", f"Hacker Among Us {args.version} by Rifegul")
     install = install.replace("Source and credits:", AUTOMATIC_UPDATES + "Source and credits:")
     files["INSTALL.txt"] = install.replace("\n", "\r\n").encode("utf-8")
-    assets, legal_complete = legal_assets(args.draft, loader)
+    assets, legal_complete = legal_assets(args.draft, loader, legal_root, loader_sha)
     require(not set(files) & set(assets), "A notice asset would overwrite a loader file.")
     files.update(assets)
     if args.draft:
@@ -252,6 +262,8 @@ def main() -> None:
     output_directory = ROOT / ("artifacts/verification/manual-package" if args.draft else "downloads/manual")
     output_directory.mkdir(parents=True, exist_ok=True)
     output = output_directory / (output_name.replace(".zip", "-DRAFT.zip") if args.draft else output_name)
+    require(not output.exists() or args.draft or args.replace and args.version != "1.0",
+            "An existing release cannot be replaced implicitly; use a new version or explicitly --replace an unpublished package.")
     with tempfile.TemporaryDirectory(prefix="MenuManualPackage-") as temporary:
         staging_zip = Path(temporary) / output.name
         with zipfile.ZipFile(staging_zip, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
@@ -286,7 +298,8 @@ def main() -> None:
         "draft": args.draft,
         "bytes": output.stat().st_size,
         "sha256": digest(output.read_bytes()),
-        "loaderArchiveSha256": LOADER_SHA,
+        "loaderArchiveSha256": loader_sha,
+        "loaderBuild": loader_build,
         "pluginArchiveSha256": plugin_sha,
         "pluginDllSha256": dll_sha,
         "officialLoaderFiles": len(loader),

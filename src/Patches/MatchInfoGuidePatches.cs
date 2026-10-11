@@ -3,21 +3,6 @@ using UnityEngine;
 
 namespace HAU;
 
-[HarmonyPatch(typeof(MatchInfoGuide), nameof(MatchInfoGuide.Open))]
-public static class MatchInfoGuide_Open
-{
-    // Prefix patch of MatchInfoGuide.Open to recreate player entries each time MatchInfo opens
-    // Without this, entries are only created on the first open, making player names difficult to update afterward
-    public static void Prefix(MatchInfoGuide __instance)
-    {
-        if (__instance.NormalModeSettings.Count > 0 || __instance.HnSModeSettings.Count > 0) // If not the first open...
-        {
-            __instance.ControllerSelectable.Clear();
-            __instance.CreatePlayerEntries();
-        }
-    }
-}
-
 [HarmonyPatch(typeof(MatchInfoGuide), nameof(MatchInfoGuide.CreatePlayerEntries))]
 public static class MatchInfoGuide_CreatePlayerEntries
 {

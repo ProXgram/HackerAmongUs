@@ -694,6 +694,8 @@ public static class Utils
 
     public static void Panic()
     {
+        PlayerActions.ResetSession();
+        GameActions.StopShipAnimCheats();
         OutfitPickerUI.Close();
         NicknameEntry.StopEditing();
         ColorCycleHandler.Stop();

@@ -8,7 +8,7 @@ public static class LogicGameFlowNormal_CheckEndCriteria
     // Prefix patch of LogicGameFlowNormal.CheckEndCriteria to prevent a running game from ending
     public static bool Prefix()
     {
-        return !CheatToggles.noGameEnd;
+        return !CheatToggles.noGameEnd || (!Utils.isHost && !Utils.isFreePlay);
     }
 }
 
@@ -19,7 +19,7 @@ public static class LogicGameFlowNormal_IsGameOverDueToDeath
     // after an exile that should have triggered game over
     public static void Postfix(ref bool __result)
     {
-        if (CheatToggles.noGameEnd)
+        if (CheatToggles.noGameEnd && (Utils.isHost || Utils.isFreePlay))
         {
             __result = false;
         }
@@ -33,7 +33,7 @@ public static class LogicGameFlowHnS_CheckEndCriteria
     // Prefix patch of LogicGameFlowHnS.CheckEndCriteria to prevent a running HnS game from ending
     public static bool Prefix()
     {
-        return !CheatToggles.noGameEnd;
+        return !CheatToggles.noGameEnd || (!Utils.isHost && !Utils.isFreePlay);
     }
 }
 
@@ -44,7 +44,7 @@ public static class LogicGameFlowHnS_IsGameOverDueToDeath
     // after an exile that should have triggered game over
     public static void Postfix(ref bool __result)
     {
-        if (CheatToggles.noGameEnd)
+        if (CheatToggles.noGameEnd && (Utils.isHost || Utils.isFreePlay))
         {
             __result = false;
         }

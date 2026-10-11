@@ -23,8 +23,10 @@ public static class ShipStatus_FixedUpdate
 [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.FixedUpdate))]
 public static class FungleShipStatus_FixedUpdate
 {
-    public static void Postfix(FungleShipStatus __instance)
+    public static void Postfix(ShipStatus __instance)
     {
-        SabotageTools.ProcessFungle(__instance);
+        if (!__instance) return;
+        var fungle = __instance.TryCast<FungleShipStatus>();
+        if (fungle) SabotageTools.ProcessFungle(fungle);
     }
 }

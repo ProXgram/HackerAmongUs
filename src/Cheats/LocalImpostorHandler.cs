@@ -18,6 +18,7 @@ public static class LocalImpostorHandler
     private static bool _diedThisRound;
     private static bool _failed;
     private static bool _blockedKillReported;
+    private static bool _localCrewSabotagePreview;
     private const string LocalRoleStatus = "Local-only Impostor; kills disabled.";
     private static string _lastResult = "Local only: armed for the next round.";
 
@@ -50,6 +51,18 @@ public static class LocalImpostorHandler
             ConsoleUI.Log(message);
         }
         return true;
+    }
+
+    // Death replaces the presentation role and clears the living kill guard.
+    // Keep the separate provenance record: a local crew preview still cannot
+    // authorize sabotage, while genuinely assigned Impostor ghosts remain valid.
+    public static bool BlocksSabotageRequests(PlayerControl actor)
+    {
+        if (!_roundReady || !_localCrewSabotagePreview || !Utils.isClient ||
+            !Utils.isInGame || Utils.isHost || Utils.isFreePlay) return false;
+        var local = PlayerControl.LocalPlayer;
+        return actor && local && actor.Pointer == local.Pointer &&
+            _playerPointer == local.Pointer && local.Data != null && !local.Data.Disconnected;
     }
 
     public static string StatusText
@@ -192,6 +205,7 @@ public static class LocalImpostorHandler
 
             _appliedRolePointer = local.Data.Role.Pointer;
             _changedLocally = true;
+            _localCrewSabotagePreview = true;
             _blockedKillReported = false;
             _lastResult = LocalRoleStatus;
             HAUPlugin.Log.LogInfo("Always Impostor: applied local-only role; host assignment is unchanged.");
@@ -210,6 +224,7 @@ public static class LocalImpostorHandler
                 {
                     _appliedRolePointer = local.Data.Role.Pointer;
                     _changedLocally = true;
+                    _localCrewSabotagePreview = true;
                 }
             }
             catch { }
@@ -243,6 +258,7 @@ public static class LocalImpostorHandler
             _changedLocally = false;
             _originalRole = null;
             _appliedRolePointer = IntPtr.Zero;
+            _localCrewSabotagePreview = false;
             _lastResult = "Local-only mode disabled; original local role restored.";
             HAUPlugin.Log.LogInfo("Always Impostor: restored the original local role.");
         }
@@ -275,5 +291,6 @@ public static class LocalImpostorHandler
         _restoreAttempted = false;
         _failed = false;
         _blockedKillReported = false;
+        _localCrewSabotagePreview = false;
     }
 }

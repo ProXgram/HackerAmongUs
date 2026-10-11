@@ -66,7 +66,10 @@ public class MultiRoleUI : MonoBehaviour
             try
             {
                 if (GUI.Button(NotesCloseRect, "Close Detective Notes"))
+                {
+                    PointerInputGuard.ConsumeGuiClose();
                     MultiRoleDetectiveHandler.CloseNotes();
+                }
             }
             finally { GUI.backgroundColor = savedBackground; }
             return;
@@ -102,7 +105,10 @@ public class MultiRoleUI : MonoBehaviour
         var innerWidth = windowRect.width - 24f;
         if (GUI.Button(new Rect(windowRect.width - 34f, 2f, 28f, 20f),
             MultiRoleHandler.PanelOpen ? "-" : "+"))
+        {
+            PointerInputGuard.ConsumeGuiClose();
             MultiRoleHandler.PanelOpen = !MultiRoleHandler.PanelOpen;
+        }
 
         GUI.Label(new Rect(12f, 28f, innerWidth, 22f), "Vent + Track + Vitals + Detective", _wrappedLabel);
 
@@ -143,7 +149,10 @@ public class MultiRoleUI : MonoBehaviour
             GUI.Label(new Rect(12f, 339f, innerWidth, 66f),
                 MultiRoleHandler.StatusText, _wrappedLabel);
             if (GUI.Button(new Rect(12f, 411f, innerWidth, 27f), "Turn off Multi Role"))
+            {
+                PointerInputGuard.ConsumeGuiClose();
                 MultiRoleHandler.SetEnabled(false);
+            }
         }
 
         GUI.DragWindow(new Rect(0f, 0f, windowRect.width - 38f, 24f));

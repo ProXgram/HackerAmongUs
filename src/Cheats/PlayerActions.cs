@@ -17,10 +17,60 @@ public static class PlayerActions
     private static bool _setFakeRoleActive;
     private static bool _setFakeAliveActive;
     private static bool _forceRoleActive;
-    private static RoleTypes? _oldRole = null;
+    private static RoleTypes? _oldRole;
+    private static OwnedActionContext.Snapshot? _previewContext;
+    private static IntPtr _previewRolePointer;
+    public static string RolePreviewStatus { get; private set; } = "Role previews do not grant a real online assignment.";
+
+    public static void ResetSession()
+    {
+        _telekillPlayerActive = _killPlayerActive = _spectateActive = _teleportPlayerActive = false;
+        _reportBodyActive = _ejectPlayerActive = _setFakeRoleActive = _setFakeAliveActive = _forceRoleActive = false;
+        _oldRole = null; _previewContext = null; _previewRolePointer = IntPtr.Zero;
+        RolePreviewStatus = "Role previews do not grant a real online assignment.";
+        CheatToggles.freecam = false;
+        CameraToolHandler.StopSpectate();
+        CameraToolHandler.Reset();
+    }
+
+    private static void RefreshPreviewSession()
+    {
+        if (!OwnedActionContext.TryPlayer(out var local) || !_previewContext.HasValue ||
+            !_previewContext.Value.IsCurrent || (HudManager.InstanceExists && HudManager.Instance.IsIntroDisplayed))
+        {
+            _oldRole = null; _previewContext = null; _previewRolePointer = IntPtr.Zero;
+            _setFakeRoleActive = false;
+            return;
+        }
+        if (local.Data.Role && _previewRolePointer != IntPtr.Zero && local.Data.Role.Pointer != _previewRolePointer)
+        {
+            if (!local.Data.IsDead && !LocalImpostorHandler.BlocksKillRequests(local)) _oldRole = local.Data.RoleType;
+            _previewRolePointer = local.Data.Role.Pointer;
+        }
+    }
+
+    private static bool ChoiceIsCurrent(OwnedActionContext.Snapshot context, bool hostMeeting = false,
+        bool hostRound = false) => context.IsCurrent &&
+        (hostMeeting ? OwnedActionContext.HostMeetingAction : hostRound ? OwnedActionContext.HostRoundAction
+            : OwnedActionContext.CanPickPlayer);
+
+    internal static bool SpecialRoleAllowed(RoleTypes? original, RoleTypes choice, bool practice, bool host)
+    {
+        if (practice) return true;
+        if (host && (!original.HasValue || Utils.GetBehaviourByRoleType(original.Value).TeamType !=
+            Utils.GetBehaviourByRoleType(choice).TeamType)) return false;
+        if (choice is RoleTypes.Shapeshifter or RoleTypes.Phantom or RoleTypes.Viper or RoleTypes.Judge)
+            return original == choice;
+        if (choice == RoleTypes.Impostor)
+            return original.HasValue && Utils.GetBehaviourByRoleType(original.Value).TeamType == RoleTeamTypes.Impostor;
+        return choice is RoleTypes.Tracker or RoleTypes.Noisemaker or RoleTypes.Engineer or RoleTypes.Scientist
+            or RoleTypes.Detective or RoleTypes.Crewmate;
+    }
+
 
     public static void ReportBodyPPM()
     {
+        if (!(OwnedActionContext.StartMeeting)) { CheatToggles.reportBody = false; _reportBodyActive = false; return; }
         if (CheatToggles.reportBody)
         {
 
@@ -33,10 +83,14 @@ public static class PlayerActions
                     CheatToggles.DisablePPMCheats("reportBody");
                 }
 
-                // Player pick menu to choose any body (alive or dead) and report it
+                var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
+                // A report still uses the normal native request and an observed dead player.
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action) (() =>
                 {
-                    PlayerControl.LocalPlayer.CmdReportDeadBody(PlayerPickMenu.targetPlayerData);
+                    if (!ChoiceIsCurrent(context) || !OwnedActionContext.StartMeeting) return;
+                    var target = PlayerPickMenu.targetPlayerData;
+                    if (target == null || target.Disconnected || !target.IsDead) return;
+                    PlayerControl.LocalPlayer.CmdReportDeadBody(target);
                 }));
 
                 _reportBodyActive = true;
@@ -60,6 +114,7 @@ public static class PlayerActions
 
     public static void EjectPlayerPPM()
     {
+        if (!(OwnedActionContext.HostMeetingAction)) { CheatToggles.ejectPlayer = false; _ejectPlayerActive = false; return; }
         if (CheatToggles.ejectPlayer)
         {
             if (!_ejectPlayerActive)
@@ -86,10 +141,14 @@ public static class PlayerActions
                     }
                 }
 
+                var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
+                var meetingPointer = MeetingHud.Instance.Pointer;
                 // Player pick menu to choose any living player and eject them during meeting
                 PlayerPickMenu.OpenPlayerPickMenu(playerInfo, (Action)(() =>
                 {
+                    if (!ChoiceIsCurrent(context, hostMeeting: true) || MeetingHud.Instance.Pointer != meetingPointer) return;
                     NetworkedPlayerInfo playerToEject = PlayerPickMenu.targetPlayerData;
+                    if (playerToEject == null || playerToEject.Disconnected || playerToEject.IsDead) return;
                     MeetingHud.Instance.RpcVotingComplete(new Il2CppStructArray<MeetingHud.VoterState>(0L), playerToEject, false, false, ushort.MinValue);
                 }));
 
@@ -110,6 +169,7 @@ public static class PlayerActions
 
     public static void KillPlayerPPM()
     {
+        if (!(OwnedActionContext.HostRoundAction)) { CheatToggles.killPlayer = false; _killPlayerActive = false; return; }
         if (CheatToggles.killPlayer)
         {
             if (!_killPlayerActive)
@@ -128,10 +188,14 @@ public static class PlayerActions
                     return;
                 }
 
+                var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
                 // Player pick menu made for killing any player by sending a successful MurderPlayer RPC call
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action)(() =>
                 {
-                    Utils.MurderPlayer(PlayerPickMenu.targetPlayerData.Object, MurderResultFlags.Succeeded);
+                    if (!ChoiceIsCurrent(context, hostRound: true)) return;
+                    var target = PlayerPickMenu.targetPlayerData?.Object;
+                    if (!OwnedActionContext.ValidTarget(target)) return;
+                    Utils.MurderPlayer(target, MurderResultFlags.Succeeded);
                 }));
 
                 _killPlayerActive = true;
@@ -151,6 +215,7 @@ public static class PlayerActions
 
     public static void TelekillPlayerPPM()
     {
+        if (!(OwnedActionContext.HostRoundAction)) { CheatToggles.telekillPlayer = false; _telekillPlayerActive = false; return; }
         if (CheatToggles.telekillPlayer)
         {
             if (!_telekillPlayerActive)
@@ -169,14 +234,18 @@ public static class PlayerActions
                     return;
                 }
 
+                var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
                 // Player pick menu made for killing any player by sending a successful MurderPlayer RPC call
                 // and immediatly teleporting back to original position
                 PlayerPickMenu.OpenPlayerPickMenu(Utils.GetAllPlayerData(), (Action)(() =>
                 {
+                    if (!ChoiceIsCurrent(context, hostRound: true)) return;
                     if (LocalImpostorHandler.BlockOwnKill(PlayerControl.LocalPlayer)) return;
                     var oldPos = PlayerControl.LocalPlayer.GetTruePosition();
-                    Utils.MurderPlayer(PlayerPickMenu.targetPlayerData.Object, MurderResultFlags.Succeeded);
-                    AmongUsClient.Instance.StartCoroutine(Utils.DelayedSnapTo(oldPos));
+                    var target = PlayerPickMenu.targetPlayerData?.Object;
+                    if (!OwnedActionContext.ValidTarget(target)) return;
+                    Utils.MurderPlayer(target, MurderResultFlags.Succeeded);
+                    AmongUsClient.Instance.StartCoroutine(ReturnAfterKill(context, oldPos));
                 }));
 
                 _telekillPlayerActive = true;
@@ -196,6 +265,7 @@ public static class PlayerActions
 
     public static void TeleportPlayerPPM()
     {
+        if (!(OwnedActionContext.CanPickPlayer)) { CheatToggles.teleportPlayer = false; _teleportPlayerActive = false; return; }
         if (CheatToggles.teleportPlayer)
         {
             if (!_teleportPlayerActive)
@@ -212,16 +282,22 @@ public static class PlayerActions
                 // All players are saved to playerList apart from LocalPlayer
                 foreach (var player in PlayerControl.AllPlayerControls)
                 {
-                    if (!player.AmOwner)
+                    if (OwnedActionContext.ValidTarget(player, false) && !player.AmOwner)
                     {
                         playerDataList.Add(player.Data);
                     }
                 }
 
                 // Player pick menu made for teleporting LocalPlayer to any player's position
+                var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action)(() =>
                 {
-                    PlayerControl.LocalPlayer.NetTransform.RpcSnapTo(PlayerPickMenu.targetPlayerData.Object.transform.position);
+                    if (!ChoiceIsCurrent(context) || !Application.isFocused) return;
+                    var local = PlayerControl.LocalPlayer;
+                    var target = PlayerPickMenu.targetPlayerData?.Object;
+                    if (!OwnedActionContext.ValidTarget(target, false) || local.inVent || local.onLadder ||
+                        local.inMovingPlat || !local.NetTransform) return;
+                    local.NetTransform.RpcSnapTo(target.GetTruePosition());
                 }));
 
                 _teleportPlayerActive = true;
@@ -241,6 +317,8 @@ public static class PlayerActions
 
     public static void SetFakeRolePPM()
     {
+        RefreshPreviewSession();
+        if (!(OwnedActionContext.CanPickPlayer)) { CheatToggles.setFakeRole = false; _setFakeRoleActive = false; return; }
         if (CheatToggles.setFakeRole)
         {
 
@@ -254,6 +332,16 @@ public static class PlayerActions
                     CheatToggles.DisablePPMCheats("setFakeRole");
                 }
 
+                var local = PlayerControl.LocalPlayer;
+                if (!_previewContext.HasValue)
+                {
+                    _oldRole = LocalImpostorHandler.BlocksKillRequests(local) ? null
+                        : local.Data.IsDead && local.Data.RoleWhenAlive.HasValue
+                            ? local.Data.RoleWhenAlive.Value : local.Data.RoleType;
+                    _previewContext = new OwnedActionContext.Snapshot(local);
+                    _previewRolePointer = local.Data.Role ? local.Data.Role.Pointer : IntPtr.Zero;
+                }
+                var context = new OwnedActionContext.Snapshot(local);
                 List<NetworkedPlayerInfo> playerDataList = new List<NetworkedPlayerInfo>();
 
                 // Shapeshifter role can only be used if it was already assigned at the start of the game
@@ -298,14 +386,21 @@ public static class PlayerActions
                 playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Detective", OutfitPreset.Detective, Utils.GetBehaviourByRoleType(RoleTypes.Detective)));
                 playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Crewmate", OutfitPreset.Crewmate, Utils.GetBehaviourByRoleType(RoleTypes.Crewmate)));
 
+                for (var i = playerDataList.Count - 1; i >= 0; i--)
+                    if (!SpecialRoleAllowed(_oldRole, playerDataList[i].Role.Role, Utils.isFreePlay, Utils.isHost))
+                        playerDataList.RemoveAt(i);
+                RolePreviewStatus = Utils.isFreePlay ? "Freeplay role experiments are available."
+                    : Utils.isHost ? "Online host previews keep your assigned team. Use Host Controls for balanced Impostor assignment."
+                    : "Local role preview only. Special roles require your original assignment; online actions still need host acceptance.";
+
                 // Player pick menu made for changing your roles with a custom choice list
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action) (() =>
                 {
-                    // Log the originally assigned role before it gets changed by setFakeRole cheat
-                    if (!Utils.isLobby && !Utils.isFreePlay && _oldRole == null)
-                    {
-                        _oldRole = PlayerControl.LocalPlayer.Data.RoleType;
-                    }
+                    if (!ChoiceIsCurrent(context) || !RoleManager.Instance) return;
+                    RefreshPreviewSession();
+                    var choice = PlayerPickMenu.targetPlayerData;
+                    if (choice == null || !choice.Role ||
+                        !SpecialRoleAllowed(_oldRole, choice.Role.Role, Utils.isFreePlay, Utils.isHost)) return;
 
                     if (PlayerControl.LocalPlayer.Data.IsDead) // Prevent accidential revives
                     {
@@ -336,6 +431,7 @@ public static class PlayerActions
 
                         RoleManager.Instance.SetRole(PlayerControl.LocalPlayer, PlayerPickMenu.targetPlayerData.Role.Role);
                     }
+                    _previewRolePointer = PlayerControl.LocalPlayer.Data.Role ? PlayerControl.LocalPlayer.Data.Role.Pointer : IntPtr.Zero;
                 }));
 
                 _setFakeRoleActive = true;
@@ -359,6 +455,7 @@ public static class PlayerActions
 
     public static void SetFakeAlivePPM()
     {
+        if (!(Utils.isFreePlay && OwnedActionContext.CanPickPlayer)) { CheatToggles.setFakeAlive = false; _setFakeAliveActive = false; return; }
         if (CheatToggles.setFakeAlive)
         {
 
@@ -372,6 +469,7 @@ public static class PlayerActions
                     CheatToggles.DisablePPMCheats("setFakeAlive");
                 }
 
+                var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
                 List<NetworkedPlayerInfo> playerDataList = new List<NetworkedPlayerInfo>();
 
                 playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Alive", OutfitPreset.Crewmate, Utils.GetBehaviourByRoleType(RoleTypes.Crewmate)));
@@ -380,6 +478,7 @@ public static class PlayerActions
                 // Player pick menu made for changing your alive state with a custom choice list
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action) (() =>
                 {
+                    if (!ChoiceIsCurrent(context) || !Utils.isFreePlay || PlayerPickMenu.targetPlayerData?.Role == null) return;
                     if (PlayerPickMenu.targetPlayerData.Role.IsDead)
                     {
                         PlayerControl.LocalPlayer.Die(DeathReason.Exile, true);
@@ -411,6 +510,7 @@ public static class PlayerActions
 
     public static void ForceRolePPM()
     {
+        if (!(OwnedActionContext.CanPickPlayer && (Utils.isHost || Utils.isFreePlay))) { CheatToggles.forceRole = false; _forceRoleActive = false; return; }
         if (CheatToggles.forceRole)
         {
             if (!_forceRoleActive)
@@ -421,6 +521,7 @@ public static class PlayerActions
                     CheatToggles.DisablePPMCheats("forceRole");
                 }
 
+                var context = new OwnedActionContext.Snapshot(PlayerControl.LocalPlayer);
                 List<NetworkedPlayerInfo> playerDataList = new List<NetworkedPlayerInfo>();
 
                 playerDataList.Add(PlayerPickMenu.CustomPPMChoice("Shapeshifter", OutfitPreset.Shapeshifter, Utils.GetBehaviourByRoleType(RoleTypes.Shapeshifter)));
@@ -437,6 +538,7 @@ public static class PlayerActions
                 // Player pick menu made for forcing a role onto another player
                 PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action)(() =>
                 {
+                    if (!ChoiceIsCurrent(context) || (!Utils.isHost && !Utils.isFreePlay) || PlayerPickMenu.targetPlayerData?.Role == null) return;
                     CheatToggles.forcedRole = PlayerPickMenu.targetPlayerData.Role.Role;
                 }));
 
@@ -461,60 +563,38 @@ public static class PlayerActions
 
     public static void SpectatePPM()
     {
-        if (CheatToggles.spectate)
+        if (!CheatToggles.spectate || !OwnedActionContext.CanPickPlayer)
         {
-
-            if (!_spectateActive)
-            {
-
-                // Close any player pick menus already open & their cheats
-                if (PlayerPickMenu.playerpickMenu != null)
-                {
-                    PlayerPickMenu.playerpickMenu.Close();
-                    CheatToggles.DisablePPMCheats("spectate");
-                }
-
-                List<NetworkedPlayerInfo> playerDataList = new List<NetworkedPlayerInfo>();
-
-                // All players are saved to playerList apart from LocalPlayer
-                foreach (var player in PlayerControl.AllPlayerControls)
-                {
-                    if (!player.AmOwner)
-                    {
-                        playerDataList.Add(player.Data);
-                    }
-                }
-
-                // Player pick menu made for spectating the targeted player
-                PlayerPickMenu.OpenPlayerPickMenu(playerDataList, (Action) (() =>
-                {
-                    Camera.main.gameObject.GetComponent<FollowerCamera>().SetTarget(PlayerPickMenu.targetPlayerData.Object);
-                }));
-
-                _spectateActive = true;
-
-                PlayerControl.LocalPlayer.moveable = false; // Can't move while spectating
-
-                CheatToggles.freecam = false; // Disable incompatible cheats while spectating
-
-            }
-
-            // Deactivate cheat if menu is closed and no one is getting spectated
-            if (PlayerPickMenu.playerpickMenu == null && Camera.main.gameObject.GetComponent<FollowerCamera>().Target == PlayerControl.LocalPlayer)
-            {
-                CheatToggles.spectate = false;
-                PlayerControl.LocalPlayer.moveable = true;
-            }
+            CameraToolHandler.StopSpectate(); _spectateActive = false; return;
         }
-        else
+        if (!_spectateActive)
         {
-            // Deactivate cheat when it is disabled from the Malum GUI
-            if (_spectateActive)
+            if (PlayerPickMenu.playerpickMenu != null)
             {
-                _spectateActive = false;
-                PlayerControl.LocalPlayer.moveable = true;
-                Camera.main.gameObject.GetComponent<FollowerCamera>().SetTarget(PlayerControl.LocalPlayer);
+                PlayerPickMenu.playerpickMenu.Close();
+                CheatToggles.DisablePPMCheats("spectate");
             }
+            if (!CameraToolHandler.BeginSpectateSelection())
+            { CheatToggles.spectate = false; return; }
+            var generation = CameraToolHandler.Generation;
+            List<NetworkedPlayerInfo> choices = new();
+            foreach (var player in PlayerControl.AllPlayerControls)
+                if (OwnedActionContext.ValidTarget(player, false) && player.Pointer != PlayerControl.LocalPlayer.Pointer)
+                    choices.Add(player.Data);
+            if (choices.Count == 0) { CameraToolHandler.StopSpectate(); return; }
+            PlayerPickMenu.OpenPlayerPickMenu(choices, (Action)(() =>
+                CameraToolHandler.SelectSpectateTarget(PlayerPickMenu.targetPlayerData?.Object, generation)));
+            _spectateActive = true;
         }
+        CameraToolHandler.TickSpectate();
+        if (!CheatToggles.spectate || (PlayerPickMenu.playerpickMenu == null && !CameraToolHandler.HasSpectateTarget))
+        { CameraToolHandler.StopSpectate(); _spectateActive = false; }
+    }
+
+    private static System.Collections.IEnumerator ReturnAfterKill(OwnedActionContext.Snapshot context, Vector2 position)
+    {
+        yield return new WaitForSeconds(0.25f);
+        if (ChoiceIsCurrent(context, hostRound: true) && PlayerControl.LocalPlayer.NetTransform)
+            PlayerControl.LocalPlayer.NetTransform.RpcSnapTo(position);
     }
 }

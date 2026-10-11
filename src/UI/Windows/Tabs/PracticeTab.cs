@@ -18,13 +18,13 @@ public class PracticeTab : ITab
             RolePreviewControls.DrawAlwaysImpostor(" Always Impostor in Freeplay");
             UIHelpers.EndSection();
             UIHelpers.BeginSection("Judge practice");
-            CheatToggles.infiniteJudge = GUILayout.Toggle(CheatToggles.infiniteJudge, " Enable Judge practice controls");
+            CheatToggles.infiniteJudge = GUILayout.Toggle(CheatToggles.infiniteJudge, " Refill Judge Use / Freeplay only");
             GUILayout.Label(InfiniteJudgeHandler.StatusText);
-            UIHelpers.Hint("Freeplay only. The current practice handler permits one Judge use per meeting.");
+            UIHelpers.Hint("Choose Judge in Freeplay first. Refills one spent use at the next meeting; normal task requirements still apply.");
             UIHelpers.EndSection();
             UIHelpers.BeginSection("Local player experiments");
-            UIHelpers.ChoosePlayer("Choose a role preview", ref CheatToggles.setFakeRole, Utils.isPlayer);
-            UIHelpers.ChoosePlayer("Choose alive or ghost preview", ref CheatToggles.setFakeAlive, Utils.isPlayer);
+            UIHelpers.ChoosePlayer("Fake Role / Freeplay preview...", ref CheatToggles.setFakeRole, Utils.isPlayer);
+            UIHelpers.ChoosePlayer("Alive or Ghost / Freeplay preview...", ref CheatToggles.setFakeAlive, Utils.isPlayer);
             UIHelpers.Hint("These previews change the local practice player.");
             UIHelpers.EndSection();
         }

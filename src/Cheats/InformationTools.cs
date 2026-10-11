@@ -4,7 +4,6 @@ using Sentry.Internal.Extensions;
 namespace HAU;
 public static class InformationTools
 {
-    private static bool _freecamActive;
     private static bool _resolutionChangeNeeded;
     public static void SporeCloudVision(Mushroom mushroom)
     {
@@ -32,6 +31,9 @@ public static class InformationTools
     {
         if (CheatToggles.zoomOut)
         {
+            // A wheel event used to scroll HAU must not also change the game camera.
+            // Keep the disabled branch below active so switching zoom off still resets it.
+            if (MenuUI.isGUIActive) return;
             // Suspend zoomOut whenever a UI screen requires scrolling
             if (hudManager.Chat.IsOpenOrOpening || MatchInfoGuide.Instance.IsActive || PlayerCustomizationMenu.Instance ||
             (Utils.isLobby && (FriendsListUI.Instance.IsOpen || GameStartManager.Instance.LobbyInfoPane.LobbyViewSettingsPane.gameObject.active || GameStartManager.Instance.RulesEditPanel))) return;
@@ -161,40 +163,5 @@ public static class InformationTools
         }catch{}
     }
 
-    public static void FreecamCheat()
-    {
-        if (CheatToggles.freecam)
-        {
-            // Completely disable FollowerCamera
-            if (!_freecamActive)
-            {
-
-                Camera.main.gameObject.GetComponent<FollowerCamera>().enabled = false;
-                Camera.main.gameObject.GetComponent<FollowerCamera>().Target = null;
-
-                _freecamActive = true;
-
-            }
-
-            // Prevent the player from moving while in freecam
-            PlayerControl.LocalPlayer.moveable = false;
-
-            // Get keyboard input
-            var movement = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), 0.0f);
-
-            // Change the camera's position depending on the keyboard input
-            // Speed: 10f
-            Camera.main.transform.position = Camera.main.transform.position + movement * 10f * Time.deltaTime;
-
-        }
-        else
-        {
-            // Re-enable FollowerCamera & movement once freecam is disabled
-            if (!_freecamActive) return;
-            PlayerControl.LocalPlayer.moveable = true;
-            Camera.main.gameObject.GetComponent<FollowerCamera>().enabled = true;
-            Camera.main.gameObject.GetComponent<FollowerCamera>().SetTarget(PlayerControl.LocalPlayer);
-            _freecamActive = false;
-        }
-    }
+    public static void FreecamCheat() => CameraToolHandler.TickFreecam();
 }

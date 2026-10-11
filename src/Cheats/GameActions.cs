@@ -9,6 +9,10 @@ public static class GameActions
 {
     private static bool _isScanAnimActive;
     private static bool _isCamsAnimActive;
+    private static System.IntPtr _effectPlayer, _effectShip;
+    private static int _lastEffectFrame = -1;
+    private static double _nextHeldEffectAt, _lastEffectClock;
+    private const double HeldEffectInterval = 0.2;
 
     public static void CloseMeetingCheat()
     {
@@ -43,6 +47,8 @@ public static class GameActions
     public static void SkipMeetingCheat()
     {
         if (!CheatToggles.skipMeeting) return;
+        CheatToggles.skipMeeting = false;
+        if (!OwnedActionContext.HostMeetingAction) return;
 
         if (Utils.isMeeting)
         {
@@ -55,6 +61,8 @@ public static class GameActions
     public static void CallMeetingCheat()
     {
         if (!CheatToggles.callMeeting) return;
+        CheatToggles.callMeeting = false;
+        if (!OwnedActionContext.StartMeeting) return;
 
         if (Utils.isHost)
         {
@@ -74,6 +82,8 @@ public static class GameActions
     public static void ForceStartGameCheat()
     {
         if (!CheatToggles.forceStartGame) return;
+        CheatToggles.forceStartGame = false;
+        if (!OwnedActionContext.TryPlayer(out _)) return;
 
         if (Utils.isHost && Utils.isLobby)
         {
@@ -227,11 +237,8 @@ public static class GameActions
     public static void KickVentsCheat()
     {
         if (!CheatToggles.kickVents) return;
-        if (!Utils.isHost && !Utils.isFreePlay)
-        {
-            CheatToggles.kickVents = false;
-            return;
-        }
+        CheatToggles.kickVents = false;
+        if (!OwnedActionContext.HostRoundAction) return;
 
         foreach(var vent in ShipStatus.Instance.AllVents)
         {
@@ -244,6 +251,8 @@ public static class GameActions
     public static void KillAllCheat()
     {
         if (!CheatToggles.killAll) return;
+        CheatToggles.killAll = false;
+        if (!OwnedActionContext.HostRoundAction) return;
 
         if (Utils.isLobby)
         {
@@ -254,6 +263,7 @@ public static class GameActions
             // Kill all players by sending a successful MurderPlayer RPC call
             foreach (var player in PlayerControl.AllPlayerControls)
             {
+                if (!OwnedActionContext.HostRoundAction || !OwnedActionContext.ValidTarget(player)) continue;
                 Utils.MurderPlayer(player, MurderResultFlags.Succeeded);
             }
         }
@@ -264,6 +274,8 @@ public static class GameActions
     public static void KillAllCrewCheat()
     {
         if (!CheatToggles.killAllCrew) return;
+        CheatToggles.killAllCrew = false;
+        if (!OwnedActionContext.HostRoundAction) return;
 
         if (Utils.isLobby)
         {
@@ -274,7 +286,8 @@ public static class GameActions
             // Kill all players by sending a successful MurderPlayer RPC call
             foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (player.Data.Role.TeamType == RoleTeamTypes.Crewmate)
+                if (OwnedActionContext.HostRoundAction && OwnedActionContext.ValidTarget(player) &&
+                    player.Data.Role && player.Data.Role.TeamType == RoleTeamTypes.Crewmate)
                 {
                     Utils.MurderPlayer(player, MurderResultFlags.Succeeded);
                 }
@@ -287,6 +300,8 @@ public static class GameActions
     public static void KillAllImpsCheat()
     {
         if (!CheatToggles.killAllImps) return;
+        CheatToggles.killAllImps = false;
+        if (!OwnedActionContext.HostRoundAction) return;
 
         if (Utils.isLobby)
         {
@@ -297,7 +312,8 @@ public static class GameActions
             // Kill all players by sending a successful MurderPlayer RPC call
             foreach (var player in PlayerControl.AllPlayerControls)
             {
-                if (player.Data.Role.TeamType == RoleTeamTypes.Impostor)
+                if (OwnedActionContext.HostRoundAction && OwnedActionContext.ValidTarget(player) &&
+                    player.Data.Role && player.Data.Role.TeamType == RoleTeamTypes.Impostor)
                 {
                     Utils.MurderPlayer(player, MurderResultFlags.Succeeded);
                 }
@@ -309,10 +325,13 @@ public static class GameActions
 
     public static void ProtectCheat()
     {
-        if (!Utils.isHost || Utils.isLobby) return;
+        if (!OwnedActionContext.HostRoundAction) return;
 
-        foreach (var player in ProtectUI.playersToProtect)
+        for (var i = ProtectUI.playersToProtect.Count - 1; i >= 0; i--)
         {
+            var player = ProtectUI.playersToProtect[i];
+            if (!OwnedActionContext.ValidTarget(player) || !player.cosmetics)
+            { ProtectUI.playersToProtect.RemoveAt(i); continue; }
             if (player.protectedByGuardianId == -1) // -1 means no protection is currently active
             {
                 //PlayerControl.LocalPlayer.TurnOnProtection(true, PlayerControl.LocalPlayer.cosmetics.ColorId, PlayerControl.LocalPlayer.PlayerId);
@@ -323,6 +342,7 @@ public static class GameActions
 
     public static void TeleportCursorCheat()
     {
+        if (!OwnedActionContext.MovementReady) return;
         if (PlayerControl.LocalPlayer?.NetTransform == null || Camera.main == null) return;
         if (!CheatToggles.teleportCursor) return;
 
@@ -359,15 +379,35 @@ public static class GameActions
         }
     }
 
-    public static void PlayAnimationCheat()
+    public static void PlayAnimationCheat(PlayerPhysics physics)
     {
-        if (CheatToggles.animPet && Utils.isPlayer && PlayerControl.LocalPlayer.cosmetics != null && PlayerControl.LocalPlayer.cosmetics.CurrentPet != null)
+        var local = PlayerControl.LocalPlayer;
+        if (!local || !local.MyPhysics || !physics || !physics.AmOwner || !physics.myPlayer ||
+            physics.myPlayer.Pointer != local.Pointer || physics.Pointer != local.MyPhysics.Pointer) return;
+        if (!OwnedActionContext.GameplayReady || Utils.isMeeting) return;
+        var shipPointer = ShipStatus.Instance.Pointer;
+        if (_effectPlayer != local.Pointer || _effectShip != shipPointer)
+        {
+            _effectPlayer = local.Pointer; _effectShip = shipPointer;
+            _lastEffectFrame = -1; _nextHeldEffectAt = _lastEffectClock = 0;
+        }
+        if (_lastEffectFrame == Time.frameCount) return;
+        _lastEffectFrame = Time.frameCount;
+        var now = Time.realtimeSinceStartupAsDouble;
+        bool validClock = !double.IsNaN(now) && !double.IsInfinity(now);
+        if (validClock && now < _lastEffectClock) _nextHeldEffectAt = now + HeldEffectInterval;
+        if (validClock) _lastEffectClock = now;
+        bool heldReady = validClock && now >= _nextHeldEffectAt;
+        bool sentHeld = false;
+        if (heldReady && CheatToggles.animPet && local.cosmetics != null && local.cosmetics.CurrentPet != null)
         {
             // Don't move LocalPlayer, just send the RPC so others see the petting animation
             RpcPetMessage rpcMessage = new(PlayerControl.LocalPlayer.MyPhysics.NetId,
                 PlayerControl.LocalPlayer.cosmetics.CurrentPet.PettingPlayerPosition,
                 PlayerControl.LocalPlayer.cosmetics.CurrentPet.transform.position);
             AmongUsClient.Instance.LateBroadcastReliableMessage(Unsafe.As<IGameDataMessage>(rpcMessage));
+            sentHeld = true;
+            _nextHeldEffectAt = now + HeldEffectInterval;
         }
 
         byte mapId = Utils.GetCurrentMapID();
@@ -389,7 +429,11 @@ public static class GameActions
         {
             if (map is MapNames.Skeld or MapNames.Dleks or MapNames.Polus)
             {
-                Utils.ForcePlayAnimation((byte)TaskTypes.ClearAsteroids);
+                if (heldReady)
+                {
+                    Utils.ForcePlayAnimation((byte)TaskTypes.ClearAsteroids);
+                    sentHeld = true;
+                }
             }
             else
             {
@@ -426,6 +470,7 @@ public static class GameActions
         {
             CheatToggles.animCamsInUse = false;
         }
+        if (sentHeld) _nextHeldEffectAt = now + HeldEffectInterval;
     }
 
     public static void StopShipAnimCheats()
@@ -441,5 +486,8 @@ public static class GameActions
 
         _isCamsAnimActive = false;
         _isScanAnimActive = false;
+        _effectPlayer = _effectShip = System.IntPtr.Zero;
+        _lastEffectFrame = -1;
+        _nextHeldEffectAt = _lastEffectClock = 0;
     }
 }

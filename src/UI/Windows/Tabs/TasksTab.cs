@@ -15,18 +15,18 @@ public class TasksTab : ITab
         UIHelpers.Hint("Off at the start of each round. Saved profiles do not start task completion.");
         UIHelpers.EndSection();
 
-        UIHelpers.BeginSection("AI Tasks", "Walks to your task consoles and completes each step after reaching it.");
+        UIHelpers.BeginSection("AI Tasks", "Walks to your task consoles and completes supported steps after reaching them.");
         bool running = MovementAutomation.Mode == MovementMode.AiTasks;
         if (GUILayout.Button(running ? "Stop AI Tasks" : "Start AI Tasks"))
         {
             if (running) MovementAutomation.Stop();
             else MovementAutomation.Start(MovementMode.AiTasks);
         }
-        GUILayout.Label(AiTasksHandler.StatusText);
+        GUILayout.Label(MovementAutomation.Mode == MovementMode.AiTasks ? AiTasksHandler.StatusText : "AI Tasks: stopped");
         GUILayout.Label(MovementAutomation.StatusText);
         if (!string.IsNullOrEmpty(MovementAutomation.LastNavigationIssue))
             UIHelpers.Hint("Last route issue: " + MovementAutomation.LastNavigationIssue);
-        UIHelpers.Hint("Close the menu and chat to walk. F8 stops movement. Starting AI Tasks turns Automatic Tasks off.");
+        UIHelpers.Hint("Close the menu and chat to walk. Unsupported timed steps stay manual. F8 stops movement. Starting AI Tasks turns Automatic Tasks off.");
         UIHelpers.EndSection();
 
         UIHelpers.BeginSection("Task display");

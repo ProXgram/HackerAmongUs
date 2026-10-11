@@ -36,7 +36,7 @@ public class MovementTab : ITab
             var index = Array.IndexOf(keys, HAUPlugin.sprintKeybind.Value);
             HAUPlugin.sprintKeybind.Value = keys[(index + 1) % keys.Length];
         }
-        UIHelpers.Hint("Sprint pauses during automatic movement. Your walking speed returns when you release the key.");
+        UIHelpers.Hint("Living players only. Sprint pauses during automatic movement; your walking speed returns when you release the key.");
         UIHelpers.EndSection();
 
         UIHelpers.BeginSection("Walking speed", "This is your normal speed before the sprint boost.");
@@ -63,8 +63,9 @@ public class MovementTab : ITab
             }
         }
         else UIHelpers.Hint("Join a lobby or open Freeplay to adjust your current walking speed.");
-        CheatToggles.noClip = GUILayout.Toggle(CheatToggles.noClip, " Walk through walls (noclip)");
-        CheatToggles.invertControls = GUILayout.Toggle(CheatToggles.invertControls, " Reverse movement keys");
+        CheatToggles.noClip = GUILayout.Toggle(CheatToggles.noClip, " Noclip");
+        CheatToggles.invertControls = GUILayout.Toggle(CheatToggles.invertControls, " Invert Controls");
+        UIHelpers.Hint("Noclip lets you move through walls. AI Tasks, Follow, Orbit and Lag Mode still use ground collision checks.");
         UIHelpers.EndSection();
     }
 

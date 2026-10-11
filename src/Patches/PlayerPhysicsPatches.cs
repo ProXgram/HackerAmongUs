@@ -20,7 +20,7 @@ public static class PlayerPhysics_LateUpdate
         GameActions.ForceStartGameCheat();
         GameActions.TeleportCursorCheat();
         GameActions.CompleteMyTasksCheat();
-        GameActions.PlayAnimationCheat();
+        GameActions.PlayAnimationCheat(__instance);
         GameActions.PlayScannerCheat();
 
         PlayerActions.EjectPlayerPPM();

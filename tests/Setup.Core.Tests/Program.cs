@@ -10,11 +10,15 @@ using System.Text;
 using HAU.Setup.Core;
 using HAU.Updates;
 
-if (args is ["--verify-release-plugin", var releasePluginPath])
+if (args.Length is 2 or 4 && args[0] == "--verify-release-plugin")
 {
+    var releasePluginPath = args[1];
+    var releaseVersion = UpdateManifestVerifier.ParseNumericVersion(args.Length == 4 && args[2] == "--version" ? args[3] : "1.0");
+    var releaseText = args.Length == 4 ? args[3] : "1.0";
+    var use788 = releaseVersion > new Version(1, 0, 0, 0);
     var repo = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
-    var loader = File.ReadAllBytes(Path.Combine(repo, "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip"));
-    if (Convert.ToHexString(SHA256.HashData(loader)) != "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F")
+    var loader = File.ReadAllBytes(Path.Combine(repo, "artifacts/verification/downloader-inputs/" + (use788 ? "BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788+5b766a3.zip" : "BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip")));
+    if (Convert.ToHexString(SHA256.HashData(loader)) != (use788 ? "F4CC496BD098A0DF4164B81E3737297707F13A47C2478DBA2F60EEFAB784817A" : "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F"))
         throw new InvalidDataException("Pinned loader hash changed.");
     var plugin = File.ReadAllBytes(releasePluginPath);
     foreach (var steam in new[] { false, true })
@@ -23,8 +27,8 @@ if (args is ["--verify-release-plugin", var releasePluginPath])
         fixture.Write("BepInEx/plugins/MalumMenuEnhanced.dll", "old menu backup fixture");
         fixture.Write("BepInEx/config/MalumMenu.cfg", "[MalumMenu.GUI]\nKeybind = F5\n");
         fixture.Write("BepInEx/config/MalumProfile.txt", "preserved profile");
-        var result = await fixture.Service(catalog: fixture.Catalog with { ExpectedPluginVersion = new Version(1, 0, 0, 0) }).InstallAsync(fixture.Game);
-        if (InstallerService.GetInstalledModVersion(fixture.Game) != new Version(1, 0, 0, 0) ||
+        var result = await fixture.Service(catalog: fixture.Catalog with { ModVersion = releaseText, ExpectedPluginVersion = releaseVersion }).InstallAsync(fixture.Game);
+        if (InstallerService.GetInstalledModVersion(fixture.Game) != releaseVersion ||
             !File.Exists(Path.Combine(result.BackupDirectory, "MalumMenuEnhanced.dll")) ||
             File.ReadAllText(Path.Combine(fixture.Game, "BepInEx/config/HAU.cfg")) != "[HAU.GUI]\nKeybind = F5\n" ||
             File.ReadAllText(Path.Combine(fixture.Game, "BepInEx/config/HAUProfile.txt")) != "preserved profile")
@@ -766,6 +770,95 @@ Test("Existing x86 loader in current Steam game is preserved and refused before 
     f.AssertSnapshot(before); Check(f.Http.Requests.Count == 0);
 });
 
+Dictionary<string, string> DeclareLoader(byte[] zipBytes)
+{
+    using var input = new MemoryStream(zipBytes); using var archive = new ZipArchive(input, ZipArchiveMode.Read);
+    return archive.Entries.Where(entry => !entry.FullName.EndsWith('/')).ToDictionary(entry => entry.FullName, entry =>
+    { using var content = entry.Open(); return Convert.ToHexString(SHA256.HashData(content)); }, StringComparer.OrdinalIgnoreCase);
+}
+
+Test("Declared previous-loader migration replaces changed files, persists backups and preserves custom settings", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader();
+    var previous = f.Http.Responses["https://example.test/loader.zip"]; var inventory = DeclareLoader(previous);
+    var originalCore = File.ReadAllBytes(Path.Combine(f.Game, "BepInEx/core/BepInEx.Core.dll"));
+    var upgradedCore = Fixture.AssemblyBytes("BepInEx.Core", 6);
+    f.ReplaceLoader(Fixture.RewriteZip(previous, "BepInEx/core/BepInEx.Core.dll", upgradedCore));
+    f.Write("BepInEx/config/HAU.cfg", "[HAU.GUI]\nKeybind = F5\n"); f.Write("BepInEx/interop/user-cache.txt", "generated cache");
+    var configPath = Path.Combine(f.Game, "doorstop_config.ini"); File.AppendAllText(configPath, "\n# custom preference\nredirect_output_log = false\n");
+    var config = File.ReadAllBytes(configPath);
+    var result = await f.Service(legacyLoaderFiles: inventory).InstallAsync(f.Game);
+    Check(result.LoaderInstalled && result.LoaderUpgraded);
+    Check(File.ReadAllBytes(Path.Combine(f.Game, "BepInEx/core/BepInEx.Core.dll")).SequenceEqual(upgradedCore));
+    Check(File.ReadAllBytes(Path.Combine(result.BackupDirectory, "loader/BepInEx/core/BepInEx.Core.dll")).SequenceEqual(originalCore));
+    Check(File.ReadAllBytes(configPath).SequenceEqual(config));
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/HAU.cfg")) == "[HAU.GUI]\nKeybind = F5\n");
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/interop/user-cache.txt")) == "generated cache");
+});
+
+Test("Previous-loader migration failure restores every original byte and removes partial backups", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader(); var previous = f.Http.Responses["https://example.test/loader.zip"];
+    var next = Fixture.RewriteZip(previous, "BepInEx/core/BepInEx.Core.dll", Fixture.AssemblyBytes("BepInEx.Core", 6));
+    next = Fixture.RewriteZip(next, "BepInEx/core/BepInEx.Unity.IL2CPP.dll", Fixture.AssemblyBytes("BepInEx.Unity.IL2CPP", 6));
+    f.ReplaceLoader(next); f.Write("BepInEx/plugins/HAU.dll", "old plugin"); var before = f.Snapshot();
+    await Reject(() => f.Service(before: path =>
+    { if (path.Equals(Path.GetFullPath(Path.Combine(f.Game, "BepInEx/core/BepInEx.Unity.IL2CPP.dll")), StringComparison.OrdinalIgnoreCase)) throw new IOException("Injected loader upgrade failure"); },
+        legacyLoaderFiles: DeclareLoader(previous)).InstallAsync(f.Game), "loader upgrade failure");
+    f.AssertSnapshot(before);
+});
+
+Test("Mixed old and new loader inventories are rejected without modifying either", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader(); var previous = f.Http.Responses["https://example.test/loader.zip"];
+    var next = Fixture.RewriteZip(previous, "BepInEx/core/BepInEx.Core.dll", Fixture.AssemblyBytes("BepInEx.Core", 6));
+    next = Fixture.RewriteZip(next, "BepInEx/core/BepInEx.Unity.IL2CPP.dll", Fixture.AssemblyBytes("BepInEx.Unity.IL2CPP", 6));
+    f.ReplaceLoader(next);
+    File.WriteAllBytes(Path.Combine(f.Game, "BepInEx/core/BepInEx.Core.dll"), Fixture.AssemblyBytes("BepInEx.Core", 6));
+    var before = f.Snapshot();
+    await Reject(() => f.Service(legacyLoaderFiles: DeclareLoader(previous)).InstallAsync(f.Game), "verified loader release"); f.AssertSnapshot(before);
+});
+
+Test("A game starting during the previous-loader migration triggers complete rollback", async () =>
+{
+    using var f = new Fixture(); f.ExistingLoader(); var previous = f.Http.Responses["https://example.test/loader.zip"];
+    var next = Fixture.RewriteZip(previous, "BepInEx/core/BepInEx.Core.dll", Fixture.AssemblyBytes("BepInEx.Core", 6));
+    next = Fixture.RewriteZip(next, "BepInEx/core/BepInEx.Unity.IL2CPP.dll", Fixture.AssemblyBytes("BepInEx.Unity.IL2CPP", 6));
+    f.ReplaceLoader(next); var running = false; var before = f.Snapshot();
+    await Reject(() => f.Service(running: () => running, before: path =>
+    { if (path.Equals(Path.GetFullPath(Path.Combine(f.Game, "BepInEx/core/BepInEx.Unity.IL2CPP.dll")), StringComparison.OrdinalIgnoreCase)) running = true; },
+        legacyLoaderFiles: DeclareLoader(previous)).InstallAsync(f.Game), "Close Among Us");
+    f.AssertSnapshot(before);
+});
+
+foreach (var steam in new[] { false, true })
+Test("Real pinned 755 to 788 migration with persistent eleven-file backup in isolated " + (steam ? "Steam" : "Xbox"), async () =>
+{
+    using var f = new Fixture(steam);
+    var repo = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
+    var previous = File.ReadAllBytes(Path.Combine(repo, "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.755+3fab71a.zip"));
+    var next = File.ReadAllBytes(Path.Combine(repo, "artifacts/verification/downloader-inputs/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788+5b766a3.zip"));
+    Check(Convert.ToHexString(SHA256.HashData(previous)) == "3616D6A67F5F595973EC4AA7BD7EDAF7F799D5BB9926F7146A6DCC7B4ABF478F");
+    Check(Convert.ToHexString(SHA256.HashData(next)) == "F4CC496BD098A0DF4164B81E3737297707F13A47C2478DBA2F60EEFAB784817A");
+    using (var input = new MemoryStream(previous)) using (var archive = new ZipArchive(input, ZipArchiveMode.Read)) archive.ExtractToDirectory(f.Game);
+    var doorstop = Path.Combine(f.Game, "doorstop_config.ini"); File.AppendAllText(doorstop, "\n# saved preference\n"); var config = File.ReadAllBytes(doorstop);
+    f.Write("BepInEx/config/HAU.cfg", "[HAU.Movement]\nSprintMultiplier = 10\n"); f.Write("BepInEx/interop/generated.txt", "untouched");
+    f.ReplaceLoader(next);
+    var result = await f.Service().InstallAsync(f.Game);
+    Check(result.LoaderUpgraded && result.LoaderInstalled);
+    var backups = Directory.EnumerateFiles(Path.Combine(result.BackupDirectory, "loader"), "*", SearchOption.AllDirectories).ToArray();
+    Check(backups.Length == 11, "Expected exactly eleven changed loader files to be backed up");
+    var oldInventory = DeclareLoader(previous);
+    foreach (var file in backups) Check(Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))) == oldInventory[Path.GetRelativePath(Path.Combine(result.BackupDirectory, "loader"), file).Replace('\\', '/')]);
+    using var nextInput = new MemoryStream(next); using var nextArchive = new ZipArchive(nextInput, ZipArchiveMode.Read);
+    foreach (var entry in nextArchive.Entries.Where(entry => !entry.FullName.EndsWith('/') && entry.FullName != "doorstop_config.ini"))
+    { using var content = entry.Open(); Check(Convert.ToHexString(SHA256.HashData(content)) == Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Path.Combine(f.Game, entry.FullName))))); }
+    Check(File.ReadAllBytes(doorstop).SequenceEqual(config));
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/config/HAU.cfg")) == "[HAU.Movement]\nSprintMultiplier = 10\n");
+    Check(File.ReadAllText(Path.Combine(f.Game, "BepInEx/interop/generated.txt")) == "untouched");
+    var second = await f.Service().InstallAsync(f.Game); Check(!second.LoaderInstalled && !second.LoaderUpgraded);
+});
+
 var failed = 0;
 foreach (var test in tests)
 {
@@ -851,8 +944,9 @@ sealed class Fixture : IDisposable
         Client = new HttpClient(Http);
         Catalog = new("1.0", new(new("https://example.test/loader.zip"), Hash(loader), "Loader"), new(new("https://example.test/plugin.zip"), Hash(plugin), "Plugin"));
     }
-    public InstallerService Service(Func<bool>? running = null, Action<string>? before = null, SetupCatalog? catalog = null)
-        => new(catalog ?? Catalog, Client, running ?? (() => false), before);
+    public InstallerService Service(Func<bool>? running = null, Action<string>? before = null, SetupCatalog? catalog = null,
+        IReadOnlyDictionary<string, string>? legacyLoaderFiles = null)
+        => new(catalog ?? Catalog, Client, running ?? (() => false), before, legacyLoaderFiles);
     public void ReplacePlugin(byte[] bytes)
     { Http.Responses["https://example.test/plugin.zip"] = bytes; Catalog = Catalog with { Plugin = Catalog.Plugin with { Sha256 = Hash(bytes) } }; }
     public void ReplaceLoader(byte[] bytes)

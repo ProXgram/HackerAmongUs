@@ -42,7 +42,7 @@ def put(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", type=numeric_version, default="1.0")
+    parser.add_argument("--version", type=numeric_version, default="1.0.1")
     parser.add_argument("--dll", type=Path, help="Finished HAU.dll; defaults to src/bin/Release/net6.0/HAU.dll.")
     parser.add_argument("--replace", action="store_true", help="Replace an existing local HAU package after reviewing a rebuilt release.")
     args = parser.parse_args()

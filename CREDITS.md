@@ -1,6 +1,6 @@
 # Hacker Among Us (HAU) credits
 
-**HAU 1.0** is Rifegul's redesigned edition. The visible name is **Hacker Among
+**HAU 1.0.1** is Rifegul's redesigned edition. The visible name is **Hacker Among
 Us**, abbreviated **HAU**. This edition introduces the reorganized interface,
 10x sprint controls and detailed outfit studio. Its version numbering starts at
 1.0; historical release records retain the names and versions they originally used.

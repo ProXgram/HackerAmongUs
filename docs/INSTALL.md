@@ -1,13 +1,13 @@
 # Install Hacker Among Us (HAU)
 
-**HAU 1.0 by Rifegul.**
+**HAU 1.0.1 by Rifegul.**
 For Among Us **19.0.0 / 2026.9.29**, on Windows 10/11, 64-bit.
 
 ## Automatic installation
 
 For **Steam / Microsoft Store / Xbox App**.
 
-1. [Download HAUSetup.exe](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAUSetup.exe).
+1. [Download HAUSetup.exe](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAUSetup.exe).
 2. Close Among Us. Open the downloaded file and click **Install**.
 3. Open Among Us from your usual launcher. Wait for the first launch, then press **Delete**.
 
@@ -21,8 +21,8 @@ Epic Games uses the manual ZIP below.
 
 Download the ZIP matching your PC launcher:
 
-- **[Steam ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Steam.zip)**
-- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-MicrosoftStore-EpicGames-XboxApp.zip)**
+- **[Steam ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-Steam.zip)**
+- **[Microsoft Store / Epic Games / Xbox App ZIP](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-MicrosoftStore-EpicGames-XboxApp.zip)**
 
 1. Close Among Us.
 2. Open your game folder using the table below.
@@ -84,11 +84,11 @@ that build after it is published; it cannot repair incompatible code itself.
 If HAU cannot start, run the latest installer. Epic Games users replace the
 files using the latest manual ZIP.
 
-Earlier editions were tested in Xbox / Microsoft Store gameplay. HAU 1.0 has
-passed build and fixture checks; live round checks are pending because the
-local unmodified game also stays on a black startup screen. Steam and Epic
-Games gameplay remain untested. These downloads are for Windows PC.
+HAU 1.0.1 includes official BepInEx Unity IL2CPP x64 build 788. Startup and
+Freeplay have been checked on Xbox / Microsoft Store. Steam, Epic Games and
+multiplayer behavior remain untested for this release. These downloads are for
+Windows PC.
 
-[Download page](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0) ·
-[Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0/HAU-1.0-Source.zip) ·
+[Download page](https://github.com/ProXgram/HackerAmongUs/releases/tag/hau-v1.0.1) ·
+[Source](https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.1/HAU-1.0.1-Source.zip) ·
 [License](../LICENSE)
