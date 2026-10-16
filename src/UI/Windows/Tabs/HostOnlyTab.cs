@@ -2,10 +2,12 @@ using UnityEngine;
 
 namespace HAU;
 
-public class HostOnlyTab : ITab
+public class HostOnlyTab : ITab, IMenuPage
 {
     public string name => "Host Controls";
     private int _page;
+
+    public void OpenPage(int page) => _page = System.Math.Clamp(page, 0, 2);
 
     public void Draw()
     {

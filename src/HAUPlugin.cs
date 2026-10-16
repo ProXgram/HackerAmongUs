@@ -53,6 +53,7 @@ public partial class HAUPlugin : BasePlugin
     public static ConfigEntry<float> rainbowColorInterval;
     public static ConfigEntry<float> lobbyColorInterval;
     public static ConfigEntry<string> menuHtmlColor;
+    public static ConfigEntry<bool> menuTransparentBackground;
     public static ConfigEntry<bool> menuOpenOnMouse;
     public static ConfigEntry<bool> menuKeepSubwindowsOpen;
     public static ConfigEntry<bool> menuAllowClickThrough;
@@ -105,7 +106,7 @@ public partial class HAUPlugin : BasePlugin
             Log.LogWarning("HAU could not import old settings: " + error.Message);
         }
         automaticUpdates = Config.Bind("HAU.Updates", "AutomaticUpdates", true,
-            "Check for signed mod updates when the game starts. A compatible update is applied after you close Among Us normally.");
+            "Check for signed compatible updates at startup and while the game is open. Updates install after Among Us closes.");
 
         var gameVersion = Application.version;
         var gameDirectory = Paths.GameRootPath;
@@ -185,6 +186,11 @@ public partial class HAUPlugin : BasePlugin
                                 "Color",
                                 "",
                                 $"A custom color for your {ModBranding.Name} GUI. Supports html color codes");
+
+        menuTransparentBackground = Config.Bind("HAU.GUI",
+                                "TransparentBackground",
+                                false,
+                                "Use a transparent menu background instead of a solid background.");
 
         menuOpenOnMouse = Config.Bind("HAU.GUI",
                                 "OpenOnMouse",

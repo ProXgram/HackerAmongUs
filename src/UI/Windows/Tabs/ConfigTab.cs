@@ -3,15 +3,30 @@ using UnityEngine;
 
 namespace HAU;
 
-public class ConfigTab : ITab
+public class ConfigTab : ITab, IMenuPage
 {
     public string name => "Settings";
+    private int _page;
     private bool _advanced;
     private string _feedback = "";
 
+    public void OpenPage(int page)
+    {
+        _page = Math.Clamp(page, 0, 2);
+        _advanced = page == 3;
+    }
+
     public void Draw()
     {
-        UIHelpers.BeginSection("Menu controls", "Choose how HAU opens and behaves. Changes are saved automatically.");
+        _page = UIHelpers.Subtabs(_page, "Menu", "Updates", "Profiles & tools");
+        if (_page == 0) DrawMenu();
+        else if (_page == 1) DrawUpdates();
+        else DrawProfiles();
+    }
+
+    private static void DrawMenu()
+    {
+        UIHelpers.BeginSection("Menu controls", "Changes are saved automatically.");
         if (GUILayout.Button("Menu key: " + HAUPlugin.menuKeybind.Value))
         {
             string[] keys = { "Delete", "Insert", "F9", "F10" };
@@ -22,10 +37,13 @@ public class ConfigTab : ITab
             new GUIContent("Open at the mouse pointer", "Place the menu near your mouse instead of its last position."));
         HAUPlugin.menuKeepSubwindowsOpen.Value = GUILayout.Toggle(HAUPlugin.menuKeepSubwindowsOpen.Value,
             new GUIContent("Keep tool windows open", "Keep separate tool windows visible when the main menu closes."));
-        UIHelpers.Hint("Sprint controls and speed are in Movement. Press F8 to stop movement automation.");
+        UIHelpers.Hint("Use Find a feature to jump straight to a tool. F8 stops movement automation.");
         UIHelpers.EndSection();
 
-        UIHelpers.BeginSection("Appearance", "Select an accent colour for your HAU menu.");
+        UIHelpers.BeginSection("Menu appearance");
+        HAUPlugin.menuTransparentBackground.Value = GUILayout.Toggle(HAUPlugin.menuTransparentBackground.Value,
+            "Transparent background");
+        UIHelpers.Hint(HAUPlugin.menuTransparentBackground.Value ? "The game shows through the menu." : "Solid background for easier reading.");
         GUILayout.BeginHorizontal();
         Accent("Cyan", "#22D3EE"); Accent("Green", "#4ADE80"); Accent("Purple", "#C084FC");
         GUILayout.EndHorizontal();
@@ -37,7 +55,31 @@ public class ConfigTab : ITab
         CheatToggles.stealthMode = GUILayout.Toggle(CheatToggles.stealthMode,
             new GUIContent("Hide HAU branding in the game", "Hides the mod label and badge on your own screen."));
         UIHelpers.EndSection();
+    }
 
+    private static void DrawUpdates()
+    {
+        UIHelpers.BeginSection("Automatic updates", "Compatible updates are prepared while you play and installed after you close Among Us. Your settings are kept.");
+        bool enabled = GUILayout.Toggle(HAUPlugin.automaticUpdates.Value, "Keep HAU updated automatically");
+        if (enabled != HAUPlugin.automaticUpdates.Value)
+        {
+            HAUPlugin.automaticUpdates.Value = enabled;
+            HAU.Updates.AutomaticUpdateHandler.SetEnabled(enabled);
+        }
+        GUILayout.Label(HAU.Updates.AutomaticUpdateHandler.Status);
+        if (!string.IsNullOrEmpty(HAU.Updates.AutomaticUpdateHandler.LastCheckedAt))
+            UIHelpers.Hint(HAU.Updates.AutomaticUpdateHandler.LastCheckedAt);
+        bool previous = GUI.enabled;
+        GUI.enabled = previous && HAU.Updates.AutomaticUpdateHandler.CanCheckNow;
+        if (GUILayout.Button(HAU.Updates.AutomaticUpdateHandler.IsChecking ? "Checking for updates..." : "Check for updates"))
+            HAU.Updates.AutomaticUpdateHandler.CheckNow();
+        GUI.enabled = previous;
+        UIHelpers.Hint("You can check manually even with automatic updates off. A new Among Us version needs a compatible HAU build first.");
+        UIHelpers.EndSection();
+    }
+
+    private void DrawProfiles()
+    {
         UIHelpers.BeginSection("Saved setup", "Save your enabled tools as a profile. Automatic Tasks still requires manual activation each round.");
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Save tool profile")) { CheatToggles.saveProfile = true; _feedback = "Profile save requested."; }
@@ -47,15 +89,13 @@ public class ConfigTab : ITab
         if (!string.IsNullOrEmpty(_feedback)) UIHelpers.Hint(_feedback);
         UIHelpers.EndSection();
 
-        UIHelpers.BeginSection("Automatic updates", "Compatible published updates install after you close Among Us. Your settings are kept.");
-        HAUPlugin.automaticUpdates.Value = GUILayout.Toggle(HAUPlugin.automaticUpdates.Value, "Check for updates on the next launch");
-        UIHelpers.Hint(HAU.Updates.AutomaticUpdateHandler.Status);
-        UIHelpers.Hint("A new Among Us version needs a compatible HAU build first.");
+        UIHelpers.BeginSection("Event logs", "View and record deaths, vents, shapeshifts, tasks and meetings.");
+        if (GUILayout.Button("Open event log settings")) MenuUI.OpenTab("Logs");
         UIHelpers.EndSection();
 
         if (GUILayout.Button(_advanced ? "Hide advanced settings" : "Show advanced settings")) _advanced = !_advanced;
         if (!_advanced) return;
-        UIHelpers.BeginSection("Advanced", "Optional settings for local display, clipboard convenience and configuration files.");
+        UIHelpers.BeginSection("Advanced", "Optional local display, clipboard and configuration tools.");
         CheatToggles.avoidPenalties = GUILayout.Toggle(CheatToggles.avoidPenalties, "Clear the local leave-penalty timer");
         CheatToggles.unlockFeatures = GUILayout.Toggle(CheatToggles.unlockFeatures, "Local Account UI Unlock");
         UIHelpers.Hint("Changes local availability of chat, friends, custom-name and online controls. It does not authenticate your account or change server permissions.");
@@ -70,6 +110,7 @@ public class ConfigTab : ITab
         {
             HAUPlugin.menuHtmlColor.Value = "";
             HAUPlugin.menuOpenOnMouse.Value = false;
+            HAUPlugin.menuTransparentBackground.Value = false;
             CheatToggles.rgbMode = false;
             _feedback = "Menu appearance reset. Gameplay tools were preserved.";
         }

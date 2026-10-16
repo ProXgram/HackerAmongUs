@@ -1,6 +1,6 @@
 # Credits
 
-- **HAU creator and maintainer:** Rifegul.
+- **HAU creator and maintainer:** ProXgram.
 - **Previous Haddad Menu edition:** MHadd.
 - **Original MalumMenu authors:** scp222thj and astra1dev (Astral).
 - **Upstream:** [scp222thj/MalumMenu](https://github.com/scp222thj/MalumMenu), v3.3.0, commit `e02c28a0ad2aedca51531606ca82114a19584ca6`.

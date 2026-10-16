@@ -3,17 +3,19 @@ using System;
 
 namespace HAU;
 
-public class MovementTab : ITab
+public class MovementTab : ITab, IMenuPage
 {
     public string name => "Movement";
     private int _page;
     private readonly FunTab _stunts = new();
 
+    public void OpenPage(int page) => _page = Math.Clamp(page, 0, 2);
+
     public void Draw()
     {
         MovementAutomation.Pause();
         SprintHandler.Reset();
-        _page = UIHelpers.Subtabs(_page, "Sprint & speed", "Stunts", "Teleport");
+        _page = UIHelpers.Subtabs(_page, "Sprint & speed", "Follow & fun", "Teleport");
         if (_page == 1) { _stunts.Draw(); return; }
         if (_page == 2) { DrawTeleport(); return; }
 

@@ -107,5 +107,96 @@ Test("Mira HQ oxygen is supported and Mira/Fungle communications repair preserve
 {var m=Setup(1);SabotageTools.Process(m);CheatToggles.oxygenSab=true;SabotageTools.Process(m);Check(m.Requests.SequenceEqual(new[]{(SystemTypes.LifeSupp,(byte)128)}));foreach(var map in new byte[]{1,5}){var s=Setup(map);Active(s,true);SabotageTools.Process(s);CheatToggles.commsSab=false;SabotageTools.Process(s);Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Comms,(byte)16),(SystemTypes.Comms,(byte)17)}));}});
 Test("Lights use existing sabotage mask and repair only mismatched switch indices",()=>
 {var s=Setup();SabotageTools.Process(s);CheatToggles.elecSab=true;SabotageTools.Process(s);Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Electrical,(byte)132)}));var e=(SwitchSystem)s.Systems[SystemTypes.Electrical];e.IsActive=true;e.ActualSwitches=2;e.ExpectedSwitches=3;SabotageTools.Process(s);CheatToggles.elecSab=false;SabotageTools.Process(s);Check(s.Requests.Last()==(SystemTypes.Electrical,(byte)0));});
+Test("Button availability follows native systems on every supported map",()=>
+{
+    foreach(var map in new byte[]{0,1,2,4,5})
+    {
+        var s=Setup(map);
+        Check(SabotageTools.IsAvailable(SabotageKind.Reactor));
+        Check(SabotageTools.IsAvailable(SabotageKind.Communications));
+        Check(SabotageTools.IsAvailable(SabotageKind.Oxygen)==(map is 0 or 1));
+        Check(SabotageTools.IsAvailable(SabotageKind.Lights)==(map!=5));
+        s.Systems.Clear();
+        foreach(var kind in Enum.GetValues<SabotageKind>())Check(!SabotageTools.IsAvailable(kind));
+    }
+});
+Test("Button status reads native state independently of a queued request",()=>
+{
+    var s=Setup();
+    Check(SabotageTools.Request(SabotageKind.Reactor,true));
+    Check(CheatToggles.reactorSab&&!SabotageTools.IsActive(SabotageKind.Reactor));
+    Check(s.Requests.Count==0&&SabotageTools.StatusText=="Sabotage request queued.");
+    Active(s,true);
+    foreach(var kind in Enum.GetValues<SabotageKind>())Check(SabotageTools.IsActive(kind));
+    Active(s,false);
+    foreach(var kind in Enum.GetValues<SabotageKind>())Check(!SabotageTools.IsActive(kind));
+});
+Test("Activate and Repair buttons preserve the old native request payloads",()=>
+{
+    foreach(var map in new byte[]{0,1,2,4,5})foreach(var kind in Enum.GetValues<SabotageKind>())
+    {
+        var s=Setup(map);PlayerControl.LocalPlayer.Data.Role.IsImpostor=false;
+        if(!SabotageTools.IsAvailable(kind))continue;
+        var system=kind switch
+        {
+            SabotageKind.Reactor=>map==4?SystemTypes.HeliSabotage:map==2?SystemTypes.Laboratory:SystemTypes.Reactor,
+            SabotageKind.Oxygen=>SystemTypes.LifeSupp,
+            SabotageKind.Lights=>SystemTypes.Electrical,
+            _=>SystemTypes.Comms
+        };
+        Check(SabotageTools.Request(kind,true));
+        SabotageTools.SyncForMenu();SabotageTools.Process(s);SabotageTools.Process(s);
+        Check(s.Requests.SequenceEqual(new[]{(system,kind==SabotageKind.Lights?(byte)132:(byte)128)}));
+        Active(s,true);SabotageTools.SyncForMenu();
+        Check(SabotageTools.Request(kind,false));
+        SabotageTools.Process(s);SabotageTools.Process(s);
+        var repairs=kind==SabotageKind.Lights
+            ?Enumerable.Range(0,5).Select(index=>(system,(byte)index))
+            :kind==SabotageKind.Reactor&&map==4||kind==SabotageKind.Communications&&map is 1 or 5
+                ?new[]{(system,(byte)16),(system,(byte)17)}:new[]{(system,(byte)16)};
+        Check(s.Requests.Skip(1).SequenceEqual(repairs));
+        Check(!PlayerControl.LocalPlayer.Data.Role.IsImpostor);
+    }
+});
+Test("Repeated button clicks cannot multiply queued requests",()=>
+{
+    var s=Setup();
+    Check(SabotageTools.Request(SabotageKind.Reactor,true));
+    Check(SabotageTools.Request(SabotageKind.Reactor,true));
+    SabotageTools.Process(s);SabotageTools.Process(s);
+    Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Reactor,(byte)128)}));
+});
+Test("Redundant and unavailable button actions do not send requests",()=>
+{
+    var s=Setup(5);
+    Check(!SabotageTools.Request(SabotageKind.Oxygen,true));
+    Check(!SabotageTools.Request(SabotageKind.Lights,true));
+    Check(!SabotageTools.Request((SabotageKind)99,true));
+    Check(!SabotageTools.Request(SabotageKind.Reactor,false));
+    Active(s,true);
+    Check(!SabotageTools.Request(SabotageKind.Reactor,true));
+    SabotageTools.Process(s);Check(s.Requests.Count==0);
+    ShipStatus.Instance=null;
+    foreach(var kind in Enum.GetValues<SabotageKind>())
+        Check(!SabotageTools.IsAvailable(kind)&&!SabotageTools.IsActive(kind)&&!SabotageTools.Request(kind,true));
+});
+Test("Button actions retain meeting and dead guest restrictions",()=>
+{
+    var s=Setup();Active(s,true);PlayerControl.LocalPlayer.Data.IsDead=true;
+    Check(!SabotageTools.Request(SabotageKind.Reactor,false));
+    Check(SabotageTools.StatusText.Contains("unavailable while dead"));
+    Active(s,false);Check(SabotageTools.Request(SabotageKind.Reactor,true));
+    SabotageTools.Process(s);Check(s.Requests.Count==1);
+    Utils.isMeeting=true;Check(!SabotageTools.Request(SabotageKind.Oxygen,true));
+    SabotageTools.Process(s);Check(s.Requests.Count==1);
+});
+Test("Lights Repair button can clear a host unfixable-light edge",()=>
+{
+    var s=Setup();Utils.isHost=true;SabotageTools.Process(s);
+    CheatToggles.unfixableLights=true;SabotageTools.Process(s);Active(s,true);
+    Check(SabotageTools.Request(SabotageKind.Lights,false));SabotageTools.Process(s);
+    Check(!CheatToggles.unfixableLights);
+    Check(s.Requests.SequenceEqual(new[]{(SystemTypes.Electrical,(byte)69),(SystemTypes.Electrical,(byte)69)}));
+});
 var failures=0;foreach(var test in tests){try{test.Run();Console.WriteLine("PASS "+test.Name);}catch(Exception ex){failures++;Console.WriteLine("FAIL "+test.Name+": "+ex);}}
 Console.WriteLine($"{tests.Count-failures}/{tests.Count} sabotage state checks passed. No game process was used.");return failures==0?0:1;

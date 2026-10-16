@@ -4,6 +4,8 @@ using UnityEngine.SceneManagement;
 
 namespace HAU;
 
+public enum SabotageKind { Reactor, Oxygen, Lights, Communications }
+
 public static class SabotageTools
 {
     private sealed class LiveState
@@ -107,6 +109,65 @@ public static class SabotageTools
         Context(ship, map);
         ReadReactor(ship, map, false); ReadOxygen(ship, map, false);
         ReadComms(ship, map, false); ReadElectrical(ship, map, false);
+    }
+
+    public static bool IsAvailable(SabotageKind kind)
+    {
+        var ship = ShipStatus.Instance;
+        var map = Utils.GetCurrentMapID();
+        return kind switch
+        {
+            SabotageKind.Reactor => map == 4
+                ? System<HeliSabotageSystem>(ship, SystemTypes.HeliSabotage) != null
+                : System<ReactorSystemType>(ship, map == 2 ? SystemTypes.Laboratory : SystemTypes.Reactor) != null,
+            SabotageKind.Oxygen => map is not (2 or 4 or 5) && System<LifeSuppSystemType>(ship, SystemTypes.LifeSupp) != null,
+            SabotageKind.Lights => map != 5 && System<SwitchSystem>(ship, SystemTypes.Electrical) != null,
+            SabotageKind.Communications => map is 1 or 5
+                ? System<HqHudSystemType>(ship, SystemTypes.Comms) != null
+                : System<HudOverrideSystemType>(ship, SystemTypes.Comms) != null,
+            _ => false
+        };
+    }
+
+    public static bool IsActive(SabotageKind kind)
+    {
+        var ship = ShipStatus.Instance;
+        var map = Utils.GetCurrentMapID();
+        return kind switch
+        {
+            SabotageKind.Reactor => map == 4
+                ? System<HeliSabotageSystem>(ship, SystemTypes.HeliSabotage)?.IsActive == true
+                : System<ReactorSystemType>(ship, map == 2 ? SystemTypes.Laboratory : SystemTypes.Reactor)?.IsActive == true,
+            SabotageKind.Oxygen => map is not (2 or 4 or 5) && System<LifeSuppSystemType>(ship, SystemTypes.LifeSupp)?.IsActive == true,
+            SabotageKind.Lights => map != 5 && System<SwitchSystem>(ship, SystemTypes.Electrical)?.IsActive == true,
+            SabotageKind.Communications => map is 1 or 5
+                ? System<HqHudSystemType>(ship, SystemTypes.Comms)?.IsActive == true
+                : System<HudOverrideSystemType>(ship, SystemTypes.Comms)?.IsActive == true,
+            _ => false
+        };
+    }
+
+    public static bool Request(SabotageKind kind, bool active)
+    {
+        SyncForMenu();
+        if (!CanRequest(active)) return false;
+        if (!IsAvailable(kind))
+        { StatusText = "This sabotage is unavailable on the current map."; return false; }
+        if (IsActive(kind) == active)
+        { StatusText = active ? "This sabotage is already active." : "This system is already repaired."; return false; }
+        switch (kind)
+        {
+            case SabotageKind.Reactor: CheatToggles.reactorSab = active; break;
+            case SabotageKind.Oxygen: CheatToggles.oxygenSab = active; break;
+            case SabotageKind.Lights:
+                if (!active && _unfixableLights) CheatToggles.unfixableLights = false;
+                CheatToggles.elecSab = active;
+                break;
+            case SabotageKind.Communications: CheatToggles.commsSab = active; break;
+            default: return false;
+        }
+        StatusText = (active ? "Sabotage" : "Repair") + " request queued.";
+        return true;
     }
 
     private static void ReadReactor(ShipStatus ship, byte map, bool requests)

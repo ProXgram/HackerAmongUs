@@ -1,5 +1,13 @@
 # HAU release notes
 
+## 1.0.3
+
+- Updated the creator name to ProXgram.
+- Added menu search and direct shortcuts to common tools.
+- Added a transparency toggle.
+- Added manual update checks, download progress and connection retries.
+- Separated sabotage requests from the current system state.
+
 ## 1.0.2
 
 - Restores explicit sabotage and repair requests without changing your role. The host still validates guest requests.

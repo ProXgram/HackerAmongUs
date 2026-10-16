@@ -1,6 +1,6 @@
 # HAU features
 
-**Hacker Among Us 1.0.2 by Rifegul.** Press **Delete** to open the menu and **F8**
+**Hacker Among Us 1.0.3 by ProXgram.** Press **Delete** to open the menu and **F8**
 to stop movement automation and color cycling. Buttons perform one action;
 switches enable a setting or show its current state.
 
@@ -17,13 +17,13 @@ switches enable a setting or show its current state.
 Close the menu and chat before moving. Only one movement mode runs at a time.
 Remote movement display and network acceptance depend on the game.
 
-## Player Tools
+## Sabotage and Chat
 
-**Round tools** has meeting requests, local meeting closure, Auto Report Bodies,
-door controls and sabotage switches. Closing a meeting on your screen does not
+**Sabotage → Meetings & reports** has meeting requests, local meeting closure,
+Auto Report Bodies and door controls. Closing a meeting on your screen does not
 finish it for everyone.
 
-Sabotage switches request reactor/seismic, oxygen, lights or communications
+Sabotage buttons request reactor/seismic, oxygen, lights or communications
 changes. Fungle has separate mushroom and spore buttons. **Open sabotage map**
 closes HAU so native icons can be clicked. These controls require an active
 Normal round or Freeplay. Guest requests do not change your assigned role, and
@@ -32,7 +32,7 @@ the host can reject them. The status reports a request, not a confirmed result.
 **Chat** has local chat access, send-delay and textbox options, clipboard
 controls and extra characters. The server still validates submitted messages.
 
-## Appearance
+## Outfits
 
 **Outfit studio** has color, hat, skin, visor, pet and nameplate categories.
 Search, browse ten results per page and equip or clear one slot. Save a look,
@@ -103,7 +103,8 @@ permits one use per meeting and does not force an online Judge assignment.
 
 ## Settings and updates
 
-Settings contains menu keys, colors, profiles and update options. Click-through
+Search at the top of the menu finds tools and opens their exact page.
+Settings contains menu keys, colors, transparency, profiles, update options and logs. Click-through
 is off by default so HAU controls do not also click the game underneath.
 Imported preferences keep their saved value.
 
@@ -114,7 +115,9 @@ start task automation or restore sabotage states and Spectate targets.
 Guest profiles cannot activate host-only controls.
 
 Steam, Microsoft Store and Xbox App check for compatible updates at startup
-and apply them after Among Us closes. Epic Games uses manual ZIP updates.
+and periodically while open. Settings also has a manual check button. Downloads
+show progress and retry temporary connection failures. Ready updates install
+after Among Us closes. Epic Games uses manual ZIP updates.
 A game update may need a compatible HAU release first.
 
 About shows version details. Logs records selected events from the current

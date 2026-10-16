@@ -16,6 +16,83 @@ Test("Disabled automatic updates make no request, cache or helper", async () =>
     Check(f.Http.Requests.Count == 0 && f.Launches.Count == 0 && !Directory.Exists(f.Cache));
 });
 
+Test("Manual checks work with automatic checks disabled and do not enable a schedule", async () =>
+{
+    var calls = 0; var scheduled = new List<TimeSpan>();
+    var coordinator = new AutomaticUpdateCoordinator(_ => { calls++; return Task.FromResult(AutomaticUpdateOutcome.UpToDate); }, scheduled.Add);
+    Check(!coordinator.Enabled && coordinator.CheckNow());
+    await coordinator.Completion;
+    Check(calls == 1 && !coordinator.Enabled && !coordinator.IsChecking);
+    Check(scheduled.SequenceEqual(new[] { Timeout.InfiniteTimeSpan }) && !coordinator.CheckScheduled());
+});
+
+Test("Completed manual checks retain their result while automatic checks are off", () =>
+{
+    foreach (var outcome in new[] { AutomaticUpdateOutcome.UpToDate, AutomaticUpdateOutcome.UnsupportedGameVersion, AutomaticUpdateOutcome.Skipped })
+    {
+        var formatted = AutomaticUpdateStatus.Format(false, false, "Manual result", "", outcome);
+        Check(formatted.Contains("Manual result") && formatted.Contains("Automatic checks are off") && !formatted.Contains("Retrying automatically"));
+    }
+    Check(AutomaticUpdateStatus.Format(true, false, "Connection failed.", "", AutomaticUpdateOutcome.Skipped).Contains("5 minutes"));
+    Check(AutomaticUpdateStatus.Format(false, false, "Check finished.", "2.0", AutomaticUpdateOutcome.Prepared).Contains("will still install"));
+    return Task.CompletedTask;
+});
+
+Test("Enabling automatic checks starts immediately and schedules a later refresh", async () =>
+{
+    var calls = 0; var scheduled = new List<TimeSpan>();
+    var coordinator = new AutomaticUpdateCoordinator(_ => { calls++; return Task.FromResult(AutomaticUpdateOutcome.UpToDate); }, scheduled.Add);
+    coordinator.SetEnabled(true); await coordinator.Completion;
+    Check(calls == 1 && coordinator.Enabled && scheduled.Last() == TimeSpan.FromMinutes(30));
+    coordinator.SetEnabled(false);
+    Check(!coordinator.Enabled && scheduled.Last() == Timeout.InfiniteTimeSpan && !coordinator.CheckScheduled());
+    coordinator.SetEnabled(true); await coordinator.Completion;
+    Check(calls == 2 && coordinator.Enabled);
+});
+
+Test("Manual, periodic and enable requests never overlap a running check", async () =>
+{
+    var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var calls = 0; var coordinator = new AutomaticUpdateCoordinator(async ct =>
+    { Interlocked.Increment(ref calls); entered.TrySetResult(); await release.Task.WaitAsync(ct); return AutomaticUpdateOutcome.Prepared; }, _ => { });
+    coordinator.SetEnabled(true); await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+    Check(coordinator.IsChecking && !coordinator.CheckNow() && !coordinator.CheckScheduled());
+    coordinator.SetEnabled(true); Check(calls == 1);
+    release.SetResult(); await coordinator.Completion;
+    Check(!coordinator.IsChecking && calls == 1);
+});
+
+Test("Disabling during preparation cancels before helper launch and stops periodic checks", async () =>
+{
+    using var f = new Fixture(); var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    f.Http.BeforeResponse = async (_, ct) => { entered.TrySetResult(); await Task.Delay(Timeout.Infinite, ct); };
+    var service = f.Service(); var scheduled = new List<TimeSpan>();
+    var coordinator = new AutomaticUpdateCoordinator(ct => service.CheckOnceAsync(f.Snapshot, true, ct), scheduled.Add);
+    coordinator.SetEnabled(true); await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+    coordinator.SetEnabled(false); await coordinator.Completion;
+    Check(!coordinator.IsChecking && !coordinator.Enabled && f.Launches.Count == 0 && !Directory.Exists(f.Cache));
+    Check(scheduled.Last() == Timeout.InfiniteTimeSpan && !coordinator.CheckScheduled()); f.AssertGameUntouched();
+});
+
+Test("Disabling after preparation preserves the staged helper and its authenticated files", async () =>
+{
+    using var f = new Fixture(); var service = f.Service();
+    var coordinator = new AutomaticUpdateCoordinator(ct => service.CheckOnceAsync(f.Snapshot, true, ct), _ => { });
+    coordinator.SetEnabled(true); await coordinator.Completion;
+    var before = f.CacheSnapshot(); coordinator.SetEnabled(false);
+    Check(service.PendingVersion == "2.0" && f.Launches.Count == 1 && before.SequenceEqual(f.CacheSnapshot()));
+    Check(!coordinator.CheckScheduled()); f.AssertGameUntouched();
+});
+
+Test("A failed scheduled check uses the shorter retry interval", async () =>
+{
+    var scheduled = new List<TimeSpan>();
+    var coordinator = new AutomaticUpdateCoordinator(_ => Task.FromResult(AutomaticUpdateOutcome.Skipped), scheduled.Add);
+    coordinator.SetEnabled(true); await coordinator.Completion;
+    Check(scheduled.Last() == TimeSpan.FromMinutes(5));
+});
+
 Test("Manual Epic-style installation requires a ZIP without any network request or helper", async () =>
 {
     using var f = new Fixture(); File.Delete(Path.Combine(f.Game, "MicrosoftGame.config")); File.Delete(Path.Combine(f.Game, "AppxManifest.xml"));
@@ -78,6 +155,68 @@ Test("Offline check leaves game and cache untouched", async () =>
     Check(f.Launches.Count == 0 && !Directory.Exists(f.Cache)); f.AssertGameUntouched();
 });
 
+Test("Temporary manifest failures retry before preparing an authenticated update", async () =>
+{
+    using var f = new Fixture(); f.Http.Failures.Enqueue(new HttpRequestException("Temporary disconnect"));
+    f.Http.Failures.Enqueue(new HttpRequestException("Gateway unavailable", null, HttpStatusCode.BadGateway));
+    var service = f.Service();
+    Check(await service.CheckOnceAsync(f.Snapshot, true) == AutomaticUpdateOutcome.Prepared);
+    Check(f.Http.Requests.Count == 4 && f.Pauses.SequenceEqual(new[] { TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(4) }));
+    Check(f.Launches.Count == 1); f.AssertGameUntouched();
+});
+
+Test("Repeated temporary failure is bounded and leaves a useful retry status", async () =>
+{
+    using var f = new Fixture(); f.Http.Failure = new HttpRequestException("Offline"); var service = f.Service();
+    Check(await service.CheckOnceAsync(f.Snapshot, true) == AutomaticUpdateOutcome.Skipped);
+    Check(f.Http.Requests.Count == AutomaticUpdateRetryPolicy.MaximumAttempts && f.Pauses.Count == 2);
+    Check(service.Status.Contains("check again") && service.DownloadPercent == -1);
+    Check(f.Launches.Count == 0 && !Directory.Exists(f.Cache)); f.AssertGameUntouched();
+});
+
+foreach (var status in new[] { HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden, HttpStatusCode.NotFound })
+    Test("Permanent HTTP failures do not retry or launch helpers: " + status, async () =>
+    {
+        using var f = new Fixture(); f.Http.Failure = new HttpRequestException("Unavailable", null, status);
+        Check(await f.Service().CheckOnceAsync(f.Snapshot, true) == AutomaticUpdateOutcome.Skipped);
+        Check(f.Http.Requests.Count == 1 && f.Pauses.Count == 0 && f.Launches.Count == 0);
+    });
+
+Test("A temporary installer failure retries without leaving duplicate or partial files", async () =>
+{
+    using var f = new Fixture(); var attempt = 0;
+    f.Http.BeforeResponse = (uri, _) =>
+    {
+        if (uri.AbsolutePath.EndsWith("/HAUSetup.exe") && attempt++ == 0)
+            throw new HttpRequestException("Rate limited", null, HttpStatusCode.TooManyRequests);
+        return Task.CompletedTask;
+    };
+    Check(await f.Service().CheckOnceAsync(f.Snapshot, true) == AutomaticUpdateOutcome.Prepared);
+    Check(f.Http.Requests.Count == 3 && f.Pauses.Count == 1 && f.Launches.Count == 1);
+    Check(!Directory.EnumerateFiles(f.Slot, "*.tmp").Any()); f.AssertGameUntouched();
+});
+
+Test("Cancellation during retry stops immediately without launching a helper", async () =>
+{
+    using var f = new Fixture(); using var cancellation = new CancellationTokenSource();
+    f.Http.Failure = new HttpRequestException("Offline");
+    var service = f.Service(pause: (_, ct) => { cancellation.Cancel(); return Task.Delay(1, ct); });
+    Check(await service.CheckOnceAsync(f.Snapshot, true, cancellation.Token) == AutomaticUpdateOutcome.Skipped);
+    Check(f.Http.Requests.Count == 1 && f.Launches.Count == 0 && !Directory.Exists(f.Cache));
+    Check(service.Status.Contains("cancelled")); f.AssertGameUntouched();
+});
+
+Test("Automatic schedule checks sooner after failure and respects explicit cancellation", () =>
+{
+    Check(AutomaticUpdateRetryPolicy.NextCheck(AutomaticUpdateOutcome.Skipped) == TimeSpan.FromMinutes(5));
+    Check(AutomaticUpdateRetryPolicy.NextCheck(AutomaticUpdateOutcome.UpToDate) == TimeSpan.FromMinutes(30));
+    Check(AutomaticUpdateRetryPolicy.NextCheck(AutomaticUpdateOutcome.Prepared) == TimeSpan.FromMinutes(30));
+    Check(AutomaticUpdateRetryPolicy.IsTransient(new TaskCanceledException(), CancellationToken.None));
+    Check(!AutomaticUpdateRetryPolicy.IsTransient(new TaskCanceledException(), new CancellationToken(true)));
+    Check(!AutomaticUpdateRetryPolicy.IsTransient(new InvalidDataException("Bad signature"), CancellationToken.None));
+    return Task.CompletedTask;
+});
+
 Test("Invalid signature cannot download or execute an installer", async () =>
 {
     using var f = new Fixture(); var text = Encoding.UTF8.GetString(f.Http.Manifest);
@@ -105,6 +244,14 @@ Test("Valid release stages exact authenticated bytes and launches hidden helper 
     Check(File.ReadAllBytes(launch.FileName).SequenceEqual(f.SetupBytes));
     Check(File.ReadAllBytes(Path.Combine(f.Slot, "latest.json")).SequenceEqual(f.Http.Manifest));
     Check(!Directory.EnumerateFiles(f.Slot, "*.tmp").Any()); f.AssertGameUntouched();
+});
+
+Test("Installer download exposes progress and clears it when the update is prepared", async () =>
+{
+    using var f = new Fixture(); var updates = new List<string>(); var service = f.Service(log: updates.Add);
+    Check(await service.CheckOnceAsync(f.Snapshot, true) == AutomaticUpdateOutcome.Prepared);
+    Check(updates.Contains("Downloading mod update: 0%.") && updates.Any(s => s.StartsWith("Downloading mod update: 99%")));
+    Check(updates.Any(s => s.StartsWith("Verifying mod update")) && service.DownloadPercent == -1);
 });
 
 Test("A concurrent startup check is only run once", async () =>
@@ -272,6 +419,7 @@ sealed class Fixture : IDisposable
     public byte[] SetupBytes { get; } = Encoding.UTF8.GetBytes("MZ authenticated simulated setup bytes");
     public MockHttp Http { get; } = new();
     public List<ProcessStartInfo> Launches { get; } = new();
+    public List<TimeSpan> Pauses { get; } = new();
     public bool HelperAlive { get; set; }
     public UpdateStartupSnapshot Snapshot => new(Game, "2026.9.29", "1.0", 100);
 
@@ -292,9 +440,11 @@ sealed class Fixture : IDisposable
             signature = Convert.ToBase64String(SigningKey.SignData(payload, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)) });
     }
 
-    public AutomaticUpdateService Service(Func<string, string>? normalize = null) => new(new HttpClient(Http, false),
+    public AutomaticUpdateService Service(Func<string, string>? normalize = null, Action<string>? log = null,
+        Func<TimeSpan, CancellationToken, Task>? pause = null) => new(new HttpClient(Http, false),
         new UpdateManifestVerifier(SigningKey.ExportSubjectPublicKeyInfoPem()), new Uri(UpdateTrust.ManifestUrl), Cache,
-        start => { Launches.Add(start); return new UpdateHelperIdentity(200, 1000); }, _ => HelperAlive, normalizeDirectory: normalize);
+        start => { Launches.Add(start); return new UpdateHelperIdentity(200, 1000); }, _ => HelperAlive, log,
+        normalizeDirectory: normalize, pause: pause ?? ((delay, ct) => { ct.ThrowIfCancellationRequested(); Pauses.Add(delay); return Task.CompletedTask; }));
 
     public void AssertGameUntouched()
     {
@@ -335,11 +485,13 @@ sealed class MockHttp : HttpMessageHandler
     public long? SetupLength { get; set; }
     public Func<Stream>? SetupStream { get; set; }
     public Exception? Failure { get; set; }
+    public Queue<Exception> Failures { get; } = new();
     public Func<Uri, CancellationToken, Task>? BeforeResponse { get; set; }
     public List<Uri> Requests { get; } = new();
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
         var uri = request.RequestUri!; Requests.Add(uri);
+        if (Failures.TryDequeue(out var failure)) throw failure;
         if (Failure != null) throw Failure;
         if (BeforeResponse != null) await BeforeResponse(uri, ct);
         var manifest = uri.AbsoluteUri == UpdateTrust.ManifestUrl;

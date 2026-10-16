@@ -15,10 +15,14 @@ public class MenuUI : MonoBehaviour
     private int _selectedTab;
     private Vector2 _tabScrollPosition;
     private Vector2 _contentScrollPosition;
+    private readonly MenuSearchInput _searchInput = new();
+    private Rect _searchBounds;
+    private IReadOnlyList<MenuDestination> _searchResults = System.Array.Empty<MenuDestination>();
     public static string ActiveTabName => HAUPlugin.menuUI &&
         HAUPlugin.menuUI._selectedTab >= 0 && HAUPlugin.menuUI._selectedTab < HAUPlugin.menuUI._tabs.Count
         ? HAUPlugin.menuUI._tabs[HAUPlugin.menuUI._selectedTab].name : "";
     public static float hue;
+    public static bool IsSearchEditing => HAUPlugin.menuUI && HAUPlugin.menuUI._searchInput.IsEditing;
     public static float ContentWidth => Mathf.Max(80f, windowRect.width - 200f);
     public static string ContextText => Utils.isFreePlay ? "FREEPLAY"
         : Utils.isHost ? "HOST" : Utils.isLobby || Utils.isInGame ? "GUEST" : "MAIN MENU";
@@ -28,6 +32,7 @@ public class MenuUI : MonoBehaviour
         isGUIActive = false;
         OutfitPickerUI.Close();
         NicknameEntry.StopEditing();
+        if (HAUPlugin.menuUI) HAUPlugin.menuUI._searchInput.StopEditing();
     }
 
     public static void CloseMenuFromPointer()
@@ -40,22 +45,41 @@ public class MenuUI : MonoBehaviour
     {
         var menu = HAUPlugin.menuUI;
         if (!menu) return;
-        int index = menu._tabs.FindIndex(tab => tab.name == name);
+        string resolved = MenuNavigation.ResolveTab(name);
+        int index = menu._tabs.FindIndex(tab => tab.name == resolved);
         if (index < 0) return;
         menu._selectedTab = index;
         menu._contentScrollPosition = Vector2.zero;
+        menu.ClearSearch();
         NicknameEntry.StopEditing();
+    }
+
+    public static void OpenFeature(string id)
+    {
+        var destination = MenuNavigation.Find(id);
+        if (destination == null) return;
+        OpenTab(destination.Tab);
+        var menu = HAUPlugin.menuUI;
+        if (menu && menu._tabs[menu._selectedTab] is IMenuPage page) page.OpenPage(destination.Page);
+    }
+
+    private void ClearSearch()
+    {
+        _searchInput.Clear();
+        _searchResults = System.Array.Empty<MenuDestination>();
+        if (Event.current != null) GUI.FocusControl(null);
     }
 
     private void Start()
     {
         _tabs.Add(new HomeTab());
         _tabs.Add(new MovementTab());
-        _tabs.Add(new PlayerToolsTab());
         _tabs.Add(new ColorsTab());
         _tabs.Add(new ESPTab());
         _tabs.Add(new TasksTab());
         _tabs.Add(new RolesTab());
+        _tabs.Add(new ShipTab());
+        _tabs.Add(new ChatTab());
         _tabs.Add(new HostOnlyTab());
         _tabs.Add(new PracticeTab());
         _tabs.Add(new ConfigTab());
@@ -83,7 +107,8 @@ public class MenuUI : MonoBehaviour
     private void Update()
     {
         MultiRoleHandler.Tick();
-        if (Input.GetKeyDown(Utils.StringToKeycode(HAUPlugin.menuKeybind.Value)))
+        TickSearchInput();
+        if (!_searchInput.IsEditing && Input.GetKeyDown(Utils.StringToKeycode(HAUPlugin.menuKeybind.Value)))
         {
 
             if (isGUIActive) CloseMenu();
@@ -135,6 +160,7 @@ public class MenuUI : MonoBehaviour
         if (CheatToggles.reloadConfig)
         {
             HAUPlugin.Plugin.Config.Reload();
+            HAU.Updates.AutomaticUpdateHandler.SetEnabled(HAUPlugin.automaticUpdates.Value);
             CheatToggles.reloadConfig = false;
         }
 
@@ -279,31 +305,38 @@ public class MenuUI : MonoBehaviour
         GUILayout.BeginVertical(GUILayout.Width(138f));
         for (int i = 0; i < _tabs.Count; i++)
         {
-            if (i == 1) GUILayout.Label("PLAYER", GUIStylePreset.Hint);
-            if (i == 7) GUILayout.Label("LOBBY", GUIStylePreset.Hint);
-            if (i == 9) GUILayout.Label("MENU", GUIStylePreset.Hint);
+            if (_tabs[i] is ConsoleTab) continue;
+            if (_tabs[i] is MovementTab) GUILayout.Label("YOUR PLAYER", GUIStylePreset.Hint);
+            if (_tabs[i] is HostOnlyTab) GUILayout.Label("HOST & PRACTICE", GUIStylePreset.Hint);
+            if (_tabs[i] is ConfigTab) GUILayout.Label("MENU", GUIStylePreset.Hint);
             if (GUILayout.Button(_tabs[i].name,
-                i == _selectedTab ? GUIStylePreset.SelectedTab : GUIStylePreset.TabButton,
+                i == _selectedTab || _tabs[i] is ConfigTab && _tabs[_selectedTab] is ConsoleTab
+                    ? GUIStylePreset.SelectedTab : GUIStylePreset.TabButton,
                 GUILayout.Height(27f)))
             {
                 _selectedTab = i;
                 _contentScrollPosition = Vector2.zero;
+                ClearSearch();
                 NicknameEntry.StopEditing();
             }
         }
         GUILayout.EndVertical();
         GUILayout.EndScrollView();
         GUILayout.Space(9f);
+        GUILayout.BeginVertical(GUILayout.Width(windowRect.width - MenuLayout.HorizontalChrome));
+        DrawSearch();
         _contentScrollPosition = GUILayout.BeginScrollView(_contentScrollPosition, false, true,
-            GUILayout.Width(windowRect.width - MenuLayout.HorizontalChrome), GUILayout.Height(contentHeight));
+            GUILayout.Width(windowRect.width - MenuLayout.HorizontalChrome), GUILayout.Height(Mathf.Max(64f, contentHeight - 42f)));
         GUILayout.BeginVertical(GUILayout.Width(ContentWidth - 12f));
-        if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
+        if (_searchInput.IsEditing || !string.IsNullOrWhiteSpace(_searchInput.Text)) DrawSearchResults();
+        else if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
         {
             GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
             _tabs[_selectedTab].Draw();
         }
         GUILayout.EndVertical();
         GUILayout.EndScrollView();
+        GUILayout.EndVertical();
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
@@ -319,5 +352,70 @@ public class MenuUI : MonoBehaviour
         GUILayout.Label("v" + HAUPlugin.displayVersion, GUIStylePreset.Hint, GUILayout.Width(compact ? 45f : 65f));
         GUILayout.EndHorizontal();
         GUI.DragWindow(new Rect(0f, 0f, windowRect.width, 77f));
+    }
+
+    private void DrawSearch()
+    {
+        if (_searchInput.IsEditing && Event.current.type == EventType.MouseDown && !_searchBounds.Contains(Event.current.mousePosition))
+            _searchInput.StopEditing();
+        GUILayout.BeginHorizontal();
+        string preview = _searchInput.Text.Length > 34 ? _searchInput.Text.Substring(0, 34) + "..." : _searchInput.Text;
+        string label = _searchInput.IsEditing ? (_searchInput.AllSelected ? "Selected: " : "Typing: ") + preview
+            : preview.Length == 0 ? "Find a feature..." : preview;
+        if (GUILayout.Button(label, GUIStylePreset.SearchField, GUILayout.Height(32f)))
+        {
+            _searchInput.BeginEditing();
+            NicknameEntry.StopEditing();
+            GUI.FocusControl(null);
+        }
+        if (Event.current.type == EventType.Repaint) _searchBounds = GUILayoutUtility.GetLastRect();
+        if (GUILayout.Button("Clear", GUILayout.Width(60f), GUILayout.Height(32f))) ClearSearch();
+        GUILayout.EndHorizontal();
+    }
+
+    private void TickSearchInput()
+    {
+        if (!_searchInput.IsEditing) return;
+        if (!isGUIActive || OutfitPickerUI.IsOpen || !Application.isFocused || HAUPlugin.isPanicked)
+        {
+            _searchInput.StopEditing();
+            return;
+        }
+        MenuTextInputPatches.CaptureSearchInputFrame();
+        if (Input.GetKeyDown(KeyCode.Escape)) { ClearSearch(); return; }
+        string previous = _searchInput.Text;
+        bool control = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        bool submitted = false;
+        if (control)
+        {
+            if (Input.GetKeyDown(KeyCode.A)) _searchInput.SelectAll();
+            else if (Input.GetKeyDown(KeyCode.V)) _searchInput.Paste(GUIUtility.systemCopyBuffer ?? "");
+        }
+        else if (!string.IsNullOrEmpty(Input.inputString)) submitted = _searchInput.Type(Input.inputString);
+        if (_searchInput.Text != previous)
+        {
+            _searchResults = MenuNavigation.Search(_searchInput.Text);
+            _contentScrollPosition = Vector2.zero;
+        }
+        if (submitted && _searchResults.Count > 0) OpenFeature(_searchResults[0].Id);
+    }
+
+    private void DrawSearchResults()
+    {
+        GUILayout.Label("Find a feature", GUIStylePreset.TabTitle);
+        UIHelpers.Hint("Type a name. Enter opens the first match. Ctrl+A replaces your search; Escape clears it.");
+        if (string.IsNullOrWhiteSpace(_searchInput.Text)) return;
+        if (_searchResults.Count == 0)
+        {
+            UIHelpers.Hint("No matches. Try sprint, outfit, vent, sabotage or ghost vote.");
+            return;
+        }
+        UIHelpers.Hint(_searchResults.Count + (_searchResults.Count == 1 ? " match. Choose it to open its settings." : " matches. Choose one to open its settings."));
+        foreach (var destination in _searchResults)
+            if (GUILayout.Button(destination.Title + "\n" + destination.Location, GUILayout.Height(50f)))
+            {
+                OpenFeature(destination.Id);
+                break;
+            }
     }
 }

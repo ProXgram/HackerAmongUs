@@ -21,36 +21,70 @@ internal enum AutomaticUpdateOutcome { Disabled, AlreadyChecked, UpToDate, Unsup
 internal static class AutomaticUpdateHandler
 {
     private static int _started;
+    private static UpdateStartupSnapshot? _snapshot;
+    private static Action<string> _log = _ => { };
+    private static Timer? _nextCheck;
+    private static AutomaticUpdateCoordinator? _coordinator;
     private static AutomaticUpdateService? _service;
     private static string _initialStatus = "Automatic update check has not started.";
-    public static string Status => Volatile.Read(ref _service)?.Status ?? Volatile.Read(ref _initialStatus);
-    public static string PendingVersion => Volatile.Read(ref _service)?.PendingVersion ?? "";
+    private static string _lastCheckedAt = "";
+    private static string _pendingVersion = "";
+    private static int _lastOutcome = -1;
+    public static string Status => AutomaticUpdateStatus.Format(Enabled, IsChecking,
+        Volatile.Read(ref _service)?.Status ?? Volatile.Read(ref _initialStatus), PendingVersion,
+        Volatile.Read(ref _lastOutcome) < 0 ? null : (AutomaticUpdateOutcome)Volatile.Read(ref _lastOutcome));
+    public static string PendingVersion => Volatile.Read(ref _pendingVersion);
+    public static bool Enabled => Volatile.Read(ref _coordinator)?.Enabled ?? false;
+    public static bool IsChecking => Volatile.Read(ref _coordinator)?.IsChecking ?? false;
+    public static bool CanCheckNow => Volatile.Read(ref _coordinator) != null && !IsChecking;
+    public static int DownloadPercent => Volatile.Read(ref _service)?.DownloadPercent ?? -1;
+    public static string LastCheckedAt => Volatile.Read(ref _lastCheckedAt);
 
     public static void Start(UpdateStartupSnapshot snapshot, bool enabled, Action<string> log)
     {
         if (Interlocked.Exchange(ref _started, 1) != 0) return;
-        if (!enabled) { Volatile.Write(ref _initialStatus, "Automatic updates are disabled."); log(_initialStatus); return; }
+        _snapshot = snapshot;
+        _log = log;
+        _nextCheck = new Timer(_ => Volatile.Read(ref _coordinator)?.CheckScheduled(), null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        Volatile.Write(ref _coordinator, new AutomaticUpdateCoordinator(RunCheckAsync,
+            delay => _nextCheck.Change(delay, Timeout.InfiniteTimeSpan)));
+        if (enabled) SetEnabled(true);
+        else log(Status);
+    }
 
-        _ = Task.Run(async () =>
+    public static bool CheckNow() => Volatile.Read(ref _coordinator)?.CheckNow() ?? false;
+    public static void SetEnabled(bool enabled) => Volatile.Read(ref _coordinator)?.SetEnabled(enabled);
+
+    private static async Task<AutomaticUpdateOutcome> RunCheckAsync(CancellationToken cancellation)
+    {
+        var snapshot = _snapshot!;
+        try
         {
-            try
-            {
-                using var http = new HttpClient(new HttpClientHandler { UseCookies = false })
-                { Timeout = TimeSpan.FromSeconds(45) };
-                var service = new AutomaticUpdateService(http, new UpdateManifestVerifier(UpdateTrust.PublicKeyPem),
-                    new Uri(UpdateTrust.ManifestUrl), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "HAU", "Updates"), LaunchHelper, IsHelperRunning, log);
-                Volatile.Write(ref _service, service);
-                using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-                await service.CheckOnceAsync(snapshot, true, timeout.Token).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                Volatile.Write(ref _initialStatus, "Automatic update check skipped: " + ex.Message);
-                Volatile.Write(ref _service, null);
-                log(_initialStatus);
-            }
-        });
+            using var http = new HttpClient(new HttpClientHandler { UseCookies = false })
+            { Timeout = TimeSpan.FromSeconds(45) };
+            var service = new AutomaticUpdateService(http, new UpdateManifestVerifier(UpdateTrust.PublicKeyPem),
+                new Uri(UpdateTrust.ManifestUrl), Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "HAU", "Updates"), LaunchHelper, IsHelperRunning, _log);
+            Volatile.Write(ref _service, service);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+            timeout.CancelAfter(TimeSpan.FromMinutes(3));
+            var outcome = await service.CheckOnceAsync(snapshot, true, timeout.Token).ConfigureAwait(false);
+            if (service.PendingVersion.Length != 0) Volatile.Write(ref _pendingVersion, service.PendingVersion);
+            Volatile.Write(ref _lastOutcome, (int)outcome);
+            return outcome;
+        }
+        catch (Exception ex)
+        {
+            Volatile.Write(ref _initialStatus, "Automatic update check skipped: " + ex.Message);
+            Volatile.Write(ref _service, null);
+            Volatile.Write(ref _lastOutcome, (int)AutomaticUpdateOutcome.Skipped);
+            _log(_initialStatus);
+            return AutomaticUpdateOutcome.Skipped;
+        }
+        finally
+        {
+            Volatile.Write(ref _lastCheckedAt, "Last checked: " + DateTime.Now.ToString("t", System.Globalization.CultureInfo.CurrentCulture));
+        }
     }
 
     private static UpdateHelperIdentity LaunchHelper(ProcessStartInfo start)
@@ -71,6 +105,104 @@ internal static class AutomaticUpdateHandler
     }
 }
 
+internal static class AutomaticUpdateStatus
+{
+    public static string Format(bool enabled, bool checking, string status, string pendingVersion, AutomaticUpdateOutcome? outcome)
+    {
+        if (checking) return status;
+        if (enabled) return outcome == AutomaticUpdateOutcome.Skipped ? status + " Retrying automatically in 5 minutes." : status;
+        var result = outcome == null ? "You can still check for updates below." : status;
+        if (pendingVersion.Length != 0)
+            result += " Update " + pendingVersion + " is already prepared and will still install when Among Us closes.";
+        return result + " Automatic checks are off.";
+    }
+}
+
+internal sealed class AutomaticUpdateCoordinator
+{
+    private readonly object _gate = new();
+    private readonly Func<CancellationToken, Task<AutomaticUpdateOutcome>> _check;
+    private readonly Action<TimeSpan> _schedule;
+    private CancellationTokenSource? _activeCancellation;
+    private Task _completion = Task.CompletedTask;
+    private bool _enabled;
+    private bool _checking;
+    public bool Enabled { get { lock (_gate) return _enabled; } }
+    public bool IsChecking { get { lock (_gate) return _checking; } }
+    public Task Completion { get { lock (_gate) return _completion; } }
+
+    public AutomaticUpdateCoordinator(Func<CancellationToken, Task<AutomaticUpdateOutcome>> check, Action<TimeSpan> schedule)
+    {
+        _check = check ?? throw new ArgumentNullException(nameof(check));
+        _schedule = schedule ?? throw new ArgumentNullException(nameof(schedule));
+    }
+
+    public void SetEnabled(bool enabled)
+    {
+        CancellationTokenSource? cancellation;
+        lock (_gate)
+        {
+            if (_enabled == enabled) return;
+            _enabled = enabled;
+            cancellation = enabled ? null : _activeCancellation;
+            if (!enabled) _schedule(Timeout.InfiniteTimeSpan);
+        }
+        if (enabled) CheckScheduled();
+        else
+        {
+            try { cancellation?.Cancel(); }
+            catch (ObjectDisposedException) { }
+        }
+    }
+
+    public bool CheckNow() => BeginCheck(false);
+    public bool CheckScheduled() => BeginCheck(true);
+
+    private bool BeginCheck(bool scheduled)
+    {
+        lock (_gate)
+        {
+            if (_checking || scheduled && !_enabled) return false;
+            _checking = true;
+            _schedule(Timeout.InfiniteTimeSpan);
+            var cancellation = new CancellationTokenSource();
+            _activeCancellation = cancellation;
+            _completion = Task.Run(async () =>
+            {
+                var outcome = AutomaticUpdateOutcome.Skipped;
+                try { outcome = await _check(cancellation.Token).ConfigureAwait(false); }
+                catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+                finally
+                {
+                    lock (_gate)
+                    {
+                        _checking = false;
+                        _activeCancellation = null;
+                        if (_enabled) _schedule(AutomaticUpdateRetryPolicy.NextCheck(outcome));
+                    }
+                    cancellation.Dispose();
+                }
+            });
+            return true;
+        }
+    }
+}
+
+internal static class AutomaticUpdateRetryPolicy
+{
+    public const int MaximumAttempts = 3;
+    public static TimeSpan NextCheck(AutomaticUpdateOutcome outcome) =>
+        outcome == AutomaticUpdateOutcome.Skipped ? TimeSpan.FromMinutes(5) : TimeSpan.FromMinutes(30);
+
+    public static bool IsTransient(Exception error, CancellationToken ct)
+    {
+        if (ct.IsCancellationRequested) return false;
+        if (error is OperationCanceledException) return true;
+        if (error is not HttpRequestException request) return false;
+        return request.StatusCode == null || (int)request.StatusCode == 408 || (int)request.StatusCode == 429 || (int)request.StatusCode >= 500;
+    }
+}
+
 
 internal sealed class AutomaticUpdateService
 {
@@ -84,15 +216,18 @@ internal sealed class AutomaticUpdateService
     private readonly Func<UpdateHelperIdentity, bool> _isHelperRunning;
     private readonly Func<string, string> _normalizeDirectory;
     private readonly Action<string> _log;
+    private readonly Func<TimeSpan, CancellationToken, Task> _pause;
     private int _started;
     private string _status = "Automatic update check has not started.";
     private string _pendingVersion = "";
+    private int _downloadPercent = -1;
     public string Status => Volatile.Read(ref _status);
     public string PendingVersion => Volatile.Read(ref _pendingVersion);
+    public int DownloadPercent => Volatile.Read(ref _downloadPercent);
 
     public AutomaticUpdateService(HttpClient http, UpdateManifestVerifier verifier, Uri manifestUrl, string cacheRoot,
         Func<ProcessStartInfo, UpdateHelperIdentity> launchHelper, Func<UpdateHelperIdentity, bool> isHelperRunning, Action<string>? log = null,
-        Func<string, string>? normalizeDirectory = null)
+        Func<string, string>? normalizeDirectory = null, Func<TimeSpan, CancellationToken, Task>? pause = null)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         _verifier = verifier ?? throw new ArgumentNullException(nameof(verifier));
@@ -104,6 +239,7 @@ internal sealed class AutomaticUpdateService
         _isHelperRunning = isHelperRunning ?? throw new ArgumentNullException(nameof(isHelperRunning));
         _log = log ?? (_ => { });
         _normalizeDirectory = normalizeDirectory ?? (directory => NormalizeGameDirectory(directory));
+        _pause = pause ?? ((delay, ct) => Task.Delay(delay, ct));
     }
 
     public async Task<AutomaticUpdateOutcome> CheckOnceAsync(UpdateStartupSnapshot snapshot, bool enabled, CancellationToken ct = default)
@@ -120,7 +256,7 @@ internal sealed class AutomaticUpdateService
             if (!HasAutomaticInstallationMarkers(game))
                 return Finish(AutomaticUpdateOutcome.ManualUpdateRequired, "This game installation uses manual updates. Download the latest ZIP.");
             SetStatus("Checking for a compatible mod update.");
-            var envelope = await DownloadManifestAsync(ct).ConfigureAwait(false);
+            var envelope = await RetryAsync(DownloadManifestAsync, ct).ConfigureAwait(false);
             var manifest = _verifier.Verify(envelope);
             if (!manifest.SupportsGameVersion(snapshot.GameVersion))
             {
@@ -146,7 +282,10 @@ internal sealed class AutomaticUpdateService
             DeleteKnownFile(slot, "manifest.write.tmp");
             DeleteKnownFile(slot, "receipt.write.tmp");
             var setupPath = Path.Combine(slot, "setup.exe");
-            await StageSetupAsync(manifest.SetupExe, setupPath, ct).ConfigureAwait(false);
+            SetStatus("Preparing mod update " + manifest.ModVersion + ".");
+            await RetryAsync(async token => { await StageSetupAsync(manifest.SetupExe, setupPath, token).ConfigureAwait(false); return true; }, ct).ConfigureAwait(false);
+            Volatile.Write(ref _downloadPercent, -1);
+            SetStatus("Verifying mod update " + manifest.ModVersion + ".");
             var manifestPath = Path.Combine(slot, "latest.json");
             await WriteAtomicAsync(manifestPath, Path.Combine(slot, "manifest.write.tmp"), envelope, ct).ConfigureAwait(false);
             ct.ThrowIfCancellationRequested();
@@ -176,7 +315,28 @@ internal sealed class AutomaticUpdateService
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or UnauthorizedAccessException or InvalidDataException or
             OperationCanceledException or ArgumentException or InvalidOperationException or CryptographicException or System.ComponentModel.Win32Exception)
-        { return Finish(AutomaticUpdateOutcome.Skipped, "Automatic update check skipped: " + ex.Message); }
+        {
+            Volatile.Write(ref _downloadPercent, -1);
+            _log("Automatic update check skipped: " + ex.Message);
+            return Finish(AutomaticUpdateOutcome.Skipped, ct.IsCancellationRequested ? "Update check cancelled. Your installed mod was not changed."
+                : "Could not prepare an update. You can check again.");
+        }
+    }
+
+    private async Task<T> RetryAsync<T>(Func<CancellationToken, Task<T>> action, CancellationToken ct)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            ct.ThrowIfCancellationRequested();
+            try { return await action(ct).ConfigureAwait(false); }
+            catch (Exception ex) when (attempt < AutomaticUpdateRetryPolicy.MaximumAttempts && AutomaticUpdateRetryPolicy.IsTransient(ex, ct))
+            {
+                Volatile.Write(ref _downloadPercent, -1);
+                SetStatus("Connection interrupted. Retrying update download (" + (attempt + 1) + "/" + AutomaticUpdateRetryPolicy.MaximumAttempts + ").");
+                _log("Temporary update connection failure: " + ex.Message);
+                await _pause(TimeSpan.FromSeconds(attempt * 2), ct).ConfigureAwait(false);
+            }
+        }
     }
 
     private async Task<byte[]> DownloadManifestAsync(CancellationToken ct)
@@ -209,6 +369,8 @@ internal sealed class AutomaticUpdateService
         CheckAncestors(temporary);
         try
         {
+            Volatile.Write(ref _downloadPercent, 0);
+            SetStatus("Downloading mod update: 0%.");
             using var response = await _http.GetAsync(asset.Url, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             if (response.Content.Headers.ContentLength is long length && length != asset.Size)
@@ -226,11 +388,18 @@ internal sealed class AutomaticUpdateService
                     total += count;
                     hash.AppendData(buffer, 0, count);
                     await output.WriteAsync(buffer.AsMemory(0, count), ct).ConfigureAwait(false);
+                    var percent = (int)Math.Min(99, total * 100 / asset.Size);
+                    if (percent / 5 != Volatile.Read(ref _downloadPercent) / 5)
+                    {
+                        Volatile.Write(ref _downloadPercent, percent);
+                        SetStatus("Downloading mod update: " + percent + "%.");
+                    }
                 }
                 await output.FlushAsync(ct).ConfigureAwait(false);
             }
             if (total != asset.Size || Convert.ToHexString(hash.GetHashAndReset()) != asset.Sha256)
                 throw new InvalidDataException("The update installer checksum or size does not match its signed release.");
+            Volatile.Write(ref _downloadPercent, 100);
             ct.ThrowIfCancellationRequested();
             CheckAncestors(destination);
             CheckAncestors(temporary);

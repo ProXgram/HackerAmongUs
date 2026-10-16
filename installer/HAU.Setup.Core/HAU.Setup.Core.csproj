@@ -5,9 +5,9 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>HAU.Setup.Core</AssemblyName>
-    <Version>1.0.2</Version>
-    <Authors>Rifegul</Authors>
-    <Company>Rifegul</Company>
+    <Version>1.0.3</Version>
+    <Authors>ProXgram</Authors>
+    <Company>ProXgram</Company>
     <DebugType>none</DebugType>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <PathMap>$(MSBuildProjectDirectory)=/_/HackerAmongUs/installer/Core</PathMap>

@@ -257,10 +257,11 @@ Test("Process path policy accepts the verified regular executable and rejects an
     return Task.CompletedTask;
 });
 
-Test("Process path policy resolves the exact official Xbox WindowsApps package alias", () =>
+foreach (var packageVersion in new[] { "2026.9.293.0", "2027.1.10.0" })
+Test("Process path policy resolves the official Xbox WindowsApps package alias: " + packageVersion, () =>
 {
     using var f = new Fixture(); var windowsApps = Path.Combine(f.Root, "WindowsApps"); Directory.CreateDirectory(windowsApps);
-    var package = Path.Combine(windowsApps, "Innersloth.AmongUs_2026.9.293.0_x64__fw5x688tam7rm");
+    var package = Path.Combine(windowsApps, "Innersloth.AmongUs_" + packageVersion + "_x64__fw5x688tam7rm");
     Fixture.MakeLink(package, f.Game);
     Check(GameProcessMonitor.IsExpectedGameExecutable(Path.Combine(package, "Among Us.exe"), f.Game, windowsApps));
     Check(!GameProcessMonitor.IsExpectedGameExecutable(Path.Combine(package, "Other.exe"), f.Game, windowsApps));
@@ -271,7 +272,8 @@ Test("Process path policy resolves the exact official Xbox WindowsApps package a
 Test("Process path policy does not accept other linked packages or arbitrary linked game folders", () =>
 {
     using var f = new Fixture(); var windowsApps = Path.Combine(f.Root, "WindowsApps"); Directory.CreateDirectory(windowsApps);
-    foreach (var name in new[] { "Innersloth.AmongUs_2026.9.293.0_x64__different", "DifferentPackage", "Among Us" })
+    foreach (var name in new[] { "Innersloth.AmongUs_2026.9.293.0_x64__different", "DifferentPackage", "Among Us",
+        "Innersloth.AmongUs_2027.1.0_x64__fw5x688tam7rm", "Innersloth.AmongUs_new_x64__fw5x688tam7rm" })
     {
         var alias = Path.Combine(windowsApps, name); Fixture.MakeLink(alias, f.Game);
         Check(!GameProcessMonitor.IsExpectedGameExecutable(Path.Combine(alias, "Among Us.exe"), f.Game, windowsApps));

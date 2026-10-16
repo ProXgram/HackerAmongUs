@@ -8,9 +8,9 @@
     <AssemblyName>HAUSetup</AssemblyName>
     <Product>Hacker Among Us Setup</Product>
     <Title>Hacker Among Us Setup</Title>
-    <Company>Rifegul</Company>
-    <Authors>Rifegul</Authors>
-    <Version>1.0.2</Version>
+    <Company>ProXgram</Company>
+    <Authors>ProXgram</Authors>
+    <Version>1.0.3</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <DebugType>none</DebugType>
     <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../..'))=/_/HackerAmongUs</PathMap>

@@ -8,5 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/UI/Utilities/MenuLayout.cs" Link="MenuLayout.cs" />
+    <Compile Include="../../src/UI/Utilities/MenuNavigation.cs" Link="MenuNavigation.cs" />
+    <Compile Include="../../src/UI/Utilities/MenuSearchInput.cs" Link="MenuSearchInput.cs" />
   </ItemGroup>
 </Project>

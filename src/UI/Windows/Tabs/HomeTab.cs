@@ -8,20 +8,12 @@ public class HomeTab : ITab
 
     public void Draw()
     {
-        UIHelpers.BeginSection("Your controls, in one place",
-            "Choose a section on the left. Buttons perform an action; switches enable settings or show their current state.");
-        GUILayout.Label(Utils.isFreePlay ? "Freeplay is ready. Use Practice for role experiments."
-            : Utils.isHost ? "You are hosting. Lobby rules and role assignment are in Host Controls."
-            : Utils.isLobby || Utils.isInGame ? "You are a guest. Shared rules still need host support."
-            : "Join a lobby or open Freeplay to use player controls.");
-        UIHelpers.EndSection();
-
         UIHelpers.BeginSection("Quick access");
-        Shortcut("Sprint, speed and movement modes", "Movement");
-        Shortcut("Pick an outfit or change your nickname", "Appearance");
-        Shortcut("ESP overlays, map markers and camera", "ESP");
-        Shortcut("Vent, track, Vitals and Detective Notes", "Abilities");
-        Shortcut("Start your own tasks manually", "Tasks");
+        ShortcutRow("Sprint & speed", "sprint", "Outfits & name", "outfits");
+        ShortcutRow("Player ESP", "player-esp", "Automatic Tasks", "automatic-tasks");
+        ShortcutRow("Multi Role", "multi-role", "Sabotage & repair", "sabotage");
+        ShortcutRow("Follow & orbit", "follow", "Check for updates", "updates");
+        UIHelpers.Hint("Looking for something else? Click Find a feature above and type its name.");
         UIHelpers.EndSection();
 
         UIHelpers.BeginSection("Current activity");
@@ -32,10 +24,18 @@ public class HomeTab : ITab
         GUILayout.Label("Multi Role: " + (CheatToggles.multiRole ? "on" : "off"));
         UIHelpers.Hint("Automatic Tasks starts only when you enable it yourself. F8 stops movement and color cycling.");
         UIHelpers.EndSection();
+        UIHelpers.Hint(Utils.isFreePlay ? "Freeplay is ready. Role experiments are in Practice."
+            : Utils.isHost ? "You are hosting. Shared rules are in Host Controls."
+            : Utils.isLobby || Utils.isInGame ? "You are a guest. Shared rules still need host support."
+            : "Join a lobby or open Freeplay to use player controls.");
     }
 
-    private static void Shortcut(string label, string tab)
+    private static void ShortcutRow(string firstLabel, string firstId, string secondLabel, string secondId)
     {
-        if (GUILayout.Button(label)) MenuUI.OpenTab(tab);
+        bool horizontal = MenuUI.ContentWidth >= 330f;
+        if (horizontal) GUILayout.BeginHorizontal();
+        if (GUILayout.Button(firstLabel, GUILayout.Height(34f))) MenuUI.OpenFeature(firstId);
+        if (GUILayout.Button(secondLabel, GUILayout.Height(34f))) MenuUI.OpenFeature(secondId);
+        if (horizontal) GUILayout.EndHorizontal();
     }
 }

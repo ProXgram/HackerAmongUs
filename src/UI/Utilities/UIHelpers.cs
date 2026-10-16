@@ -6,6 +6,7 @@ public static class UIHelpers
 {
     public static void RefreshTheme()
     {
+        GUIStylePreset.SetTransparentBackground(HAUPlugin.menuTransparentBackground.Value);
         if (CheatToggles.rgbMode)
         {
             GUIStylePreset.SetAccent(Color.HSVToRGB(MenuUI.hue, 0.72f, 0.90f));

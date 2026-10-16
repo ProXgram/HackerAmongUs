@@ -2,10 +2,12 @@ using UnityEngine;
 
 namespace HAU;
 
-public class RolesTab : ITab
+public class RolesTab : ITab, IMenuPage
 {
     public string name => "Abilities";
     private int _page;
+
+    public void OpenPage(int page) => _page = System.Math.Clamp(page, 0, 2);
 
     public void Draw()
     {

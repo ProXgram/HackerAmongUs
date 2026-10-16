@@ -26,7 +26,7 @@ TIMESTAMP = (2026, 10, 10, 0, 0, 0)
 MAX_FILE = 128 * 1024 * 1024
 MAX_TOTAL = 512 * 1024 * 1024
 
-INSTALL = """Hacker Among Us 1.0 by Rifegul
+INSTALL = """Hacker Among Us 1.0 by ProXgram
 Windows PC: Microsoft Store / Epic Games / Xbox App
 Among Us 19.0.0 / 2026.9.29
 
@@ -40,12 +40,12 @@ Epic Games: Library > Among Us > Manage > Installation > folder icon.
 
 Updating another menu? Close the game and move every old MalumMenu.dll, HaddadMenu.dll or MalumMenuEnhanced.dll outside BepInEx/plugins, including copies in subfolders. Remove duplicate HAU.dll copies too; keep only BepInEx/plugins/HAU.dll from this ZIP. Your old configuration and saved profile are imported on the first HAU launch and their originals stay intact. Existing HAU settings are kept.
 
-Earlier editions were tested in Xbox / Microsoft Store gameplay. HAU 1.0 build and fixture checks have passed; live round checks are pending because the local unmodified game also stays on a black startup screen. Epic Games gameplay has not been tested. This package is for PC, not Xbox consoles.
+This package is for Windows PC, not Xbox consoles.
 
 Source and credits: https://github.com/ProXgram/HackerAmongUs
 """
 
-STEAM_INSTALL = """Hacker Among Us 1.0 by Rifegul
+STEAM_INSTALL = """Hacker Among Us 1.0 by ProXgram
 Windows PC: Steam (64-bit)
 Among Us 19.0.0 / 2026.9.29
 
@@ -57,12 +57,12 @@ Among Us 19.0.0 / 2026.9.29
 
 Updating another menu? Close the game and move every old MalumMenu.dll, HaddadMenu.dll or MalumMenuEnhanced.dll outside BepInEx/plugins, including copies in subfolders. Remove duplicate HAU.dll copies too; keep only BepInEx/plugins/HAU.dll from this ZIP. Your old configuration and saved profile are imported on the first HAU launch and their originals stay intact. Existing HAU settings are kept.
 
-This package targets the 64-bit Steam build of Among Us 19.0.0 / 2026.9.29. Steam has not yet been tested live. Older 32-bit Steam versions need a matching loader and mod version.
+This package requires the 64-bit Steam build of Among Us 19.0.0 / 2026.9.29. Older 32-bit Steam versions need a matching loader and mod version.
 
 Source and credits: https://github.com/ProXgram/HackerAmongUs
 """
 
-AUTOMATIC_UPDATES = """Automatic updates on Steam / Microsoft Store / Xbox App: The menu checks for a compatible published release when Among Us opens. A verified update installs after you close Among Us and keeps your settings. A new game version needs a compatible mod release before the menu can update. Epic Games uses updates from the latest manual ZIP.
+AUTOMATIC_UPDATES = """Automatic updates on Steam / Microsoft Store / Xbox App: HAU checks at startup and while the game stays open. Settings also has a Check for updates button. Downloads show progress and retry temporary connection failures. A verified update installs after you close Among Us and keeps your settings. A new game version needs a compatible mod release first. Epic Games uses the latest manual ZIP.
 
 """
 
@@ -198,7 +198,7 @@ def main() -> None:
     parser.add_argument("--draft", action="store_true", help="Build an explicitly unfinished preview.")
     parser.add_argument("--platform", choices=("windows", "steam"), default="windows",
                         help="Choose the existing Windows stores package or the current 64-bit Steam package.")
-    parser.add_argument("--version", type=numeric_version, default="1.0.2", help="Finished HAU release version.")
+    parser.add_argument("--version", type=numeric_version, default="1.0.3", help="Finished HAU release version.")
     parser.add_argument("--loader-build", choices=("755", "788"), help="Audited loader build; 1.0 uses 755, newer HAU uses 788.")
     parser.add_argument("--replace", action="store_true", help="Replace an unpublished local package after reviewing a rebuild. Published 1.0 is immutable.")
     parser.add_argument("--plugin-sha", type=sha256_argument, required=True, help="Verified HAU plugin ZIP SHA256.")
@@ -229,7 +229,7 @@ def main() -> None:
         require(path.is_file() and not path.is_symlink(), "A root license or credits file is missing.")
         files[name] = path.read_bytes()
     install = STEAM_INSTALL if steam else INSTALL
-    install = install.replace("Hacker Among Us 1.0 by Rifegul", f"Hacker Among Us {args.version} by Rifegul")
+    install = install.replace("Hacker Among Us 1.0 by ProXgram", f"Hacker Among Us {args.version} by ProXgram")
     install = install.replace("Source and credits:", AUTOMATIC_UPDATES + "Source and credits:")
     files["INSTALL.txt"] = install.replace("\n", "\r\n").encode("utf-8")
     assets, legal_complete = legal_assets(args.draft, loader, legal_root, loader_sha)

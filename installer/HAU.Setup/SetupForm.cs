@@ -26,12 +26,12 @@ internal sealed class SetupForm : Form
     private bool finished;
     private string lastError = "";
 
-    internal static readonly SetupCatalog Catalog = new("1.0.2",
+    internal static readonly SetupCatalog Catalog = new("1.0.3",
         new DownloadArtifact(new Uri("https://builds.bepinex.dev/projects/bepinex_be/788/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.788%2B5b766a3.zip"),
             "F4CC496BD098A0DF4164B81E3737297707F13A47C2478DBA2F60EEFAB784817A", "BepInEx loader"),
-        new DownloadArtifact(new Uri("https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.2/HAU-1.0.2-Plugin.zip"),
-            "D76C8A983BA10634868ED7813F0423024707E36FA53A6DD6AB011D8E76BFF1DB", "Hacker Among Us"))
-        { ExpectedPluginVersion = new Version(1, 0, 2, 0) };
+        new DownloadArtifact(new Uri("https://github.com/ProXgram/HackerAmongUs/releases/download/hau-v1.0.3/HAU-1.0.3-Plugin.zip"),
+            "5668A070752CF4A4FCD5B4FC53D902ADFFDD3C7B0F28B58C44C0C7879F00C6B6", "Hacker Among Us"))
+        { ExpectedPluginVersion = new Version(1, 0, 3, 0) };
 
     public SetupForm()
     {
@@ -55,12 +55,12 @@ internal sealed class SetupForm : Form
         var logo = new Label { Text = "HAU", Font = new Font("Segoe UI", 16, FontStyle.Bold), TextAlign = ContentAlignment.MiddleCenter, ForeColor = Background, BackColor = Accent, Location = Point.Empty, Size = new Size(70, 52) };
         header.Controls.Add(logo);
         header.Controls.Add(TextLabel("Hacker Among Us", 20, FontStyle.Bold, new Point(85, 0), new Size(450, 34)));
-        header.Controls.Add(TextLabel($"HAU {Catalog.ModVersion}  ·  By Rifegul", 10, FontStyle.Regular, new Point(87, 35), new Size(450, 24), Muted));
+        header.Controls.Add(TextLabel($"HAU {Catalog.ModVersion}  ·  By ProXgram", 10, FontStyle.Regular, new Point(87, 35), new Size(450, 24), Muted));
         layout.Controls.Add(header, 0, 0);
 
         var introduction = new Panel { Dock = DockStyle.Fill };
         introduction.Controls.Add(TextLabel("Install HAU. Keep your settings.", 23, FontStyle.Bold, new Point(0, 7), new Size(670, 38)));
-        introduction.Controls.Add(TextLabel("Choose Among Us, install HAU, then open your game normally.", 10.5f, FontStyle.Regular, new Point(0, 51), new Size(670, 28), Muted));
+        introduction.Controls.Add(TextLabel("One download. Click Install HAU, then open Among Us normally.", 10.5f, FontStyle.Regular, new Point(0, 51), new Size(670, 28), Muted));
         layout.Controls.Add(introduction, 0, 1);
 
         var location = new Panel { Dock = DockStyle.Fill, BackColor = Card, Padding = new Padding(16), Margin = new Padding(0, 0, 0, 12) };

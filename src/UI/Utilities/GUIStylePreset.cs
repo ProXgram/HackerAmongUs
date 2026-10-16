@@ -5,11 +5,12 @@ namespace HAU;
 public static class GUIStylePreset
 {
     private static GUIStyle _window, _button, _toggle, _label, _tabButton, _selectedTab,
-        _title, _subtitle, _hint, _section, _context, _brand, _separator, _darkSeparator, _richLabel;
+        _title, _subtitle, _hint, _section, _context, _brand, _separator, _darkSeparator, _richLabel, _searchField;
     private static Texture2D _windowTexture, _cardTexture, _buttonTexture, _hoverTexture,
         _selectedTexture, _activeTexture;
 
     private static Color _accent = new(0.18f, 0.87f, 0.88f, 1f);
+    private static bool _transparent;
     public static Color Accent => _accent;
 
     private static RectOffset Insets(int left, int right, int top, int bottom) =>
@@ -29,12 +30,32 @@ public static class GUIStylePreset
         _subtitle.normal.textColor = color;
         _context.normal.textColor = color;
         _brand.normal.textColor = color;
-        _selectedTexture.SetPixel(0, 0, Color.Lerp(new Color(0.05f, 0.12f, 0.14f), color, 0.3f));
-        _selectedTexture.Apply();
-        _hoverTexture.SetPixel(0, 0, Color.Lerp(new Color(0.10f, 0.18f, 0.22f), color, 0.15f));
-        _hoverTexture.Apply();
-        _activeTexture.SetPixel(0, 0, Color.Lerp(new Color(0.05f, 0.12f, 0.14f), color, 0.4f));
-        _activeTexture.Apply();
+        RefreshBackgrounds();
+    }
+
+    public static void SetTransparentBackground(bool transparent)
+    {
+        EnsureStyles();
+        if (_transparent == transparent) return;
+        _transparent = transparent;
+        RefreshBackgrounds();
+    }
+
+    private static void RefreshBackgrounds()
+    {
+        SetTexture(_windowTexture, new Color(0.035f, 0.055f, 0.075f), 0.72f);
+        SetTexture(_cardTexture, new Color(0.08f, 0.11f, 0.14f), 0.72f);
+        SetTexture(_buttonTexture, new Color(0.12f, 0.18f, 0.22f), 0.84f);
+        SetTexture(_selectedTexture, Color.Lerp(new Color(0.05f, 0.12f, 0.14f), _accent, 0.3f), 0.88f);
+        SetTexture(_hoverTexture, Color.Lerp(new Color(0.10f, 0.18f, 0.22f), _accent, 0.15f), 0.90f);
+        SetTexture(_activeTexture, Color.Lerp(new Color(0.05f, 0.12f, 0.14f), _accent, 0.4f), 0.94f);
+    }
+
+    private static void SetTexture(Texture2D texture, Color color, float transparentAlpha)
+    {
+        color.a = _transparent ? transparentAlpha : 1f;
+        texture.SetPixel(0, 0, color);
+        texture.Apply();
     }
 
     private static Texture2D Solid(Color color)
@@ -49,7 +70,7 @@ public static class GUIStylePreset
     private static void EnsureStyles()
     {
         if (_window != null) return;
-        _windowTexture = Solid(new Color(0.035f, 0.055f, 0.075f, 0.97f));
+        _windowTexture = Solid(new Color(0.035f, 0.055f, 0.075f, 1f));
         _cardTexture = Solid(new Color(0.08f, 0.11f, 0.14f, 1f));
         _buttonTexture = Solid(new Color(0.12f, 0.18f, 0.22f, 1f));
         _hoverTexture = Solid(new Color(0.17f, 0.30f, 0.34f, 1f));
@@ -98,6 +119,10 @@ public static class GUIStylePreset
             fontStyle = FontStyle.Bold,
             normal = { background = _selectedTexture, textColor = Color.white }
         };
+        _searchField = new GUIStyle(_button)
+        {
+            alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip
+        };
         _title = new GUIStyle(_label)
         {
             fontSize = 22, fontStyle = FontStyle.Bold,
@@ -144,6 +169,7 @@ public static class GUIStylePreset
     public static GUIStyle SectionBody { get { EnsureStyles(); return _section; } }
     public static GUIStyle Context { get { EnsureStyles(); return _context; } }
     public static GUIStyle Brand { get { EnsureStyles(); return _brand; } }
+    public static GUIStyle SearchField { get { EnsureStyles(); return _searchField; } }
     public static GUIStyle Separator { get { EnsureStyles(); return _separator; } }
     public static GUIStyle DarkSeparator { get { EnsureStyles(); return _darkSeparator; } }
 }

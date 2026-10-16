@@ -41,7 +41,7 @@ def put(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='Package a finished HAU build and its matching source without touching historical releases.')
-    parser.add_argument("--version", type=numeric_version, default="1.0.2")
+    parser.add_argument("--version", type=numeric_version, default="1.0.3")
     parser.add_argument("--dll", type=Path, help="Finished HAU.dll; defaults to src/bin/Release/net6.0/HAU.dll.")
     parser.add_argument("--replace", action="store_true", help="Replace an existing local HAU package after reviewing a rebuilt release.")
     args = parser.parse_args()
@@ -53,7 +53,7 @@ def main() -> None:
     require(project.findtext(".//AssemblyName") == "HAU" and project.findtext(".//VersionPrefix") == args.version,
             "The HAU project identity or version does not match this release.")
     branding = (ROOT / "src/ModBranding.cs").read_text(encoding="utf-8-sig")
-    require('Name = "Hacker Among Us"' in branding and 'Creator = "Rifegul"' in branding and
+    require('Name = "Hacker Among Us"' in branding and 'Creator = "ProXgram"' in branding and
             f'Version = "{args.version}"' in branding, "The release must match the HAU branding and numeric version.")
     git_root = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "--show-toplevel"], text=True).strip()
     require(Path(git_root).resolve() == ROOT, "Package from this source repository's own root.")
@@ -99,7 +99,7 @@ def main() -> None:
     shutil.copy2(plugin_zip, downloads / plugin_zip.name)
     shutil.copy2(source_zip, downloads / source_zip.name)
     shutil.copy2(built, release / "HAU.dll")
-    report = {"name": "Hacker Among Us", "creator": "Rifegul", "version": args.version,
+    report = {"name": "Hacker Among Us", "creator": "ProXgram", "version": args.version,
               "pluginPackage": (downloads / plugin_zip.name).relative_to(ROOT).as_posix(),
               "pluginArchiveSha256": sha256(plugin_zip.read_bytes()), "dllSha256": sha256(binary),
               "sourcePackage": (downloads / source_zip.name).relative_to(ROOT).as_posix(),

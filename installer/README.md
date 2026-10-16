@@ -14,7 +14,7 @@ stop the upgrade.
 Test the finished DLL first. From the repository root:
 
 ```powershell
-python scripts/package-hau.py --version 1.0.2 --dll src/bin/Release/net6.0/HAU.dll
+python scripts/package-hau.py --version 1.0.3 --dll src/bin/Release/net6.0/HAU.dll
 ```
 
 Use the report's ZIP hash in `installer/HAU.Setup/SetupForm.cs`, then publish
@@ -27,30 +27,32 @@ dotnet publish installer/HAU.Setup/HAU.Setup.csproj -c Release -o artifacts/setu
 The output is `HAUSetup.exe`. Build both manual ZIPs with the verified hashes:
 
 ```powershell
-python scripts/package-manual.py --version 1.0.2 --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
-python scripts/package-manual.py --version 1.0.2 --platform steam --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
+python scripts/package-manual.py --version 1.0.3 --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
+python scripts/package-manual.py --version 1.0.3 --platform steam --plugin-sha <ZIP-SHA256> --dll-sha <DLL-SHA256>
 ```
 
-## Publish 1.0.2
+## Publish 1.0.3
 
 1. Finish testing and place `HAUSetup.exe` in `downloads/setup/`.
 2. Stage the signed manifest:
 
    ```powershell
-   python scripts/sign-update-manifest.py --version 1.0.2 --private-key <KEY-OUTSIDE-THE-REPOSITORY> --game-version 2026.9.29 --stage
-   python scripts/package-setup.py --release 1.0.2
+   python scripts/sign-update-manifest.py --version 1.0.3 --private-key <KEY-OUTSIDE-THE-REPOSITORY> --game-version 2026.9.29 --game-version 19.0.0 --stage
+   python scripts/package-setup.py --release 1.0.3
    ```
 
-3. Publish `hau-v1.0.2` with `HAUSetup.exe`, the plugin ZIP, both manual ZIPs and the source ZIP.
-4. Verify the public files and signature before promoting `updates/hau/1.0.2.json` to `updates/hau/latest.json`.
+3. Publish `hau-v1.0.3` with `HAUSetup.exe`, the plugin ZIP, both manual ZIPs and the source ZIP.
+4. Verify the public files and signature before promoting `updates/hau/1.0.3.json` to `updates/hau/latest.json`.
 
 Keep signing keys outside the repository. Leave earlier releases and the legacy
 `updates/latest.json` unchanged.
 
 ## Updates and licenses
 
-On supported launchers, the updater checks the signed HAU feed at startup,
-verifies compatibility and file hashes, and installs after Among Us closes.
+On supported launchers, the updater checks the signed HAU feed at startup and
+every 30 minutes, retrying failed checks after 5 minutes. Settings also has a
+manual check button and a switch that takes effect immediately. Downloads show
+progress. HAU verifies compatibility and file hashes and installs after Among Us closes.
 It does not close or restart the game. Epic Games uses manual ZIP updates.
 
 HAU retains [GPL-3.0](../LICENSE) and [source attribution](../CREDITS.md).

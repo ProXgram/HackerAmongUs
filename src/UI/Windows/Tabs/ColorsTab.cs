@@ -2,11 +2,17 @@ using UnityEngine;
 
 namespace HAU;
 
-public class ColorsTab : ITab
+public class ColorsTab : ITab, IMenuPage
 {
-    public string name => "Appearance";
+    public string name => "Outfits";
     private int _page;
     private readonly AnimationsTab _effects = new();
+
+    public void OpenPage(int page)
+    {
+        _page = System.Math.Clamp(page, 0, 2);
+        NicknameEntry.StopEditing();
+    }
 
     public void Draw()
     {

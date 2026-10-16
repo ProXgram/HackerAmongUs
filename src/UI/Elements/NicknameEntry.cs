@@ -56,7 +56,7 @@ public static class NicknameEntry
     public static void Tick()
     {
         if (!IsEditing) return;
-        if (!MenuUI.isGUIActive || MenuUI.ActiveTabName != "Appearance" ||
+        if (!MenuUI.isGUIActive || MenuUI.ActiveTabName != "Outfits" ||
             !Application.isFocused || HAUPlugin.isPanicked)
         {
             StopEditing();
@@ -118,7 +118,7 @@ public static class NicknameEntry
 
     public static void SuppressMovement(PlayerPhysics physics)
     {
-        bool editingWindow = OutfitPickerUI.IsOpen || (IsEditing && MenuUI.ActiveTabName == "Appearance");
+        bool editingWindow = OutfitPickerUI.IsOpen || MenuUI.IsSearchEditing || (IsEditing && MenuUI.ActiveTabName == "Outfits");
         if (!editingWindow || !MenuUI.isGUIActive ||
             !Application.isFocused || HAUPlugin.isPanicked) return;
         try

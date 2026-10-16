@@ -149,7 +149,9 @@ internal sealed class GameProcessMonitor : IAutoUpdateProcessMonitor
             windowsAppsRoot ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsApps");
             if (package.Parent == null ||
                 !package.Parent.FullName.Equals(Path.GetFullPath(windowsAppsRoot), StringComparison.OrdinalIgnoreCase) ||
-                package.Name != "Innersloth.AmongUs_2026.9.293.0_x64__fw5x688tam7rm" ||
+                package.Name.Length > 160 || !System.Text.RegularExpressions.Regex.IsMatch(package.Name,
+                    @"^Innersloth[.]AmongUs_[0-9]+[.][0-9]+[.][0-9]+[.][0-9]+_x64__fw5x688tam7rm$",
+                    System.Text.RegularExpressions.RegexOptions.CultureInvariant) ||
                 (package.Attributes & FileAttributes.ReparsePoint) == 0) return false;
 
 

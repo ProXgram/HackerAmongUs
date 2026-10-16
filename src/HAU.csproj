@@ -10,11 +10,11 @@
         <Product>Hacker Among Us</Product>
         <Title>Hacker Among Us</Title>
         <AssemblyTitle>Hacker Among Us</AssemblyTitle>
-        <Company>Rifegul</Company>
-        <VersionPrefix>1.0.2</VersionPrefix>
+        <Company>ProXgram</Company>
+        <VersionPrefix>1.0.3</VersionPrefix>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-        <Description>Hacker Among Us (HAU) by Rifegul.</Description>
-        <Authors>Rifegul</Authors>
+        <Description>Hacker Among Us (HAU) by ProXgram.</Description>
+        <Authors>ProXgram</Authors>
         <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     </PropertyGroup>
 
